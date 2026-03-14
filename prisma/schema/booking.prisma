@@ -8,7 +8,7 @@ enum BookingStatus {
 }
 
 model Booking {
-  id          String @id @default(cuid())
+  id          String @id @default(uuid())
 
   rideId      String
   passengerId String
@@ -38,7 +38,7 @@ model Booking {
 }
 
 model BookingEvent {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
 
   bookingId String
   type      String

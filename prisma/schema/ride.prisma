@@ -11,7 +11,7 @@ enum GenderPreference {
 }
 
 model Ride {
-  id               String @id @default(cuid())
+  id               String @id @default(uuid())
 
   driverId         String
   vehicleId        String?
@@ -62,7 +62,7 @@ model Ride {
 }
 
 model RideStop {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   rideId    String
 
   order     Int

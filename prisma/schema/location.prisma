@@ -1,8 +1,7 @@
 model Location {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
 
-  address   String
-  city      String?
+  city      String
   state     String?
   country   String?
 

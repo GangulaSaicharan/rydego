@@ -1,5 +1,5 @@
 model Vehicle {
-  id          String @id @default(cuid())
+  id          String @id @default(uuid())
   ownerId     String
 
   brand       String
