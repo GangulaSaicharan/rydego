@@ -142,6 +142,7 @@ export async function getMyBookingsAction() {
       orderBy: { createdAt: "desc" },
     })
 
+    
     const serialized = bookings.map((b) => ({
       ...b,
       totalPrice: b.totalPrice ? Number(b.totalPrice) : null,
