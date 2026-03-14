@@ -1,0 +1,49 @@
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Booking {
+  id          String @id @default(cuid())
+
+  rideId      String
+  passengerId String
+
+  seats       Int
+
+  totalPrice  Decimal? @db.Decimal(10,2)
+
+  status      BookingStatus @default(PENDING)
+
+  pickupNote  String?
+  dropNote    String?
+
+  events BookingEvent[]
+
+  ride Ride @relation(fields: [rideId], references: [id])
+
+  passenger User @relation(fields: [passengerId], references: [id])
+
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rideId])
+  @@index([passengerId])
+}
+
+model BookingEvent {
+  id        String @id @default(cuid())
+
+  bookingId String
+  type      String
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}

@@ -1,0 +1,18 @@
+model Location {
+  id        String @id @default(cuid())
+
+  address   String
+  city      String?
+  state     String?
+  country   String?
+
+  latitude  Float
+  longitude Float
+
+  placeId   String?
+
+  createdAt DateTime @default(now())
+
+  ridesFrom Ride[] @relation("RideFrom")
+  ridesTo   Ride[] @relation("RideTo")
+}

@@ -1,0 +1,27 @@
+enum ReviewTargetType {
+  DRIVER
+  PASSENGER
+}
+
+model Review {
+  id        String @id @default(cuid())
+
+  rideId    String
+
+  authorId  String
+  targetId  String
+
+  targetType ReviewTargetType
+
+  rating    Int
+  comment   String?
+
+  createdAt DateTime @default(now())
+
+  ride   Ride @relation(fields: [rideId], references: [id])
+
+  author User @relation("ReviewAuthor", fields: [authorId], references: [id])
+  target User @relation("ReviewTarget", fields: [targetId], references: [id])
+
+  @@unique([rideId, authorId])
+}

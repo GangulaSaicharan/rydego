@@ -1,0 +1,51 @@
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String?
+  email           String?  @unique
+  emailVerified   DateTime?
+  image           String?
+  phone           String?
+
+  role            UserRole @default(USER)
+
+  bio             String?
+  ratingAverage   Float    @default(0)
+  ratingCount     Int      @default(0)
+
+  isBlocked       Boolean  @default(false)
+  lastLoginAt     DateTime?
+
+  accounts        Account[]
+  sessions        Session[]
+
+  driverProfile   DriverProfile?
+
+  vehicles        Vehicle[]
+  rides           Ride[]     @relation("DriverRides")
+  bookings        Booking[]
+
+  reviewsGiven    Review[]   @relation("ReviewAuthor")
+  reviewsReceived Review[]   @relation("ReviewTarget")
+
+  notifications   Notification[]
+
+  deletedAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DriverProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  licenseNumber String?
+  verified      Boolean @default(false)
+  totalRides    Int     @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+}
