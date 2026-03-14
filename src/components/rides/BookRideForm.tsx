@@ -67,7 +67,7 @@ export function BookRideForm({
         <Label htmlFor="seats">Number of seats</Label>
         <Select
           value={seats.toString()}
-          onValueChange={(v) => setSeats(parseInt(v, 10))}
+          onValueChange={(v) => { if (v != null) setSeats(parseInt(v, 10)) }}
         >
           <SelectTrigger id="seats">
             <SelectValue />

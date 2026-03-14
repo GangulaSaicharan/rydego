@@ -17,7 +17,8 @@ import {
   TicketCheck,
 } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
 
 const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -87,9 +88,12 @@ export default async function BookingsPage() {
             <p className="text-sm text-muted-foreground mt-1 max-w-sm">
               Search for a ride and book a seat. Your requests will appear here.
             </p>
-            <Button asChild className="mt-4">
-              <Link href="/search">Find a ride</Link>
-            </Button>
+            <Link
+              href="/search"
+              className={cn(buttonVariants(), "mt-4")}
+            >
+              Find a ride
+            </Link>
           </CardContent>
         </Card>
       ) : (
@@ -221,9 +225,12 @@ function BookingCard({
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/rides/${booking.ride.id}`}>View ride</Link>
-        </Button>
+        <Link
+          href={`/rides/${booking.ride.id}`}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+        >
+          View ride
+        </Link>
         {canCancel && <CancelBookingButton bookingId={booking.id} />}
       </div>
     </div>
