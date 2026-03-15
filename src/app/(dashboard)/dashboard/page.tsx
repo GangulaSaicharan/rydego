@@ -19,7 +19,8 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button-variants"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"

@@ -48,13 +48,15 @@ import {
   BreadcrumbEllipsis,
 } from "./breadcrumb";
 import { Toaster } from "./sonner";
-
+import { buttonVariants, type ButtonVariants } from "./button-variants";
 export {
   Button,
   Avatar,
   AvatarFallback,
   AvatarImage,
   Badge,
+  buttonVariants,
+  type ButtonVariants,
   Card,
   CardContent,
   CardDescription,

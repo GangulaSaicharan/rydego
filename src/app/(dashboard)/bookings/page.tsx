@@ -18,7 +18,7 @@ import {
   TicketCheck,
 } from "lucide-react"
 import Link from "next/link"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
 
