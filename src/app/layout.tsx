@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: `${APP_NAME} | %s`,
   },
   description: APP_DESCRIPTION,
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     title: APP_NAME,

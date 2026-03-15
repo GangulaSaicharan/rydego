@@ -14,7 +14,7 @@ export function getFirebaseConfig() {
 /** Firebase config object for initializeApp (matches Firebase Console snippet). */
 function getFirebaseConfigForInit() {
   const c = getFirebaseConfig()
-  if (!c) return null
+  if (!c?.apiKey) return null
   return {
     apiKey: c.apiKey,
     authDomain: c.authDomain,

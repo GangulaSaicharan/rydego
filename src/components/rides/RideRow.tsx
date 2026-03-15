@@ -12,8 +12,8 @@ export type RideRowRide = {
   seatsAvailable: number
   seatsTotal: number
   driver: { name: string | null }
-  fromLocation: { city: string; state: string }
-  toLocation: { city: string; state: string }
+  fromLocation: { city: string; state: string | null }
+  toLocation: { city: string; state: string | null }
 }
 
 export function RideRow({

@@ -25,9 +25,6 @@ function getFirebaseApp(): admin.app.App | null {
     return null
   }
 
-
-  console.log(json)
-
   try {
     const serviceAccount = JSON.parse(json) as admin.ServiceAccount
     app = admin.initializeApp({

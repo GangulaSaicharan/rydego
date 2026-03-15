@@ -56,8 +56,18 @@ export async function sendPushToUser(
             },
           }),
         })
-        .catch((err: { code?: string }) => {
-          if (err?.code === "messaging/registration-token-not-registered" || err?.code === "messaging/invalid-registration-token") {
+        .catch((err: { code?: string; message?: string }) => {
+          const code = err?.code ?? ""
+          const msg = String(err?.message ?? "")
+          const errStr = typeof err === "object" ? JSON.stringify(err) : String(err)
+          const isInvalid =
+            code === "messaging/registration-token-not-registered" ||
+            code === "messaging/invalid-registration-token" ||
+            code === "messaging/invalid-argument" ||
+            code.startsWith("messaging/") ||
+            /permission denied|invalid.*token|not found/i.test(msg) ||
+            /permission denied/i.test(errStr)
+          if (isInvalid) {
             invalidTokens.push(token)
           }
           console.error("[push] Send failed for token:", err)
