@@ -85,6 +85,7 @@ CREATE TABLE "Location" (
     "country" TEXT,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
+    "status" BOOLEAN NOT NULL DEFAULT true,
     "placeId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -134,6 +135,7 @@ CREATE TABLE "Ride" (
     "genderPreference" "GenderPreference" NOT NULL DEFAULT 'NONE',
     "status" "RideStatus" NOT NULL DEFAULT 'SCHEDULED',
     "description" TEXT,
+    "fromSlot" TEXT,
     "deletedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
