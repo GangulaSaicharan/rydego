@@ -20,14 +20,21 @@ export async function sendPushToUser(
   message: string
 ): Promise<void> {
   const messaging = getMessaging()
-  if (!messaging) return
+  if (!messaging) {
+    console.warn("[push] Firebase Admin not configured; skipping push for user", userId)
+    return
+  }
 
   try {
     const tokens = await prisma.userFcmToken.findMany({
       where: { userId },
       select: { token: true },
     })
-    if (tokens.length === 0) return
+    if (tokens.length === 0) {
+      console.info("[push] No FCM tokens for user", userId, "; skipping push.")
+      return
+    }
+    console.info("[push] Sending to", tokens.length, "token(s) for user", userId)
 
     const formattedTitle = formatNotificationTitle(title)
     // Logo only as icon (left); no large image in content
@@ -79,7 +86,9 @@ export async function sendPushToUser(
       await prisma.userFcmToken.deleteMany({
         where: { userId, token: { in: invalidTokens } },
       })
+      console.warn("[push] Removed", invalidTokens.length, "invalid token(s) for user", userId)
     }
+    console.info("[push] Done for user", userId)
   } catch (err) {
     console.error("[push] sendPushToUser failed:", err)
   }

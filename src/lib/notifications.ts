@@ -11,6 +11,7 @@ export async function createNotification(
   message: string
 ): Promise<void> {
   try {
+    console.info("[notifications] Creating notification for user", userId, "|", title, "|", message.slice(0, 80) + (message.length > 80 ? "…" : ""))
     await prisma.notification.create({
       data: { userId, title, message },
     })
@@ -31,6 +32,7 @@ export async function createNotifications(
 ): Promise<void> {
   if (userIds.length === 0) return
   try {
+    console.info("[notifications] Creating notifications for", userIds.length, "user(s) |", title, "|", message.slice(0, 80) + (message.length > 80 ? "…" : ""))
     await prisma.notification.createMany({
       data: userIds.map((userId) => ({ userId, title, message })),
     })

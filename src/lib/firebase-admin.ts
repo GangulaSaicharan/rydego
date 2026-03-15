@@ -17,11 +17,11 @@ function getFirebaseApp(): admin.app.App | null {
     return app
   }
 
-  let json = getServiceAccountJson()
+  const json = getServiceAccountJson()
   if (!json) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[firebase-admin] Set FIREBASE_SERVICE_ACCOUNT_JSON; push notifications disabled.")
-    }
+    console.warn(
+      "[firebase-admin] FIREBASE_SERVICE_ACCOUNT_JSON not set or empty; push notifications disabled. Set it in Vercel env for production.",
+    )
     return null
   }
 
@@ -30,9 +30,13 @@ function getFirebaseApp(): admin.app.App | null {
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     })
+    console.info("[firebase-admin] Initialized; FCM push enabled.")
     return app
   } catch (err) {
-    console.error("[firebase-admin] Failed to initialize:", err)
+    console.error(
+      "[firebase-admin] Failed to initialize (check FIREBASE_SERVICE_ACCOUNT_JSON is valid one-line JSON, e.g. newlines as \\n):",
+      err,
+    )
     return null
   }
 }

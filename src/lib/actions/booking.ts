@@ -127,12 +127,15 @@ export async function createBookingAction(params: {
         : "your ride"
     const passengerName = session.user.name ?? "A passenger"
 
+    console.info("[booking] Ride booked; sending notifications | rideId=", rideId, "| instant=", ride.instantBooking, "| driverId=", ride.driverId, "| passengerId=", session.user.id)
     if (ride.instantBooking) {
+      console.log("Sending notification to driver")
       await createNotification(
         ride.driverId,
         "New booking",
         `${passengerName} booked ${seats} seat(s) on ${route}.`
       )
+      console.log("Sending notification to passenger")
       await createNotification(
         session.user.id,
         "Booking confirmed",
