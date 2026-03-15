@@ -41,7 +41,7 @@ const navMainAll = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Publish a Ride", url: "/publish", icon: PlusCircle, adminOnly: true },
   { title: "Find a Ride", url: "/search", icon: Search },
-  { title: "My Rides", url: "/rides", icon: Clock },
+  { title: "My Rides", url: "/rides", icon: Clock, adminOnly: true },
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },
   { title: "Messages", url: "/messages", icon: MessageSquare },
 ]
@@ -56,7 +56,12 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ user, isAdmin = false, ...props }: AppSidebarProps) {
-  const navMain = navMainAll.filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
+  // Defer isAdmin to after mount so server and client always render the same nav list
+  // and avoid hydration mismatch (session/role can differ between server and client initially).
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => setMounted(true), [])
+  const effectiveAdmin = mounted ? isAdmin : false
+  const navMain = navMainAll.filter((item) => !("adminOnly" in item && item.adminOnly) || effectiveAdmin)
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

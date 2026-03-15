@@ -2,7 +2,9 @@ import Link from "next/link"
 import Image from "next/image"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppBottomNav } from "@/components/app-bottom-nav"
+import { HeaderNotifications } from "@/components/header-notifications"
 import { HeaderUserMenu } from "@/components/header-user-menu"
+import { PushRegistration } from "@/components/push-registration"
 import { Separator } from "@/components/ui/separator"
 import { LOGO_URL } from "@/lib/constants/brand"
 import {
@@ -54,11 +56,13 @@ export default async function DashboardLayout({
               RydeGo
             </span>
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <HeaderNotifications />
             <HeaderUserMenu user={session.user} />
           </div>
         </header>
         <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pb-20 pt-3 md:p-6 md:pb-6 md:pt-4">
+          <PushRegistration />
           {children}
         </main>
       </SidebarInset>

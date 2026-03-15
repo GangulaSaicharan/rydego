@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { GoogleSignInButton } from "@/components/auth/google-auth-button"
 import { LOGO_URL } from "@/lib/constants/brand"
+import { auth } from "@/auth"
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -14,9 +16,11 @@ type LoginPageProps = {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const session = await auth()
   const { callbackUrl } = await searchParams
   const safeCallbackUrl =
     callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
+  if (session?.user) redirect(safeCallbackUrl)
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background via-background to-primary/5 p-4 sm:p-6 relative overflow-hidden">

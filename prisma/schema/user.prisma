@@ -33,11 +33,23 @@ model User {
   reviewsReceived Review[]   @relation("ReviewTarget")
 
   notifications   Notification[]
+  fcmTokens       UserFcmToken[]
 
   deletedAt       DateTime?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model UserFcmToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model DriverProfile {

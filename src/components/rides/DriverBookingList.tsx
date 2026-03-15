@@ -36,7 +36,6 @@ const statusVariant: Record<string, "default" | "secondary" | "outline" | "destr
   REJECTED: "destructive",
   CANCELLED: "destructive",
   COMPLETED: "outline",
-  NO_SHOW: "outline",
 }
 
 export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) {

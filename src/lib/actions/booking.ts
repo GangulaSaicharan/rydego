@@ -5,6 +5,7 @@ import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { BookingStatus } from "@prisma/client"
 import { requireMobile } from "@/lib/require-mobile"
+import { createNotification } from "@/lib/notifications"
 
 export async function createBookingAction(params: {
   rideId: string
@@ -111,6 +112,45 @@ export async function createBookingAction(params: {
     revalidatePath("/dashboard")
     revalidatePath("/bookings")
 
+    // Notifications (fire-and-forget)
+    const rideForNotification = await prisma.ride.findUnique({
+      where: { id: rideId },
+      include: {
+        fromLocation: { select: { city: true } },
+        toLocation: { select: { city: true } },
+        driver: { select: { name: true } },
+      },
+    })
+    const route =
+      rideForNotification?.fromLocation && rideForNotification?.toLocation
+        ? `${rideForNotification.fromLocation.city} → ${rideForNotification.toLocation.city}`
+        : "your ride"
+    const passengerName = session.user.name ?? "A passenger"
+
+    if (ride.instantBooking) {
+      await createNotification(
+        ride.driverId,
+        "New booking",
+        `${passengerName} booked ${seats} seat(s) on ${route}.`
+      )
+      await createNotification(
+        session.user.id,
+        "Booking confirmed",
+        `You're booked on ${route}. The ride is confirmed.`
+      )
+    } else {
+      await createNotification(
+        ride.driverId,
+        "New booking request",
+        `${passengerName} requested ${seats} seat(s) on ${route}.`
+      )
+      await createNotification(
+        session.user.id,
+        "Request sent",
+        `Your booking request for ${route} was sent. The driver will confirm shortly.`
+      )
+    }
+
     return {
       success: true,
       bookingId: booking.id,
@@ -216,7 +256,15 @@ export async function updateBookingStatusAction(
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { ride: true },
+      include: {
+        ride: {
+          include: {
+            fromLocation: { select: { city: true } },
+            toLocation: { select: { city: true } },
+          },
+        },
+        passenger: { select: { name: true } },
+      },
     })
 
     if (!booking) {
@@ -287,6 +335,40 @@ export async function updateBookingStatusAction(
     revalidatePath("/rides/[id]", "page")
     revalidatePath("/dashboard")
     revalidatePath("/bookings")
+
+    const route =
+      booking.ride.fromLocation && booking.ride.toLocation
+        ? `${booking.ride.fromLocation.city} → ${booking.ride.toLocation.city}`
+        : "the ride"
+
+    if (status === "ACCEPTED") {
+      await createNotification(
+        booking.passengerId,
+        "Booking accepted",
+        `Your booking for ${route} was accepted by the driver.`
+      )
+    } else if (status === "REJECTED") {
+      await createNotification(
+        booking.passengerId,
+        "Booking declined",
+        `Your booking request for ${route} was declined.`
+      )
+    } else if (status === "CANCELLED") {
+      if (isPassenger) {
+        const passengerName = booking.passenger.name ?? "A passenger"
+        await createNotification(
+          booking.ride.driverId,
+          "Booking cancelled",
+          `${passengerName} cancelled their booking on ${route}.`
+        )
+      } else {
+        await createNotification(
+          booking.passengerId,
+          "Booking cancelled",
+          `Your booking for ${route} was cancelled by the driver.`
+        )
+      }
+    }
 
     return { success: true, message: "Booking updated" }
   } catch (error) {

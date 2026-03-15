@@ -147,7 +147,9 @@ export default async function DriverProfilePage({ params }: Props) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-muted-foreground">Mobile</p>
-                <p className="text-sm text-foreground">{user.phone}</p>
+                <a href={`tel:${user.phone}`} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
+                  {user.phone}
+                </a>
               </div>
             </div>
           )}

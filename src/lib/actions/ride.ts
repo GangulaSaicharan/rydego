@@ -5,6 +5,7 @@ import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { CITIES } from "@/lib/constants/locations"
 import { requireMobile } from "@/lib/require-mobile"
+import { createNotifications } from "@/lib/notifications"
 
 export async function getCitiesAction() {
   try {
@@ -136,7 +137,18 @@ export async function deleteRideAction(rideId: string) {
   try {
     const ride = await prisma.ride.findUnique({
       where: { id: rideId },
-      select: { id: true, driverId: true, status: true, departureTime: true },
+      select: {
+        id: true,
+        driverId: true,
+        status: true,
+        departureTime: true,
+        fromLocation: { select: { city: true } },
+        toLocation: { select: { city: true } },
+        bookings: {
+          where: { status: { in: ["PENDING", "ACCEPTED"] } },
+          select: { passengerId: true },
+        },
+      },
     })
     if (!ride) return { success: false, error: "Ride not found" }
     if (ride.driverId !== session.user.id) return { success: false, error: "Only the ride creator can delete this ride" }
@@ -153,6 +165,19 @@ export async function deleteRideAction(rideId: string) {
         data: { status: "CANCELLED" },
       })
     })
+
+    const passengerIds = ride.bookings.map((b) => b.passengerId)
+    const route =
+      ride.fromLocation && ride.toLocation
+        ? `${ride.fromLocation.city} → ${ride.toLocation.city}`
+        : "your ride"
+    if (passengerIds.length > 0) {
+      await createNotifications(
+        passengerIds,
+        "Ride cancelled",
+        `The ride ${route} has been cancelled by the driver.`
+      )
+    }
 
     revalidatePath("/dashboard")
     revalidatePath("/rides")

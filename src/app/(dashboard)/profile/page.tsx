@@ -125,7 +125,13 @@ export default async function ProfilePage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-muted-foreground">Phone</p>
-              <p className="text-sm text-foreground">{user.phone ?? "Not set"}</p>
+              {user.phone ? (
+                <a href={`tel:${user.phone}`} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
+                  {user.phone}
+                </a>
+              ) : (
+                <p className="text-sm text-foreground">Not set</p>
+              )}
             </div>
           </div>
           <div className="flex items-start gap-3 border-t border-border/60 py-3">

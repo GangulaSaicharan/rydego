@@ -2,6 +2,7 @@ import Google from "next-auth/providers/google"
 import type { NextAuthConfig } from "next-auth"
 
 export const authConfig = {
+  trustHost: true, // required for ngrok / preview URLs (middleware uses this config)
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,

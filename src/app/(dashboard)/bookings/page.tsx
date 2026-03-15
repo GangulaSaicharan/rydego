@@ -2,91 +2,105 @@ import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/db"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Calendar,
-  IndianRupee,
-  Clock,
-  TicketCheck,
-} from "lucide-react"
+import type { Prisma } from "@prisma/client"
+import { BookingStatus, RideStatus } from "@prisma/client"
+import { Card, CardContent } from "@/components/ui/card"
+import { TicketCheck } from "lucide-react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 import { cn } from "@/lib/utils"
-import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
+import { BookingsFilterView } from "@/components/rides/BookingsFilterView"
 
 export const metadata: Metadata = {
   title: "My Bookings",
   description: "View and manage your ride bookings on RydeGo.",
-};
-
-const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  PENDING: "secondary",
-  ACCEPTED: "default",
-  REJECTED: "destructive",
-  CANCELLED: "destructive",
-  COMPLETED: "outline",
-  NO_SHOW: "outline",
 }
 
-const statusLabel: Record<string, string> = {
-  PENDING: "Pending",
-  ACCEPTED: "Confirmed",
-  REJECTED: "Declined",
-  CANCELLED: "Cancelled",
-  COMPLETED: "Completed",
-  NO_SHOW: "No show",
+const bookingInclude = {
+  ride: {
+    include: {
+      driver: { select: { id: true, name: true, image: true } },
+      fromLocation: { select: { city: true, state: true } },
+      toLocation: { select: { city: true, state: true } },
+    },
+  },
 }
 
-export default async function BookingsPage() {
+const validFilters = ["upcoming", "inProgress", "past"] as const
+type Filter = (typeof validFilters)[number]
+
+function isValidFilter(s: string | null): s is Filter {
+  return s !== null && validFilters.includes(s as Filter)
+}
+
+export default async function BookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>
+}) {
   const session = await auth()
   const userId = session?.user?.id
   if (!userId) redirect("/login")
 
+  const params = await searchParams
+  const filter: Filter = isValidFilter(params.filter ?? null) ? (params.filter as Filter) : "upcoming"
+  const now = new Date()
+
+  const where =
+    filter === "upcoming"
+      ? {
+          passengerId: userId,
+          status: "ACCEPTED" as const,
+          ride: { departureTime: { gt: now } },
+        }
+      : filter === "inProgress"
+        ? {
+            passengerId: userId,
+            status: "ACCEPTED" as const,
+            ride: { status: RideStatus.STARTED },
+          }
+        : {
+            passengerId: userId,
+            OR: [
+              { status: { in: ["REJECTED", "CANCELLED", "COMPLETED"] satisfies BookingStatus[] } },
+              {
+                status: "ACCEPTED" as const,
+                ride: {
+                  OR: [
+                    { status: RideStatus.COMPLETED },
+                    { status: RideStatus.CANCELLED },
+                    { departureTime: { lte: now }, status: { not: RideStatus.STARTED } },
+                  ],
+                },
+              },
+            ],
+          }
+
+  type BookingWithRide = Prisma.BookingGetPayload<{
+    include: typeof bookingInclude
+  }>
   const bookings = await prisma.booking.findMany({
+    where,
+    include: bookingInclude,
+    orderBy:
+      filter === "past"
+        ? { createdAt: "desc" }
+        : { ride: { departureTime: "asc" } },
+  }) as BookingWithRide[]
+
+  const totalBookings = await prisma.booking.count({
     where: { passengerId: userId },
-    include: {
-      ride: {
-        include: {
-          driver: { select: { id: true, name: true, image: true } },
-          fromLocation: { select: { city: true, state: true } },
-          toLocation: { select: { city: true, state: true } },
-        },
-      },
-    },
-    orderBy: { createdAt: "desc" },
   })
 
-  const pending = bookings.filter((b) => b.status === "PENDING")
-  const upcoming = bookings.filter(
-    (b) => b.status === "ACCEPTED" && new Date(b.ride.departureTime) > new Date()
-  )
-  const past = bookings.filter(
-    (b) =>
-      b.status === "REJECTED" ||
-      b.status === "CANCELLED" ||
-      b.status === "COMPLETED" ||
-      b.status === "NO_SHOW" ||
-      (b.status === "ACCEPTED" && new Date(b.ride.departureTime) <= new Date())
-  )
-
-  return (
-    <main className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">My Bookings</h2>
-        <p className="text-muted-foreground mt-1">
-          View and manage your ride booking requests
-        </p>
-      </div>
-
-      {bookings.length === 0 ? (
+  if (totalBookings === 0) {
+    return (
+      <main className="flex-1 space-y-6">
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">My Bookings</h2>
+          <p className="text-muted-foreground mt-1">
+            View and manage your ride booking requests
+          </p>
+        </div>
         <Card className="border-2 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <TicketCheck className="h-12 w-12 text-muted-foreground mb-4" />
@@ -102,143 +116,31 @@ export default async function BookingsPage() {
             </Link>
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-6">
-          {pending.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-amber-500" />
-                  Pending
-                </CardTitle>
-                <CardDescription>Waiting for driver approval</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {pending.map((b) => (
-                  <BookingCard key={b.id} booking={b} showCancel={false} />
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {upcoming.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Upcoming
-                </CardTitle>
-                <CardDescription>Confirmed rides</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {upcoming.map((b) => (
-                  <BookingCard key={b.id} booking={b} showCancel={false} />
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {past.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TicketCheck className="h-5 w-5 text-muted-foreground" />
-                  Past
-                </CardTitle>
-                <CardDescription>Previous requests and rides</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {past.map((b) => (
-                  <BookingCard key={b.id} booking={b} showCancel={false} />
-                ))}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-    </main>
-  )
-}
-
-function BookingCard({
-  booking,
-  showCancel,
-}: {
-  booking: {
-    id: string
-    seats: number
-    totalPrice: unknown
-    status: string
-    ride: {
-      id: string
-      departureTime: Date
-      pricePerSeat: { toString: () => string }
-      driver: { id: string; name: string | null; image: string | null }
-      fromLocation: { city: string; state?: string | null }
-      toLocation: { city: string; state?: string | null }
-    }
+      </main>
+    )
   }
-  showCancel: boolean
-}) {
-  const total = Number(booking.totalPrice ?? 0)
-  const canCancel =
-    showCancel && (booking.status === "PENDING" || booking.status === "ACCEPTED")
+
+  const serialized = bookings.map((b) => ({
+    id: b.id,
+    seats: b.seats,
+    totalPrice: b.totalPrice == null ? null : Number(b.totalPrice),
+    status: b.status,
+    ride: {
+      id: b.ride.id,
+      departureTime: b.ride.departureTime.toISOString(),
+      driver: b.ride.driver,
+      fromLocation: b.ride.fromLocation,
+      toLocation: b.ride.toLocation,
+    },
+  }))
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border bg-card">
-      <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href={`/rides/${booking.ride.id}`}
-            className="font-semibold text-primary hover:underline"
-          >
-            {booking.ride.fromLocation.city} → {booking.ride.toLocation.city}
-          </Link>
-          <Badge variant={statusVariant[booking.status] ?? "outline"}>
-            {statusLabel[booking.status] ?? booking.status}
-          </Badge>
-        </div>
-        <p className="text-sm text-muted-foreground flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" />
-          {new Date(booking.ride.departureTime).toLocaleDateString("en-IN", {
-            timeZone: "Asia/Kolkata",
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <Link
-            href={`/profile/${booking.ride.driver.id}`}
-            className="flex items-center gap-1.5 hover:text-foreground"
-          >
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={booking.ride.driver.image ?? ""} />
-              <AvatarFallback className="text-[10px]">
-                {booking.ride.driver.name?.[0] ?? "D"}
-              </AvatarFallback>
-            </Avatar>
-            <span>{booking.ride.driver.name ?? "Driver"}</span>
-          </Link>
-          <span className="flex items-center gap-1">
-            <IndianRupee className="h-3.5 w-3.5" />
-            {total > 0 ? `₹${total.toLocaleString()}` : "—"} ({booking.seats} seat
-            {booking.seats !== 1 ? "s" : ""})
-          </span>
-        </div>
+    <main className="flex-1 space-y-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">My Bookings</h2>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Link
-          href={`/rides/${booking.ride.id}`}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          View ride
-        </Link>
-        {canCancel && <CancelBookingButton bookingId={booking.id} />}
-      </div>
-    </div>
+
+      <BookingsFilterView currentFilter={filter} bookings={serialized} />
+    </main>
   )
 }

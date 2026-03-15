@@ -44,12 +44,19 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold mb-3">2. Description of Service</h2>
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed mb-3">
               {APP_NAME} is a ride-sharing platform that connects riders with
               drivers for shared trips. We facilitate listing rides, searching
               for rides, booking seats, and communication between users. We do
               not employ drivers or operate vehicles; users offer and request
               rides at their own arrangement.
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              Rides shown on the platform are listed by users. We display them
+              as provided and do not verify, endorse, or guarantee their
+              accuracy, safety, timing, or outcome. We are not responsible for
+              any ride you see or book through the Service—responsibility for
+              the ride lies solely between the driver and the rider(s).
             </p>
           </section>
 
@@ -106,12 +113,14 @@ export default function TermsPage() {
             <h2 className="text-xl font-semibold mb-3">6. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
               {APP_NAME} is a platform connecting users. We are not a transport
-              operator. We do not guarantee the quality, safety, or legality of
-              any ride or user conduct. To the fullest extent permitted by law,
-              we exclude liability for indirect, incidental, or consequential
-              damages arising from your use of the Service or any ride arranged
-              through it. Your use of the Service and any rides is at your own
-              risk.
+              operator. We are not responsible for the rides we show—they are
+              user-generated listings displayed as-is. We do not verify, endorse,
+              or guarantee the quality, safety, accuracy, or legality of any
+              ride, listing, or user conduct. To the fullest extent permitted
+              by law, we exclude liability for indirect, incidental, or
+              consequential damages arising from your use of the Service or any
+              ride arranged through it. Your use of the Service and any rides is
+              at your own risk.
             </p>
           </section>
 
