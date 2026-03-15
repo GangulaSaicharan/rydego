@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useSession } from "next-auth/react"
 import { getFirebaseApp, getFirebaseConfig } from "@/lib/firebase-client"
 
 const LOG_PREFIX = "[FCM]"
@@ -8,13 +9,15 @@ const LOG_PREFIX = "[FCM]"
 /**
  * Registers the current device for FCM push notifications when the user is logged in.
  * Call from dashboard layout so it runs on any authenticated page.
+ * Waits for session to be ready so the register API receives the auth cookie.
  * Requires NEXT_PUBLIC_FIREBASE_* (including VAPID_KEY) and firebase-messaging-sw.js in public.
  */
 export function useRegisterPush() {
+  const { status } = useSession()
   const done = useRef(false)
 
   useEffect(() => {
-    if (typeof window === "undefined" || done.current) return
+    if (typeof window === "undefined" || done.current || status !== "authenticated") return
 
     const config = getFirebaseConfig()
     if (!config) {
@@ -69,11 +72,15 @@ export function useRegisterPush() {
           body: JSON.stringify({ token }),
           credentials: "same-origin",
         })
-        if (!res.ok && res.status !== 401) {
-          console.warn(LOG_PREFIX, "Register API failed:", res.status, await res.text())
+        if (!res.ok) {
+          if (res.status === 401) {
+            console.warn(LOG_PREFIX, "Token NOT stored: Unauthorized. Session cookie may not be sent yet — try refreshing the page or re-opening the dashboard.")
+          } else {
+            console.warn(LOG_PREFIX, "Register API failed:", res.status, await res.text())
+          }
           return
         }
-        console.info(LOG_PREFIX, "Token registered")
+        console.info(LOG_PREFIX, "Token registered and saved to FCM table")
       } catch (err) {
         console.warn(LOG_PREFIX, "Registration failed:", err)
       }
@@ -83,5 +90,5 @@ export function useRegisterPush() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [status])
 }
