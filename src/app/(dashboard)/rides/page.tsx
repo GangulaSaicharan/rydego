@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import {
@@ -11,6 +12,13 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, ChevronRight, MapPin, Calendar, CheckCircle2, Loader2, User, Users } from "lucide-react"
 import Link from "next/link"
 import { RideStatus } from "@prisma/client"
+import { CancelRideButton } from "@/components/rides/CancelRideButton"
+import { RideRowAction } from "@/components/rides/RideRowAction"
+
+export const metadata: Metadata = {
+  title: "My Rides",
+  description: "View and manage your offered and taken rides on RydeGo.",
+};
 
 const rideInclude = {
   driver: { select: { name: true, image: true, email: true } },
@@ -27,11 +35,13 @@ function RideRow({
   userId,
   statusLabel,
   statusVariant,
+  action,
 }: {
   ride: RideWithRelations
   userId: string
   statusLabel: string
   statusVariant: "default" | "secondary" | "outline" | "destructive"
+  action?: React.ReactNode
 }) {
   const isDriver = ride.driverId === userId
   return (
@@ -77,6 +87,7 @@ function RideRow({
       <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
         <p className="text-sm font-bold text-primary">₹{ride.pricePerSeat.toString()}/seat</p>
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {action && <RideRowAction>{action}</RideRowAction>}
           <Badge variant={statusVariant} className="text-[9px] uppercase tracking-tighter">
             {statusLabel}
           </Badge>
@@ -153,6 +164,7 @@ export default async function RidesPage() {
                   userId={userId}
                   statusLabel="Scheduled"
                   statusVariant="secondary"
+                  action={ride.driverId === userId ? <CancelRideButton rideId={ride.id} size="icon" compact /> : undefined}
                 />
               ))
             ) : (

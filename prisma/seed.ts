@@ -12,6 +12,12 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log(`Start seeding ...`);
 
+  const existingCount = await prisma.location.count();
+  if (existingCount >= CITIES.length) {
+    console.log(`Database already seeded (${existingCount} locations). Skipping.`);
+    return;
+  }
+
   for (const l of CITIES) {
     const existing = await prisma.location.findFirst({
       where: {
@@ -27,6 +33,7 @@ async function main() {
           country: l.country,
           latitude: l.latitude,
           longitude: l.longitude,
+          status: l.status,
         },
       });
       console.log(`Created location: ${l.name}`);

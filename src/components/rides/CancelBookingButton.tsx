@@ -3,7 +3,17 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Loader2, X } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { X } from "lucide-react"
 import { updateBookingStatusAction } from "@/lib/actions/booking"
 import { toast } from "sonner"
 
@@ -13,40 +23,58 @@ interface CancelBookingButtonProps {
 
 export function CancelBookingButton({ bookingId }: CancelBookingButtonProps) {
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  async function handleCancel() {
-    if (!confirm("Cancel this booking? Seats will be freed for others.")) return
-    setIsSubmitting(true)
+  async function handleConfirmCancel() {
+    setLoading(true)
     try {
       const result = await updateBookingStatusAction(bookingId, "CANCELLED")
       if (result.success) {
         toast.success("Booking cancelled")
+        setOpen(false)
         router.refresh()
       } else {
         toast.error(result.error ?? "Failed to cancel")
       }
     } finally {
-      setIsSubmitting(false)
+      setLoading(false)
     }
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-      onClick={handleCancel}
-      disabled={isSubmitting}
-    >
-      {isSubmitting ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        onClick={() => setOpen(true)}
+      >
         <>
           <X className="h-4 w-4 mr-1" />
           Cancel
         </>
-      )}
-    </Button>
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Seats will be freed for others. You can request again if the ride is still available.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep booking</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleConfirmCancel}
+              disabled={loading}
+            >
+              {loading ? "..." : "Yes, cancel booking"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

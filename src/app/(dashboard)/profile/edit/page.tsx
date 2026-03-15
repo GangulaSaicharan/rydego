@@ -1,11 +1,18 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { EditProfileForm } from "./edit-profile-form"
-import { Button } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { ArrowLeft, UserCircle } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Edit Profile",
+  description: "Update your name, phone, and bio on RydeGo.",
+};
 
 export default async function EditProfilePage() {
   const session = await auth()
@@ -18,21 +25,28 @@ export default async function EditProfilePage() {
   if (!user) redirect("/login")
 
   return (
-    <main className="flex-1 space-y-4 max-w-2xl mx-auto">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon">
-          <Link href="/profile" aria-label="Back to profile">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <h2 className="text-3xl font-bold tracking-tight">Edit profile</h2>
+    <main className="flex-1 space-y-6 max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Link
+          href="/profile"
+          aria-label="Back to profile"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "shrink-0 -ml-1")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+            Edit profile
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Update your phone and bio. Name and email are managed by your account.
+          </p>
+        </div>
       </div>
 
+      {/* Account info (read-only) */}
       <Card>
-        <CardHeader>
-          <CardTitle>Your details</CardTitle>
-          <CardDescription>Name and email are from your account and cannot be changed here.</CardDescription>
-        </CardHeader>
         <CardContent>
           <EditProfileForm
             defaultBio={user.bio ?? ""}

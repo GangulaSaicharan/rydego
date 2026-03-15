@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import {
@@ -23,15 +24,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Your RydeGo overview – stats, quick actions, and recent activity.",
+};
+
 export default async function DashboardPage() {
   const session = await auth()
   const userId = session?.user?.id
+  const isAdmin = session?.user?.role === "ADMIN"
 
   if (!userId) return null
 
   const now = new Date()
 
-  // Fetch stats and data in parallel
+  // Fetch stats and data in parallel (skip publishedRidesCount for non-admin)
   const [
     user,
     publishedRidesCount,
@@ -92,18 +99,22 @@ export default async function DashboardPage() {
   const stats = [
     {
       title: "Total Rides",
-      value: (bookingsCount + publishedRidesCount).toString(),
-      description: "Taken & Offered",
+      value: isAdmin ? (bookingsCount + publishedRidesCount).toString() : bookingsCount.toString(),
+      description: isAdmin ? "Taken & Offered" : "Rides taken",
       icon: Car,
       color: "text-blue-500",
     },
-    {
-      title: "Active Requests",
-      value: pendingBookingsCount.toString(),
-      description: "Pending approvals",
-      icon: AlertCircle,
-      color: pendingBookingsCount > 0 ? "text-orange-500" : "text-muted-foreground",
-    },
+    ...(isAdmin
+      ? [
+          {
+            title: "Active Requests",
+            value: pendingBookingsCount.toString(),
+            description: "Pending approvals",
+            icon: AlertCircle,
+            color: (pendingBookingsCount > 0 ? "text-orange-500" : "text-muted-foreground") as string,
+          },
+        ]
+      : []),
     {
       title: "Avg. Rating",
       value: user?.ratingAverage.toFixed(1) ?? "0.0",
@@ -128,7 +139,7 @@ export default async function DashboardPage() {
       {/* Stats - app-style cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         {stats.map((stat, index) => (
-          <Card key={stat.title} className={cn("overflow-hidden rounded-2xl border shadow-sm", index === 2 && "col-span-2 lg:col-span-1")}>
+          <Card key={stat.title} className={cn("overflow-hidden rounded-2xl border shadow-sm", index === stats.length - 1 && stats.length === 3 && "col-span-2 lg:col-span-1")}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
               <CardTitle className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {stat.title}
@@ -221,18 +232,20 @@ export default async function DashboardPage() {
                 <span className="text-[10px] text-muted-foreground mt-0.5">Browse available trips</span>
               </div>
             </Link>
-            <Link 
-              href="/publish" 
-              className={cn(buttonVariants({ variant: "outline" }), "justify-start h-14 md:h-14 rounded-xl border-green-500/20 hover:border-green-500/50 bg-green-500/5 transition-all active:scale-[0.98]")}
-            >
-              <div className="h-9 w-9 rounded-xl bg-green-500/10 flex items-center justify-center mr-3 shrink-0">
-                <PlusCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex flex-col items-start leading-none text-left min-w-0">
-                <span className="text-sm font-bold text-green-700 dark:text-green-400">Publish a Ride</span>
-                <span className="text-[10px] text-muted-foreground mt-0.5">Share your plan</span>
-              </div>
-            </Link>
+            {isAdmin && (
+              <Link 
+                href="/publish" 
+                className={cn(buttonVariants({ variant: "outline" }), "justify-start h-14 md:h-14 rounded-xl border-green-500/20 hover:border-green-500/50 bg-green-500/5 transition-all active:scale-[0.98]")}
+              >
+                <div className="h-9 w-9 rounded-xl bg-green-500/10 flex items-center justify-center mr-3 shrink-0">
+                  <PlusCircle className="h-4 w-4 text-green-600" />
+                </div>
+                <div className="flex flex-col items-start leading-none text-left min-w-0">
+                  <span className="text-sm font-bold text-green-700">Publish a Ride</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">Share your plan</span>
+                </div>
+              </Link>
+            )}
           </CardContent>
         </Card>
 

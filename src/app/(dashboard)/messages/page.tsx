@@ -1,5 +1,11 @@
+import type { Metadata } from "next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Messages",
+  description: "Chat with drivers and passengers on RydeGo.",
+};
 
 export default function MessagesPage() {
   return (

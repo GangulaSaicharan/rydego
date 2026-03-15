@@ -34,7 +34,7 @@ const statusVariant: Record<string, "default" | "secondary" | "outline" | "destr
   PENDING: "secondary",
   ACCEPTED: "default",
   REJECTED: "destructive",
-  CANCELLED: "outline",
+  CANCELLED: "destructive",
   COMPLETED: "outline",
   NO_SHOW: "outline",
 }
@@ -46,12 +46,14 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
   const pending = bookings.filter((b) => b.status === "PENDING")
   const others = bookings.filter((b) => b.status !== "PENDING")
 
-  async function handleStatus(bookingId: string, status: "ACCEPTED" | "REJECTED") {
+  async function handleStatus(bookingId: string, status: "ACCEPTED" | "REJECTED" | "CANCELLED") {
     setUpdatingId(bookingId)
     try {
       const result = await updateBookingStatusAction(bookingId, status)
       if (result.success) {
-        toast.success(status === "ACCEPTED" ? "Request accepted" : "Request rejected")
+        if (status === "ACCEPTED") toast.success("Request accepted")
+        else if (status === "REJECTED") toast.success("Request rejected")
+        else toast.success("Passenger removed from ride")
         router.refresh()
       } else {
         toast.error(result.error ?? "Failed to update")
@@ -147,6 +149,21 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
                 <Badge variant={statusVariant[b.status] ?? "outline"} className="shrink-0">
                   {b.status}
                 </Badge>
+                {b.status === "ACCEPTED" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                    onClick={() => handleStatus(b.id, "CANCELLED")}
+                    disabled={updatingId !== null}
+                  >
+                    {updatingId === b.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Remove"
+                    )}
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

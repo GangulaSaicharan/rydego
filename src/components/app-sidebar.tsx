@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import {
-  Car,
   Search,
   PlusCircle,
   Clock,
@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   TicketCheck,
 } from "lucide-react"
+import { LOGO_URL } from "@/lib/constants/brand"
 
 import {
   Sidebar,
@@ -36,40 +37,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const data = {
-  navMain: [
-    {
-      title: "Overview",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      title: "Publish a Ride",
-      url: "/publish",
-      icon: PlusCircle,
-    },
-    {
-      title: "Find a Ride",
-      url: "/search",
-      icon: Search,
-    },
-    {
-      title: "My Rides",
-      url: "/rides",
-      icon: Clock,
-    },
-    {
-      title: "My Bookings",
-      url: "/bookings",
-      icon: TicketCheck,
-    },
-    {
-      title: "Messages",
-      url: "/messages",
-      icon: MessageSquare,
-    },
-  ],
-}
+const navMainAll = [
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Publish a Ride", url: "/publish", icon: PlusCircle, adminOnly: true },
+  { title: "Find a Ride", url: "/search", icon: Search },
+  { title: "My Rides", url: "/rides", icon: Clock },
+  { title: "My Bookings", url: "/bookings", icon: TicketCheck },
+  { title: "Messages", url: "/messages", icon: MessageSquare },
+]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
@@ -77,17 +52,25 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     email?: string | null
     image?: string | null
   }
+  isAdmin?: boolean
 }
 
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+export function AppSidebar({ user, isAdmin = false, ...props }: AppSidebarProps) {
+  const navMain = navMainAll.filter((item) => !("adminOnly" in item && item.adminOnly) || isAdmin)
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Car className="size-4" />
+              <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground">
+                <Image
+                  src={LOGO_URL}
+                  alt="RydeGo"
+                  width={32}
+                  height={32}
+                  className="size-8 object-contain"
+                />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">RydeGo</span>
@@ -99,7 +82,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {data.navMain.map((item) => (
+          {navMain.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton tooltip={item.title} render={<Link href={item.url} />}>
                 <item.icon />

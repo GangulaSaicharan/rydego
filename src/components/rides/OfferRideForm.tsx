@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,12 +10,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createRideAction, getCitiesAction } from "@/lib/actions/ride"
+import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
+import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
 export function OfferRideForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [requiresProfile, setRequiresProfile] = useState(false)
   const [cities, setCities] = useState<{ city: string }[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
 
@@ -33,18 +37,23 @@ export function OfferRideForm() {
     event.preventDefault()
     setLoading(true)
     setError(null)
+    setRequiresProfile(false)
 
     const formData = new FormData(event.currentTarget)
     
     try {
       const result = await createRideAction(formData)
       if (result.success) {
+        toast.success("Ride published successfully")
         router.push("/dashboard")
       } else {
         setError(result.error || "Failed to create ride")
+        setRequiresProfile("requiresProfile" in result && result.requiresProfile === true)
+        toast.error(result.error ?? "Failed to create ride")
       }
     } catch (err) {
       setError("An unexpected error occurred")
+      toast.error("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -58,12 +67,11 @@ export function OfferRideForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          {error && (
+          {error && !requiresProfile && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              {error}
+              <p>{error}</p>
             </div>
           )}
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fromCity">From City</Label>
@@ -105,6 +113,27 @@ export function OfferRideForm() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>From Slot</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="fromSlotStart"
+                name="fromSlotStart"
+                type="text"
+                placeholder="e.g. 5am"
+                className="flex-1"
+              />
+              <span className="shrink-0 text-sm text-muted-foreground font-medium">to</span>
+              <Input
+                id="fromSlotEnd"
+                name="fromSlotEnd"
+                type="text"
+                placeholder="e.g. 6am"
+                className="flex-1"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="departureTime">Departure Time</Label>
@@ -127,28 +156,25 @@ export function OfferRideForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="genderPreference">Gender Preference</Label>
-            <Select name="genderPreference" defaultValue="NONE">
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select preference" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="NONE">No Preference</SelectItem>
-                <SelectItem value="SAME_GENDER">Same Gender Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="description">Additional Details</Label>
             <Textarea id="description" name="description" placeholder="Smoking allowed, pets, luggage limits, etc." />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-2">
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Publish Ride
           </Button>
+          {requiresProfile && (
+            <p className="text-center text-sm w-full">
+              <Link
+                href={PROFILE_EDIT_PATH}
+                className="text-primary font-medium underline underline-offset-2 hover:no-underline"
+              >
+                Add your phone number in Edit profile →
+              </Link>
+            </p>
+          )}
         </CardFooter>
       </form>
     </Card>

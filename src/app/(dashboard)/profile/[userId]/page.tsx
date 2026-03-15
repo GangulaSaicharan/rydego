@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { notFound, redirect } from "next/navigation"
@@ -9,11 +10,23 @@ import { FileText, Star, Car, ArrowLeft, Phone } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export default async function DriverProfilePage({
-  params,
-}: {
-  params: Promise<{ userId: string }>
-}) {
+type Props = { params: Promise<{ userId: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { userId } = await params
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  })
+  if (!user) return { title: "Profile" }
+  const name = user.name || "Driver"
+  return {
+    title: `${name}'s Profile`,
+    description: `View ${name}'s driver profile, ratings, and ride history on RydeGo.`,
+  }
+}
+
+export default async function DriverProfilePage({ params }: Props) {
   const { userId } = await params
   const session = await auth()
 
@@ -87,7 +100,7 @@ export default async function DriverProfilePage({
           {user.ratingCount && user.ratingCount > 0 && (
             <Card size="sm" className="overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
                   <Star className="h-5 w-5 fill-current" />
                 </div>
                 <div className="min-w-0">

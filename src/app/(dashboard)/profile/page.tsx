@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { redirect } from "next/navigation"
@@ -8,6 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Mail, Phone, FileText, Star, Car } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Profile",
+  description: "Your RydeGo profile – edit details, ratings, and driver info.",
+};
 
 export default async function ProfilePage() {
   const session = await auth()
@@ -81,7 +87,7 @@ export default async function ProfilePage() {
           {user.ratingCount && user.ratingCount > 0 && (
             <Card size="sm" className="overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
                   <Star className="h-5 w-5 fill-current" />
                 </div>
                 <div className="min-w-0">

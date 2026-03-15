@@ -36,6 +36,9 @@ model Ride {
 
   description      String?
 
+  /// Slot time e.g. "5am to 6am"
+  fromSlot         String?
+
   deletedAt        DateTime?
 
   driver User @relation("DriverRides", fields: [driverId], references: [id])

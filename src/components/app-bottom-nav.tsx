@@ -12,17 +12,28 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const navItems = [
+const navItemsAll = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/publish", label: "Offer", icon: PlusCircle },
+  { href: "/publish", label: "Offer", icon: PlusCircle, adminOnly: true },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/rides", label: "Rides", icon: Clock },
+  { href: "/rides", label: "Rides", icon: Clock, driverOnly: true },
   { href: "/bookings", label: "Bookings", icon: TicketCheck },
   { href: "/messages", label: "Messages", icon: MessageSquare },
 ]
 
-export function AppBottomNav() {
+export function AppBottomNav({
+  isAdmin = false,
+  hasDriverProfile = false,
+}: {
+  isAdmin?: boolean
+  hasDriverProfile?: boolean
+}) {
   const pathname = usePathname()
+  const navItems = navItemsAll.filter((item) => {
+    if ("adminOnly" in item && item.adminOnly && !isAdmin) return false
+    if ("driverOnly" in item && item.driverOnly && !hasDriverProfile && !isAdmin) return false
+    return true
+  })
 
   return (
     <nav

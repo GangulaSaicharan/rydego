@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
 import { BookingStatus } from "@prisma/client"
+import { requireMobile } from "@/lib/require-mobile"
 
 export async function createBookingAction(params: {
   rideId: string
@@ -15,6 +16,9 @@ export async function createBookingAction(params: {
   if (!session?.user?.id) {
     return { success: false, error: "You must be logged in to book a ride" }
   }
+
+  const mobileError = await requireMobile(session.user.id, "book")
+  if (mobileError) return mobileError
 
   const { rideId, seats, pickupNote, dropNote } = params
 
@@ -142,7 +146,7 @@ export async function getMyBookingsAction() {
       orderBy: { createdAt: "desc" },
     })
 
-    
+
     const serialized = bookings.map((b) => ({
       ...b,
       totalPrice: b.totalPrice ? Number(b.totalPrice) : null,
@@ -238,6 +242,13 @@ export async function updateBookingStatusAction(
 
     if (booking.status === "CANCELLED" || booking.status === "REJECTED") {
       return { success: false, error: "This booking is already closed" }
+    }
+
+    // Driver can only cancel/reject a passenger's booking before departure time
+    if (status === "CANCELLED" || status === "REJECTED") {
+      if (new Date(booking.ride.departureTime) <= new Date()) {
+        return { success: false, error: "Cannot cancel or remove a booking after departure time" }
+      }
     }
 
     await prisma.$transaction(async (tx) => {

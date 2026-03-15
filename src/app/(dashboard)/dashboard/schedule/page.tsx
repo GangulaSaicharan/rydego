@@ -1,5 +1,11 @@
+import type { Metadata } from "next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "Schedule",
+  description: "Set up recurring trips and automate your commute with RydeGo.",
+};
 
 export default function SchedulePage() {
   return (

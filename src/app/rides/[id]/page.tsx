@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import {
@@ -24,7 +25,9 @@ import { Button } from "@/components/ui/button"
 import { notFound } from "next/navigation"
 import { RideStatus } from "@prisma/client"
 import { BookRideForm } from "@/components/rides/BookRideForm"
+import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
+import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 
 const statusLabel: Record<RideStatus, string> = {
   SCHEDULED: "Upcoming",
@@ -33,13 +36,29 @@ const statusLabel: Record<RideStatus, string> = {
   CANCELLED: "Cancelled",
 }
 
-export default async function RideDetailPage({
-  params,
-  searchParams,
-}: {
+type Props = {
   params: Promise<{ id: string }>
   searchParams: Promise<{ fromCity?: string; toCity?: string; date?: string }>
-}) {
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const ride = await prisma.ride.findUnique({
+    where: { id },
+    include: {
+      fromLocation: { select: { city: true } },
+      toLocation: { select: { city: true } },
+    },
+  })
+  if (!ride) return { title: "Ride" }
+  const route = `${ride.fromLocation.city} → ${ride.toLocation.city}`
+  return {
+    title: `Ride: ${route}`,
+    description: `View ride details: ${route}. Date & time, driver, price on RydeGo.`,
+  }
+}
+
+export default async function RideDetailPage({ params, searchParams }: Props) {
   const session = await auth()
   const userId = session?.user?.id
 
@@ -53,9 +72,10 @@ export default async function RideDetailPage({
   const ride = await prisma.ride.findUnique({
     where: { id },
     include: {
-      driver: { select: { id: true, name: true, image: true, email: true } },
+      driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
       fromLocation: true,
       toLocation: true,
+      vehicle: { select: { brand: true, model: true } },
     },
   })
 
@@ -85,12 +105,16 @@ export default async function RideDetailPage({
     driverBookings = dBookings
   }
 
-  const canBook =
-    userId &&
-    !isDriver &&
+  const rideIsBookable =
     ride.status === "SCHEDULED" &&
     ride.seatsAvailable > 0 &&
     !userBooking
+  const canBook =
+    !!userId &&
+    !isDriver &&
+    rideIsBookable
+  /** Show "Book now" → sign in for any guest who is not the driver */
+  const showBookPromptForGuest = !userId && !isDriver
 
   const hasPendingBooking = userBooking?.status === "PENDING"
   const hasAcceptedBooking = userBooking?.status === "ACCEPTED"
@@ -118,12 +142,29 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
   })
 
   return (
-    <main className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" nativeButton={false} render={<Link href={backToSearch} />}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h2 className="text-2xl font-bold tracking-tight">Ride details</h2>
+    <main className="min-h-screen flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" nativeButton={false} render={<Link href={backToSearch} />}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-2xl font-bold tracking-tight">Ride details</h2>
+        </div>
+        <ShareRideWhatsAppButton
+          rideId={ride.id}
+          fromCity={ride.fromLocation.city}
+          toCity={ride.toLocation.city}
+          departureTime={ride.departureTime}
+          fromSlot={ride.fromSlot}
+          seatsAvailable={ride.seatsAvailable}
+          driverName={ride.driver.name}
+          driverPhone={ride.driver.phone}
+          vehicleInfo={
+            ride.vehicle
+              ? `${ride.vehicle.brand} ${ride.vehicle.model}`.trim()
+              : null
+          }
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -261,6 +302,24 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
         )}
       </div>
 
+      {showBookPromptForGuest && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Book this ride</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              className="w-full"
+              size="lg"
+              nativeButton={false}
+              render={<Link href={`/login?${new URLSearchParams({ callbackUrl: `/rides/${ride.id}` }).toString()}`} />}
+            >
+              Book now
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {canBook && (
         <Card>
           <CardHeader>
@@ -288,8 +347,13 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
             <CardTitle>Booking requests</CardTitle>
             <CardDescription>Accept or reject passenger requests</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <DriverBookingList rideId={ride.id} bookings={driverBookingsSerialized} />
+            {ride.status === "SCHEDULED" && new Date(ride.departureTime) > new Date() && (
+              <div className="pt-2 border-t">
+                <CancelRideButton rideId={ride.id} />
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

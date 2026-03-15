@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { IndianRupee, Loader2 } from "lucide-react"
 import { createBookingAction } from "@/lib/actions/booking"
+import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
 import { toast } from "sonner"
 
 interface BookRideFormProps {
@@ -35,6 +37,7 @@ export function BookRideForm({
   const [pickupNote, setPickupNote] = useState("")
   const [dropNote, setDropNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [profileError, setProfileError] = useState<boolean>(false)
 
   const total = pricePerSeat * seats
   const maxSeats = Math.min(seatsAvailable, 10)
@@ -43,6 +46,7 @@ export function BookRideForm({
     e.preventDefault()
     if (seats < 1 || seats > seatsAvailable) return
     setIsSubmitting(true)
+    setProfileError(false)
     try {
       const result = await createBookingAction({
         rideId,
@@ -54,6 +58,9 @@ export function BookRideForm({
         toast.success(result.message ?? "Booking request sent")
         router.refresh()
       } else {
+        if ("requiresProfile" in result && result.requiresProfile) {
+          setProfileError(true)
+        }
         toast.error(result.error ?? "Failed to book")
       }
     } finally {
@@ -111,18 +118,30 @@ export function BookRideForm({
         Total: ₹{total.toLocaleString()}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {instantBooking ? "Booking…" : "Sending request…"}
-          </>
-        ) : instantBooking ? (
-          "Book now"
-        ) : (
-          "Request to book"
+      <div className="space-y-2">
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {instantBooking ? "Booking…" : "Sending request…"}
+            </>
+          ) : instantBooking ? (
+            "Book now"
+          ) : (
+            "Request to book"
+          )}
+        </Button>
+        {profileError && (
+          <p className="text-center text-sm">
+            <Link
+              href={PROFILE_EDIT_PATH}
+              className="text-primary font-medium underline underline-offset-2 hover:no-underline"
+            >
+              Add your phone number in Edit profile →
+            </Link>
+          </p>
         )}
-      </Button>
+      </div>
     </form>
   )
 }

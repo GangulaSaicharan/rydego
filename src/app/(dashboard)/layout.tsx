@@ -1,8 +1,10 @@
 import Link from "next/link"
+import Image from "next/image"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppBottomNav } from "@/components/app-bottom-nav"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { Separator } from "@/components/ui/separator"
+import { LOGO_URL } from "@/lib/constants/brand"
 import {
   SidebarInset,
   SidebarProvider,
@@ -23,9 +25,11 @@ export default async function DashboardLayout({
     redirect("/login")
   }
 
+  const isAdmin = session.user.role === "ADMIN"
+
   return (
     <SidebarProvider>
-      <AppSidebar user={session.user} />
+      <AppSidebar user={session.user} isAdmin={isAdmin} />
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80 md:h-16 md:gap-4 md:px-6">
           <span className="hidden md:inline-flex">
@@ -39,6 +43,13 @@ export default async function DashboardLayout({
             href="/search"
             className="flex items-center gap-2 rounded-md outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
+            <Image
+              src={LOGO_URL}
+              alt="RydeGo"
+              width={32}
+              height={32}
+              className="size-8 object-contain md:size-9"
+            />
             <span className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
               RydeGo
             </span>
@@ -51,7 +62,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </SidebarInset>
-      <AppBottomNav />
+      <AppBottomNav isAdmin={isAdmin} />
     </SidebarProvider>
   )
 }

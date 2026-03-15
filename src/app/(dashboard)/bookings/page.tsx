@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/db"
@@ -21,11 +22,16 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
 
+export const metadata: Metadata = {
+  title: "My Bookings",
+  description: "View and manage your ride bookings on RydeGo.",
+};
+
 const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   PENDING: "secondary",
   ACCEPTED: "default",
   REJECTED: "destructive",
-  CANCELLED: "outline",
+  CANCELLED: "destructive",
   COMPLETED: "outline",
   NO_SHOW: "outline",
 }
@@ -109,7 +115,7 @@ export default async function BookingsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {pending.map((b) => (
-                  <BookingCard key={b.id} booking={b} showCancel />
+                  <BookingCard key={b.id} booking={b} showCancel={false} />
                 ))}
               </CardContent>
             </Card>
@@ -126,7 +132,7 @@ export default async function BookingsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {upcoming.map((b) => (
-                  <BookingCard key={b.id} booking={b} showCancel />
+                  <BookingCard key={b.id} booking={b} showCancel={false} />
                 ))}
               </CardContent>
             </Card>

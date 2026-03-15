@@ -232,7 +232,7 @@ export function RideSearchForm() {
                       <SelectValue placeholder="City or area" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CITIES.map((city) => (
+                      {CITIES.filter((city) => city.status).map((city) => (
                         <SelectItem key={city.name} value={city.name}>
                           {city.name}
                         </SelectItem>
@@ -260,7 +260,7 @@ export function RideSearchForm() {
                       <SelectValue placeholder="City or area" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CITIES.map((city) => (
+                      {CITIES.filter((city) => city.status).map((city) => (
                         <SelectItem key={city.name} value={city.name}>
                           {city.name}
                         </SelectItem>
@@ -289,7 +289,7 @@ export function RideSearchForm() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full md:w-auto md:min-w-[140px] h-11 font-semibold"
+                  className="w-full md:w-auto md:min-w-[140px] h-11 font-semibold shadow-md hover:shadow-lg transition-shadow"
                   disabled={loading}
                 >
                   {loading ? (

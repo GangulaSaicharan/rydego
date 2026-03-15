@@ -29,6 +29,14 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Production & DATABASE_URL
+
+- **Set `DATABASE_URL`** in your production environment (e.g. Vercel, Railway). It must be available at build time if you run migrations during build.
+- **If your DB password contains special characters** (e.g. `@`, `#`, `%`, `!`), they must be **URL-encoded** in `DATABASE_URL`, or the URL will be parsed incorrectly and you may see errors like `Can't reach database server at 3:5432`.
+  - Example: password `Sai1!2@3#4$5%6^` → encode as `Sai1%212%403%234%245%256%5E` (`!`→`%21`, `@`→`%40`, `#`→`%23`, `$`→`%24`, `%`→`%25`, `^`→`%5E`).
+  - Full URL example: `postgresql://postgres:Sai1%212%403%234%245%256%5E@db.xxxx.supabase.co:5432/postgres`
+- After deploy, run migrations (and optionally seed) in your release step or locally against production: `npm run migrate:deploy` and optionally `npm run db:seed`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
