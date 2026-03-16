@@ -1,10 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
+import dynamic from "next/dynamic"
 import { AppSidebar } from "@/components/app-sidebar"
-import { AppBottomNav } from "@/components/app-bottom-nav"
-import { HeaderNotifications } from "@/components/header-notifications"
 import { HeaderUserMenu } from "@/components/header-user-menu"
-import { PushRegistration } from "@/components/push-registration"
 import { AddMobileModal } from "@/components/add-mobile-modal"
 import { Separator } from "@/components/ui/separator"
 import { LOGO_URL } from "@/lib/constants/brand"
@@ -14,7 +12,26 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 
+const HeaderNotifications = dynamic(() =>
+  import("@/components/header-notifications").then(
+    (m) => m.HeaderNotifications,
+  ),
+)
+
+const PushRegistration = dynamic(() =>
+  import("@/components/push-registration").then(
+    (m) => m.PushRegistration,
+  ),
+)
+
+const AppBottomNav = dynamic(() =>
+  import("@/components/app-bottom-nav").then(
+    (m) => m.AppBottomNav,
+  ),
+)
+
 import { auth } from "@/auth"
+import prisma from "@/lib/db"
 import { redirect } from "next/navigation"
 
 export default async function DashboardLayout({
@@ -29,7 +46,12 @@ export default async function DashboardLayout({
   }
 
   const isAdmin = session.user.role === "ADMIN"
-  const hasPhone = !!(session.user as any).phone
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { phone: true },
+  })
+  const hasPhone = !!dbUser?.phone
 
   return (
     <SidebarProvider>

@@ -39,7 +39,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navMainAll = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Publish a Ride", url: "/publish", icon: PlusCircle, adminOnly: true },
   { title: "Find a Ride", url: "/search", icon: Search },
   { title: "My Rides", url: "/rides", icon: Clock, adminOnly: true },
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },

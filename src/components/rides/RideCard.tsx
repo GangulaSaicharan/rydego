@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Timer } from "lucide-react"
 import { differenceInMinutes } from "date-fns"
-import { formatDateTimeShortIST, formatTimeIST } from "@/lib/date-time"
+import { formatDateTimeShortIST, formatTimeIST, formatTimeToDepartureIST } from "@/lib/date-time"
 
 function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes}m`
@@ -40,6 +40,7 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
     typeof ride.pricePerSeat === "string"
       ? parseFloat(ride.pricePerSeat).toFixed(0)
       : ride.pricePerSeat.toFixed(0)
+  const timeToDeparture = formatTimeToDepartureIST(departureDate)
 
   return (
     <Card className="group overflow-hidden border shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 pb-0">
@@ -113,7 +114,15 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
                   {ride.driver.name ?? "Driver"}
                 </span>
               </div>
-              <span className="shrink-0 text-base sm:text-lg font-bold text-primary">₹{price}</span>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <span className="text-base sm:text-lg font-bold text-primary">₹{price}</span>
+                {timeToDeparture && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Timer className="h-3 w-3 shrink-0" />
+                    {timeToDeparture}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>

@@ -7,23 +7,47 @@ import { buttonVariants } from "@/components/ui"
 import { Calendar, Search, TicketCheck, Loader2 } from "lucide-react"
 import { BookingCard, type BookingCardBooking } from "./BookingCard"
 
-const emptyMessages: Record<string, string> = {
-  upcoming: "No upcoming bookings",
-  inProgress: "No bookings in progress",
-  past: "No past bookings",
-}
-
 const filters = ["upcoming", "inProgress", "past"] as const
 type Filter = (typeof filters)[number]
 
-function EmptySection({ message }: { message: string }) {
+function EmptySection({ filter }: { filter: Filter }) {
+  const title =
+    filter === "upcoming"
+      ? "No upcoming rides yet"
+      : filter === "inProgress"
+        ? "No rides in progress"
+        : "No past rides yet"
+
+  const body =
+    filter === "upcoming"
+      ? "You don't have any upcoming rides. Search for a ride to get started."
+      : filter === "inProgress"
+        ? "When your driver starts the trip, it will appear here so you can track it in real time."
+        : "Once you complete rides, they'll show up here so you can review your past trips."
+
   return (
-    <div className="flex flex-col items-center gap-3 py-6 text-center">
+    <div className="flex flex-col items-center gap-3 py-8 text-center">
       <Search className="h-10 w-10 text-muted-foreground/60" />
-      <p className="text-sm text-muted-foreground">{message}</p>
-      <Link href="/search" className={buttonVariants({ size: "sm" })}>
-        Search rides
-      </Link>
+      <div className="space-y-1 max-w-md">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Link href="/search" className={buttonVariants({ size: "sm" })}>
+          {filter === "upcoming" ? "Search or create a ride" : "Search rides"}
+        </Link>
+      </div>
+      {filter === "inProgress" && (
+        <p className="text-xs text-muted-foreground">
+          Track your ride on this screen once it starts.
+        </p>
+      )}
+      {filter === "past" && (
+        <p className="text-xs text-muted-foreground">
+          Want to share your experience? <span className="underline underline-offset-2">Leave
+          feedback</span> (coming soon).
+        </p>
+      )}
     </div>
   )
 }
@@ -39,6 +63,7 @@ export function BookingsFilterView({
   const searchParams = useSearchParams()
 
   const setFilter = (value: string) => {
+    if (!filters.includes(value as Filter)) return
     const next = new URLSearchParams(searchParams)
     next.set("filter", value)
     router.push(`/bookings?${next.toString()}`)
@@ -77,7 +102,7 @@ export function BookingsFilterView({
             ))}
           </div>
         ) : (
-          <EmptySection message={emptyMessages[currentFilter] ?? "No bookings"} />
+          <EmptySection filter={currentFilter} />
         )}
       </TabsContent>
     </Tabs>

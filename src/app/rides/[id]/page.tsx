@@ -252,7 +252,7 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
             </CardTitle>
             <CardDescription>Who&apos;s driving</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <Link
               href={`/profile/${ride.driver.id}`}
               className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-muted/50 transition-colors"
@@ -269,6 +269,19 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
                 <p className="text-xs text-primary mt-1">View profile →</p>
               </div>
             </Link>
+            {/* <div className="flex flex-wrap gap-2">
+              {ride.driver.phone && (
+                <Button variant="outline" size="sm">
+                  <a
+                    href={`https://wa.me/${ride.driver.phone.replace(/\\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Message driver
+                  </a>
+                </Button>
+              )}
+            </div> */}
           </CardContent>
         </Card>
       </div>

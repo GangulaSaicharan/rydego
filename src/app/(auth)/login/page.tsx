@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { GoogleSignInButton } from "@/components/auth/google-auth-button"
+import { LoginErrorToast } from "@/components/auth/login-error-toast"
 import { LOGO_URL } from "@/lib/constants/brand"
 import { auth } from "@/auth"
 
@@ -15,7 +16,7 @@ const LINK_CLASS =
   "underline underline-offset-4 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded transition-colors"
 
 type LoginPageProps = {
-  searchParams: Promise<{ callbackUrl?: string }>
+  searchParams: Promise<{ callbackUrl?: string; error?: string }>
 }
 
 function LoginLayout({ children }: { children: React.ReactNode }) {
@@ -63,12 +64,35 @@ function LoginHeader() {
   )
 }
 
+function mapErrorToMessage(error?: string): string | null {
+  if (!error) return null
+  switch (error) {
+    case "OAuthSignin":
+    case "OAuthCallback":
+    case "OAuthCreateAccount":
+    case "Signin":
+      return "There was a problem signing you in. Please try again."
+    case "OAuthAccountNotLinked":
+      return "This email is already linked with a different sign-in method."
+    case "AccessDenied":
+      return "Access was denied. Please use an allowed account."
+    case "Configuration":
+      return "Sign-in is temporarily unavailable. Please try again later."
+    case "SessionRequired":
+      return "Please sign in to continue."
+    default:
+      return "Something went wrong while signing you in. Please try again."
+  }
+}
+
 function SignInBlock({
   callbackUrl,
   termsLinkClass,
+  errorMessage,
 }: {
   callbackUrl: string
   termsLinkClass: string
+  errorMessage?: string | null
 }) {
   return (
     <section
@@ -78,6 +102,14 @@ function SignInBlock({
       <h2 id="sign-in-heading" className="sr-only">
         Sign in options
       </h2>
+      {errorMessage && (
+        <div
+          className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      )}
       <GoogleSignInButton callbackUrl={callbackUrl} />
       <div className="relative py-1">
         <span
@@ -112,15 +144,22 @@ function LoginFooter() {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await auth()
-  const { callbackUrl } = await searchParams
+  const { callbackUrl, error } = await searchParams
   const safeCallbackUrl =
     callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/"
   if (session?.user) redirect(safeCallbackUrl)
 
+  const errorMessage = mapErrorToMessage(error)
+
   return (
     <LoginLayout>
       <LoginHeader />
-      <SignInBlock callbackUrl={safeCallbackUrl} termsLinkClass={LINK_CLASS} />
+      <LoginErrorToast message={errorMessage} />
+      <SignInBlock
+        callbackUrl={safeCallbackUrl}
+        termsLinkClass={LINK_CLASS}
+        errorMessage={errorMessage}
+      />
       <LoginFooter />
     </LoginLayout>
   )

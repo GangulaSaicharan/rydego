@@ -17,13 +17,13 @@ export type SendPushResult =
 /**
  * Send FCM push to all devices registered for a user. No-op if Firebase is not configured or user has no tokens.
  * Uses brand LOGO_URL (Cloudinary) for notification image; optional FCM_NOTIFICATION_IMAGE_URL env overrides.
- * @param url - Optional deep link (e.g. /rides/xyz). Defaults to /dashboard.
+ * @param url - Deep link (e.g. /rides/xyz or /bookings). Must be a concrete route, not left blank.
  */
 export async function sendPushToUser(
   userId: string,
   title: string,
   message: string,
-  url: string = "/dashboard"
+  url: string
 ): Promise<SendPushResult> {
   const messaging = getMessaging()
   if (!messaging) {
@@ -107,13 +107,13 @@ export async function sendPushToUser(
 
 /**
  * Send FCM push to multiple users. No-op if Firebase is not configured.
- * @param url - Optional deep link for all (e.g. /bookings). Defaults to /dashboard.
+ * @param url - Deep link for all (e.g. /bookings). Must be a concrete route, not left blank.
  */
 export async function sendPushToUsers(
   userIds: string[],
   title: string,
   message: string,
-  url: string = "/dashboard"
+  url: string
 ): Promise<void> {
   if (userIds.length === 0) return
   await Promise.all(userIds.map((id) => sendPushToUser(id, title, message, url)))

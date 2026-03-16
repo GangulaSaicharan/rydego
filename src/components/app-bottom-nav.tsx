@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils"
 
 const navItemsAll = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/publish", label: "Offer", icon: PlusCircle, adminOnly: true },
   { href: "/search", label: "Search", icon: Search },
   { href: "/rides", label: "Rides", icon: Clock, driverOnly: true },
   { href: "/bookings", label: "Bookings", icon: TicketCheck },

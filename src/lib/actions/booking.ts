@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { BookingStatus } from "@prisma/client"
 import { requireMobile } from "@/lib/require-mobile"
 import { createNotification } from "@/lib/notifications"
+import { bookingCreateSchema } from "@/lib/validation"
 
 export async function createBookingAction(params: {
   rideId: string
@@ -21,11 +22,7 @@ export async function createBookingAction(params: {
   const mobileError = await requireMobile(session.user.id, "book")
   if (mobileError) return mobileError
 
-  const { rideId, seats, pickupNote, dropNote } = params
-
-  if (seats < 1) {
-    return { success: false, error: "At least one seat is required" }
-  }
+  const { rideId, seats, pickupNote, dropNote } = bookingCreateSchema.parse(params)
 
   try {
     const ride = await prisma.ride.findUnique({

@@ -3,6 +3,7 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { phoneSchema } from "@/lib/validation"
 
 export type ProfileUser = {
   id: string
@@ -38,7 +39,8 @@ export async function updateProfile(formData: FormData): Promise<{ success: true
   }
 
   const bio = (formData.get("bio") as string)?.trim() ?? null
-  const phone = (formData.get("phone") as string)?.trim() ?? null
+  const phoneRaw = (formData.get("phone") as string) ?? ""
+  const phone = phoneRaw ? phoneSchema.parse(phoneRaw) : null
 
   await prisma.user.update({
     where: { id: session.user.id },
@@ -56,14 +58,11 @@ export async function updatePhone(phone: string): Promise<{ success: true } | { 
     return { success: false, error: "Not authenticated" }
   }
 
-  const trimmed = phone?.trim() ?? ""
-  if (!trimmed) {
-    return { success: false, error: "Please enter a mobile number." }
-  }
+  const normalized = phoneSchema.parse(phone)
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { phone: trimmed },
+    data: { phone: normalized },
   })
 
   revalidatePath("/profile")

@@ -4,13 +4,13 @@ import { sendPushToUser, sendPushToUsers } from "@/lib/push"
 /**
  * Create an in-app notification for a single user and send FCM push if configured.
  * Fire-and-forget: we don't fail the main action if notification creation fails.
- * @param url - Optional deep link for push (e.g. /rides/xyz). Defaults to /dashboard.
+ * @param url - Deep link for push (e.g. /rides/xyz or /bookings). Must be a concrete route, not left blank.
  */
 export async function createNotification(
   userId: string,
   title: string,
   message: string,
-  url: string = "/dashboard"
+  url: string
 ): Promise<void> {
   try {
     console.info("[notifications] Creating notification for user", userId, "|", title, "|", message.slice(0, 80) + (message.length > 80 ? "…" : ""))
@@ -26,13 +26,13 @@ export async function createNotification(
 /**
  * Create the same in-app notification for multiple users and send FCM push to each.
  * Used e.g. when a ride is cancelled and all passengers are notified.
- * @param url - Optional deep link for push (e.g. /bookings). Defaults to /dashboard.
+ * @param url - Deep link for push (e.g. /bookings). Must be a concrete route, not left blank.
  */
 export async function createNotifications(
   userIds: string[],
   title: string,
   message: string,
-  url: string = "/dashboard"
+  url: string
 ): Promise<void> {
   if (userIds.length === 0) return
   try {

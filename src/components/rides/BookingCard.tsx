@@ -1,11 +1,16 @@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, IndianRupee } from "lucide-react"
+import { Calendar, Clock, IndianRupee, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
-import { formatDateTimeIST } from "@/lib/date-time"
+import {
+  formatDateTimeIST,
+  formatRelativeTimeIST,
+  formatTimeToDepartureIST,
+} from "@/lib/date-time"
+import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 
 const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   PENDING: "secondary",
@@ -28,9 +33,11 @@ export type BookingCardBooking = {
   seats: number
   totalPrice: number | null
   status: string
+  createdAt: string
   ride: {
     id: string
     departureTime: Date | string
+    status?: string
     driver: { id: string; name: string | null; image: string | null }
     fromLocation: { city: string; state?: string | null }
     toLocation: { city: string; state?: string | null }
@@ -47,6 +54,10 @@ export function BookingCard({
   const total = Number(booking.totalPrice ?? 0)
   const canCancel =
     showCancel && (booking.status === "PENDING" || booking.status === "ACCEPTED")
+  const isInProgress =
+    booking.status === "ACCEPTED" && booking.ride.status === "STARTED"
+  const timeToDeparture = formatTimeToDepartureIST(booking.ride.departureTime)
+  const createdAgo = formatRelativeTimeIST(booking.createdAt)
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border bg-card">
@@ -58,14 +69,22 @@ export function BookingCard({
           >
             {booking.ride.fromLocation.city} → {booking.ride.toLocation.city}
           </Link>
-          <Badge variant={statusVariant[booking.status] ?? "outline"}>
-            {statusLabel[booking.status] ?? booking.status}
+          <Badge variant={isInProgress ? "default" : statusVariant[booking.status] ?? "outline"}>
+            {isInProgress ? "In progress" : statusLabel[booking.status] ?? booking.status}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground flex items-center gap-1">
-          <Calendar className="h-3.5 w-3.5" />
-          {formatDateTimeIST(booking.ride.departureTime)}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <p className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatDateTimeIST(booking.ride.departureTime)}
+          </p>
+          {timeToDeparture && (
+            <span className="flex items-center gap-1 text-xs">
+              <Clock className="h-3 w-3" />
+              {timeToDeparture}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Link
             href={`/profile/${booking.ride.driver.id}`}
@@ -85,15 +104,29 @@ export function BookingCard({
             {booking.seats !== 1 ? "s" : ""})
           </span>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Booked {createdAgo}
+        </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <Link
-          href={`/rides/${booking.ride.id}`}
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-        >
-          View ride
-        </Link>
-        {canCancel && <CancelBookingButton bookingId={booking.id} />}
+      <div className="flex justify-between items-center gap-2">
+          {/* <Link
+            href={`/profile/${booking.ride.driver.id}#contact`}
+            className={cn(buttonVariants({ variant: "ghost", size: "xs" }), "gap-1 text-xs")}
+          >
+            <MessageCircle className="h-3 w-3" />
+            Message driver
+          </Link> */}
+          <ShareRideWhatsAppButton
+            rideId={booking.ride.id}
+            fromCity={booking.ride.fromLocation.city}
+            toCity={booking.ride.toLocation.city}
+            departureTime={new Date(booking.ride.departureTime)}
+            fromSlot={null}
+            seatsAvailable={booking.seats}
+            driverName={booking.ride.driver.name}
+            driverPhone={null}
+            vehicleInfo={null}
+          />
       </div>
     </div>
   )

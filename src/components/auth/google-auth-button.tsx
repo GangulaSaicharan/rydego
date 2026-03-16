@@ -1,5 +1,6 @@
 "use client"
 import type React from "react"
+import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 
@@ -7,12 +8,29 @@ export interface GoogleSignInButtonProps {
   callbackUrl?: string
 }
 
-export function GoogleSignInButton({ callbackUrl = "/" }: GoogleSignInButtonProps): React.ReactElement {
+export function GoogleSignInButton({
+  callbackUrl = "/",
+}: GoogleSignInButtonProps): React.ReactElement {
+  const [loading, setLoading] = useState(false)
+
+  async function handleClick() {
+    if (loading) return
+    setLoading(true)
+    try {
+      await signIn("google", { callbackUrl })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Button
+      type="button"
       variant="outline"
       className="w-full flex items-center justify-center gap-3 h-12 px-4 text-base font-medium rounded-lg bg-white text-gray-700 border border-gray-300 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 dark:bg-white dark:text-gray-800 dark:border-gray-300 dark:hover:bg-gray-100"
-      onClick={() => signIn("google", { callbackUrl })}
+      onClick={handleClick}
+      disabled={loading}
+      aria-busy={loading}
     >
       <svg
         className="w-5 h-5 shrink-0"
@@ -38,7 +56,8 @@ export function GoogleSignInButton({ callbackUrl = "/" }: GoogleSignInButtonProp
           fill="#EA4335"
         />
       </svg>
-      <span>Sign in with Google</span>
+      <span>{loading ? "Signing you in…" : "Sign in with Google"}</span>
     </Button>
   )
 }
+

@@ -1,8 +1,11 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { RideStatus } from "@prisma/client"
 import { RidesFilterView } from "@/components/rides/RidesFilterView"
+import { buttonVariants } from "@/components/ui"
+import { PlusCircle } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "My Rides",
@@ -30,6 +33,7 @@ export default async function RidesPage({
   const session = await auth()
   const userId = session?.user?.id
   if (!userId) return null
+  const isAdmin = session.user.role === "ADMIN"
 
   const params = await searchParams
   const filter: Filter = isValidFilter(params.filter ?? null) ? (params.filter as Filter) : "upcoming"
@@ -88,15 +92,17 @@ export default async function RidesPage({
 
   return (
     <main className="flex-1 space-y-6">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-3xl font-bold tracking-tight">My Rides</h2>
+        {isAdmin && (
+          <Link href="/publish" className={buttonVariants({ size: "sm" })}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Publish a ride
+          </Link>
+        )}
       </div>
 
-      <RidesFilterView
-        currentFilter={filter}
-        rides={serialized}
-        userId={userId}
-      />
+      <RidesFilterView currentFilter={filter} rides={serialized} userId={userId} />
     </main>
   )
 }

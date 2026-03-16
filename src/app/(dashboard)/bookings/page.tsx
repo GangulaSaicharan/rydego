@@ -88,9 +88,11 @@ export default async function BookingsPage({
     seats: b.seats,
     totalPrice: b.totalPrice == null ? null : Number(b.totalPrice),
     status: b.status,
+    createdAt: b.createdAt.toISOString(),
     ride: {
       id: b.ride.id,
       departureTime: b.ride.departureTime.toISOString(),
+      status: b.ride.status,
       driver: b.ride.driver,
       fromLocation: b.ride.fromLocation,
       toLocation: b.ride.toLocation,

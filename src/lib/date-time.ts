@@ -246,3 +246,37 @@ export function formatShareTimeIST(
   if (fromSlot?.trim()) return fromSlot.trim()
   return formatTimeIST(departureTime)
 }
+
+/**
+ * Human-friendly time-to-departure string in IST for rides.
+ * e.g. "Starts in 2h 15m", "Started 5m ago".
+ */
+export function formatTimeToDepartureIST(
+  date: Date | string | number
+): string {
+  const target =
+    typeof date === "object" && "getTime" in date ? date : new Date(date)
+  const now = new Date()
+  const diffMs = target.getTime() - now.getTime()
+  const absMinutes = Math.round(Math.abs(diffMs) / 60_000)
+
+  if (absMinutes < 1) return "Starting now"
+
+  const minutesInDay = 60 * 24
+  const days = Math.floor(absMinutes / minutesInDay)
+  const hours = Math.floor((absMinutes % minutesInDay) / 60)
+  const minutes = absMinutes % 60
+
+  const parts: string[] = []
+  if (days) parts.push(`${days}d`)
+  if (hours) parts.push(`${hours}h`)
+  if (!days && minutes) parts.push(`${minutes}m`)
+
+  const base = parts.join(" ")
+
+  if (diffMs > 0) {
+    return base ? `Starts in ${base}` : "Starts soon"
+  }
+
+  return base ? `Started ${base} ago` : "Started recently"
+}
