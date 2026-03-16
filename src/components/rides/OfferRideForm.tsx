@@ -14,6 +14,25 @@ import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
+function nowISTDateTimeLocalString(): string {
+  // `datetime-local` expects "YYYY-MM-DDTHH:mm" without timezone.
+  // We show/validate this form in IST, regardless of the viewer's system timezone.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date())
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? ""
+
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`
+}
+
 export function OfferRideForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -21,6 +40,7 @@ export function OfferRideForm() {
   const [requiresProfile, setRequiresProfile] = useState(false)
   const [cities, setCities] = useState<{ city: string }[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
+  const [minDateTime, setMinDateTime] = useState<string>("")
 
   useEffect(() => {
     async function fetchCities() {
@@ -31,6 +51,14 @@ export function OfferRideForm() {
       setCitiesLoading(false)
     }
     fetchCities()
+  }, [])
+
+  useEffect(() => {
+    // Keep min reasonably fresh for users leaving the form open.
+    const update = () => setMinDateTime(nowISTDateTimeLocalString())
+    update()
+    const id = window.setInterval(update, 30_000)
+    return () => window.clearInterval(id)
   }, [])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -137,11 +165,23 @@ export function OfferRideForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="departureTime">Departure Time</Label>
-              <Input id="departureTime" name="departureTime" type="datetime-local" required />
+              <Input
+                id="departureTime"
+                name="departureTime"
+                type="datetime-local"
+                min={minDateTime || undefined}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="arrivalTime">Arrival Time</Label>
-              <Input id="arrivalTime" name="arrivalTime" type="datetime-local" required />
+              <Input
+                id="arrivalTime"
+                name="arrivalTime"
+                type="datetime-local"
+                min={minDateTime || undefined}
+                required
+              />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

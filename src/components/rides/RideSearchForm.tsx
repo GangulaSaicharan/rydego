@@ -13,9 +13,8 @@ import {
   ArrowRight,
   ArrowLeft,
 } from "lucide-react"
-import { searchRidesAction } from "@/lib/actions/ride"
+import { getCitiesAction, searchRidesAction } from "@/lib/actions/ride"
 import { RideCard } from "./RideCard"
-import { CITIES } from "@/lib/constants/locations"
 import {
   Select,
   SelectContent,
@@ -72,6 +71,8 @@ export function RideSearchForm() {
   const searchParamsFromUrl = useSearchParams()
   const [defaults, setDefaults] = useState<SearchParams>(INITIAL_DEFAULTS)
   const [minDate, setMinDate] = useState("")
+  const [cities, setCities] = useState<{ city: string }[]>([])
+  const [citiesLoading, setCitiesLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -110,6 +111,20 @@ export function RideSearchForm() {
       ...stored,
       date: getTodayDate(),
     }))
+  }, [])
+
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const result = await getCitiesAction()
+        if (result.success && result.cities) {
+          setCities(result.cities)
+        }
+      } finally {
+        setCitiesLoading(false)
+      }
+    }
+    fetchCities()
   }, [])
 
   // Restore search from URL when user returns from ride details
@@ -233,11 +248,17 @@ export function RideSearchForm() {
                       <SelectValue placeholder="City or area" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CITIES.filter((city) => city.status).map((city) => (
-                        <SelectItem key={city.name} value={city.name}>
-                          {city.name}
+                      {citiesLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading cities...
                         </SelectItem>
-                      ))}
+                      ) : (
+                        cities.map((city) => (
+                          <SelectItem key={city.city} value={city.city}>
+                            {city.city}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -261,11 +282,17 @@ export function RideSearchForm() {
                       <SelectValue placeholder="City or area" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CITIES.filter((city) => city.status).map((city) => (
-                        <SelectItem key={city.name} value={city.name}>
-                          {city.name}
+                      {citiesLoading ? (
+                        <SelectItem value="loading" disabled>
+                          Loading cities...
                         </SelectItem>
-                      ))}
+                      ) : (
+                        cities.map((city) => (
+                          <SelectItem key={city.city} value={city.city}>
+                            {city.city}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

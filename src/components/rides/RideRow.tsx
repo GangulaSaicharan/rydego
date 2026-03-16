@@ -71,9 +71,6 @@ export function RideRow({
           <Badge variant={statusVariant} className="text-[9px] uppercase tracking-tighter">
             {statusLabel}
           </Badge>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded uppercase tracking-tighter">
-            {isDriver ? "Driving" : "Booked"}
-          </span>
         </div>
       </div>
     </Link>

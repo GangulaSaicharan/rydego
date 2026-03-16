@@ -38,6 +38,16 @@ export default async function ProfilePage() {
   const initials = user.name?.[0] ?? user.email?.[0] ?? "U"
   const hasStats = (user.ratingCount && user.ratingCount > 0) || (user.driverProfile && user.driverProfile.totalRides > 0)
 
+  const formattedPhone = (() => {
+    if (!user.phone) return null
+    if (user.phone.startsWith("+91")) {
+      const digits = user.phone.replace(/^\+91/, "")
+      return `+91 ${digits}`
+    }
+    return user.phone
+  })()
+  const telHref = user.phone ? `tel:${user.phone}` : undefined
+
   return (
     <main className="flex-1 space-y-6 max-w-2xl mx-auto">
       {/* Profile hero */}
@@ -125,9 +135,9 @@ export default async function ProfilePage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-muted-foreground">Phone</p>
-              {user.phone ? (
-                <a href={`tel:${user.phone}`} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
-                  {user.phone}
+              {formattedPhone ? (
+                <a href={telHref} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
+                  {formattedPhone}
                 </a>
               ) : (
                 <p className="text-sm text-foreground">Not set</p>

@@ -32,16 +32,9 @@ export function AddMobileModal({ hasPhone }: { hasPhone: boolean }) {
   }, [hasPhone])
 
   function isPhoneValid(value: string) {
-    const input = value.replace(/\s+/g, "")
-    // Accept common Indian formats:
-    //  - 10 digit mobile (e.g. 9876543210)
-    //  - 0 followed by 10 digits (e.g. 09876543210)
-    //  - +91 followed by 10 digits (e.g. +919876543210)
-    if (!/^\+?[0-9]+$/.test(input)) return false
-    if (/^[6-9][0-9]{9}$/.test(input)) return true
-    if (/^0[6-9][0-9]{9}$/.test(input)) return true
-    if (/^\+91[6-9][0-9]{9}$/.test(input)) return true
-    return false
+    const digits = value.replace(/\D/g, "")
+    // Require exactly 10 digits starting with 6–9
+    return /^[6-9][0-9]{9}$/.test(digits)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -54,9 +47,10 @@ export function AddMobileModal({ hasPhone }: { hasPhone: boolean }) {
       toast.error("Please enter a valid mobile number.")
       return
     }
+    const digits = phone.replace(/\D/g, "").slice(0, 10)
     setLoading(true)
     try {
-      const result = await updatePhone(phone.trim())
+      const result = await updatePhone(digits)
       if (result.success) {
         toast.success("Mobile number added")
         setOpen(false)
@@ -88,17 +82,21 @@ export function AddMobileModal({ hasPhone }: { hasPhone: boolean }) {
             <Input
               id="add-mobile-phone"
               type="tel"
-              placeholder="e.g. +91 98765 43210"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="10-digit mobile number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10)
+                setPhone(digitsOnly)
+              }}
               className="h-10"
               autoComplete="tel"
               disabled={loading}
             />
             <p className="text-xs text-muted-foreground">
-              Use a 10-digit mobile number starting with 6–9. You can include{" "}
-              <span className="font-medium">+91</span> or a leading 0.
-            </p>
+              Enter your 10-digit mobile number starting with 6–9. 
+              </p>
           </div>
           <AlertDialogFooter>
             {/* <AlertDialogCancel type="button" disabled={loading}>

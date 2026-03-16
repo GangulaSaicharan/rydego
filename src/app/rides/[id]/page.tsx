@@ -189,7 +189,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           fromSlot={ride.fromSlot}
           seatsAvailable={ride.seatsAvailable}
           driverName={ride.driver.name}
-          driverPhone={ride.driver.phone}
+          driverPhone={ride.driver.phone ?? null}
           vehicleInfo={
             ride.vehicle
               ? `${ride.vehicle.brand} ${ride.vehicle.model}`.trim()

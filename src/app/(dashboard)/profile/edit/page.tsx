@@ -3,11 +3,11 @@ import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+
 import { EditProfileForm } from "./edit-profile-form"
-import { buttonVariants } from "@/components/ui/button-variants"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent,  buttonVariants} from "@/components/ui"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, UserCircle } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Edit Profile",

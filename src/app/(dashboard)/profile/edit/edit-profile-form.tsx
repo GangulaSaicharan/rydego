@@ -26,6 +26,9 @@ export function EditProfileForm({ defaultBio, defaultPhone, name, email }: EditP
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [bioLength, setBioLength] = useState(defaultBio.length)
+  const [phone, setPhone] = useState(
+    defaultPhone ? defaultPhone.replace(/^\+?91/, "").replace(/\D/g, "").slice(-10) : "",
+  )
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -33,6 +36,8 @@ export function EditProfileForm({ defaultBio, defaultPhone, name, email }: EditP
     setError(null)
 
     const formData = new FormData(event.currentTarget)
+    // Always submit only the 10-digit local phone number (no +91)
+    formData.set("phone", phone)
     const result = await updateProfile(formData)
 
     if (result.success) {
@@ -95,8 +100,15 @@ export function EditProfileForm({ defaultBio, defaultPhone, name, email }: EditP
             id="phone"
             name="phone"
             type="tel"
-            placeholder="e.g. +1 234 567 8900"
-            defaultValue={defaultPhone}
+            inputMode="numeric"
+            pattern="\d{10}"
+            maxLength={10}
+            placeholder="10-digit mobile number"
+            value={phone}
+            onChange={(e) => {
+              const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10)
+              setPhone(digitsOnly)
+            }}
             className="h-10"
             autoComplete="tel"
           />

@@ -56,6 +56,16 @@ export default async function DriverProfilePage({ params }: Props) {
     (user.ratingCount && user.ratingCount > 0) ||
     (user.driverProfile && user.driverProfile.totalRides > 0)
 
+  const formattedPhone = (() => {
+    if (!user.phone) return null
+    if (user.phone.startsWith("+91")) {
+      const digits = user.phone.replace(/^\+91/, "")
+      return `+91 ${digits}`
+    }
+    return user.phone
+  })()
+  const telHref = user.phone ? `tel:${user.phone}` : undefined
+
   return (
     <main className="flex-1 space-y-6 max-w-2xl mx-auto">
       <Link
@@ -140,15 +150,15 @@ export default async function DriverProfilePage({ params }: Props) {
           <CardTitle className="text-base">Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-0">
-          {user.phone && (
+          {formattedPhone && (
             <div className="flex items-center gap-3 py-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Phone className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-muted-foreground">Mobile</p>
-                <a href={`tel:${user.phone}`} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
-                  {user.phone}
+                <a href={telHref} className="text-sm text-foreground underline underline-offset-2 hover:text-primary">
+                  {formattedPhone}
                 </a>
               </div>
             </div>

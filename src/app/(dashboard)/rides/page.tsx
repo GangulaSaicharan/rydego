@@ -40,10 +40,7 @@ export default async function RidesPage({
   const now = new Date()
 
   const baseWhere = {
-    OR: [
-      { driverId: userId },
-      { bookings: { some: { passengerId: userId, status: "ACCEPTED" as const } } },
-    ],
+    driverId: userId,
   }
 
   const where =
@@ -55,7 +52,15 @@ export default async function RidesPage({
         }
       : filter === "inProgress"
         ? { ...baseWhere, status: RideStatus.STARTED }
-        : { ...baseWhere, status: RideStatus.COMPLETED }
+        : {
+            ...baseWhere,
+            OR: [
+              { status: RideStatus.COMPLETED },
+              // Older data can contain past rides still marked SCHEDULED.
+              { status: RideStatus.SCHEDULED, departureTime: { lte: now } },
+              { status: RideStatus.CANCELLED },
+            ],
+          }
 
   type RideWithInclude = Awaited<
     ReturnType<typeof prisma.ride.findMany<{ include: typeof rideInclude }>>

@@ -39,12 +39,23 @@ export async function updateProfile(formData: FormData): Promise<{ success: true
   }
 
   const bio = (formData.get("bio") as string)?.trim() ?? null
-  const phoneRaw = (formData.get("phone") as string) ?? ""
-  const phone = phoneRaw ? phoneSchema.parse(phoneRaw) : null
+  const phoneRaw = ((formData.get("phone") as string) ?? "").trim()
+
+  // Frontend sends only 10 digits; normalize to +91XXXXXXXXXX in DB
+  let phone: string | null = null
+  if (phoneRaw) {
+    const digits = phoneRaw.replace(/\D/g, "")
+    if (digits.length === 10) {
+      phone = `+91${digits}`
+    } else {
+      // Fallback to generic normalization (keeps existing behaviour if something unexpected comes through)
+      phone = phoneSchema.parse(phoneRaw)
+    }
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { bio: bio || null, phone: phone || null },
+    data: { bio: bio || null, phone },
   })
 
   revalidatePath("/profile")
@@ -58,7 +69,9 @@ export async function updatePhone(phone: string): Promise<{ success: true } | { 
     return { success: false, error: "Not authenticated" }
   }
 
-  const normalized = phoneSchema.parse(phone)
+  const raw = phone.trim()
+  const digits = raw.replace(/\D/g, "")
+  const normalized = digits.length === 10 ? `+91${digits}` : phoneSchema.parse(phone)
 
   await prisma.user.update({
     where: { id: session.user.id },

@@ -82,6 +82,13 @@ export async function createRideAction(formData: FormData) {
   if (!arrivalTime) {
     return { success: false, error: "Invalid arrival time" }
   }
+  if (departureTime.getTime() <= Date.now()) {
+    return { success: false, error: "Departure time cannot be in the past" }
+  }
+
+  if (arrivalTime.getTime() <= departureTime.getTime()) {
+    return { success: false, error: "Arrival time cannot be before departure time" }
+  }
 
   const pricePerSeat = Number(pricePerSeatStr)
   const seatsTotal = Number(seatsTotalStr)
@@ -280,6 +287,9 @@ export async function updateRideAction(rideId: string, formData: FormData) {
   }
   if (!arrivalTime) {
     return { success: false, error: "Invalid arrival time" }
+  }
+  if (departureTime.getTime() <= Date.now()) {
+    return { success: false, error: "Departure time cannot be in the past" }
   }
 
   const pricePerSeat = Number(pricePerSeatStr)
