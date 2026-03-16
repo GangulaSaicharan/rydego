@@ -1,9 +1,11 @@
 import Link from "next/link"
 import Image from "next/image"
 import dynamic from "next/dynamic"
+import { Settings } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { AddMobileModal } from "@/components/add-mobile-modal"
+import { InstallPwaLoginPrompt } from "@/components/InstallPwaLoginPrompt"
 import { Separator } from "@/components/ui/separator"
 import { LOGO_URL } from "@/lib/constants/brand"
 import {
@@ -82,12 +84,20 @@ export default async function DashboardLayout({
           </Link>
           <div className="ml-auto flex items-center gap-1">
             <HeaderNotifications />
+            <Link
+              href="/settings"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors md:h-10 md:w-10"
+              aria-label="Settings"
+            >
+              <Settings className="h-4 w-4 md:h-5 md:w-5" />
+            </Link>
             <HeaderUserMenu user={session.user} />
           </div>
         </header>
         <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pb-20 pt-3 md:p-6 md:pb-6 md:pt-4">
           <PushRegistration />
           <AddMobileModal hasPhone={hasPhone} />
+          <InstallPwaLoginPrompt />
           {children}
         </main>
       </SidebarInset>

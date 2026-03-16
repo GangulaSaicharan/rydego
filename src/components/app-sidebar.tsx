@@ -43,6 +43,7 @@ const navMainAll = [
   { title: "My Rides", url: "/rides", icon: Clock, adminOnly: true },
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },
   { title: "Messages", url: "/messages", icon: MessageSquare },
+  { title: "Settings", url: "/settings", icon: Settings },
 ]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -140,15 +141,6 @@ export function AppSidebar({ user, isAdmin = false, ...props }: AppSidebarProps)
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
                     Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link
-                      href="/settings"
-                      className="flex w-full items-center gap-1.5 outline-none"
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>

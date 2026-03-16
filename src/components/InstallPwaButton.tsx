@@ -12,9 +12,25 @@ type BeforeInstallPromptEvent = Event & {
 export function InstallPwaButton({ className }: { className?: string }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [supported, setSupported] = useState(false)
+  const [installed, setInstalled] = useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
+
+    function checkInstalled() {
+      const isStandalone =
+        window.matchMedia?.("(display-mode: standalone)").matches ||
+        // iOS Safari
+        // @ts-expect-error - non-standard property
+        Boolean(window.navigator.standalone)
+      setInstalled(isStandalone)
+    }
+
+    checkInstalled()
+
+    function handleAppInstalled() {
+      setInstalled(true)
+    }
 
     function handleBeforeInstallPrompt(e: Event) {
       e.preventDefault()
@@ -23,9 +39,11 @@ export function InstallPwaButton({ className }: { className?: string }) {
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+    window.addEventListener("appinstalled", handleAppInstalled)
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      window.removeEventListener("appinstalled", handleAppInstalled)
     }
   }, [])
 
@@ -40,6 +58,14 @@ export function InstallPwaButton({ className }: { className?: string }) {
     setDeferredPrompt(null)
     setSupported(false)
   }, [deferredPrompt])
+
+  if (installed) {
+    return (
+      <p className={`text-xs text-muted-foreground ${className ?? ""}`}>
+        App is already installed on this device.
+      </p>
+    )
+  }
 
   if (!supported || !deferredPrompt) {
     return null

@@ -12,7 +12,7 @@ export default function SettingsPage() {
       <div className="space-y-1">
         <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
         <p className="text-sm text-muted-foreground">
-          Manage how you use RydeGo on this device.
+          Manage how you use the app on this device.
         </p>
       </div>
 
@@ -20,13 +20,10 @@ export default function SettingsPage() {
         <div>
           <h3 className="text-base font-semibold">Install app</h3>
           <p className="text-sm text-muted-foreground">
-            Add RydeGo to your home screen for a faster, app-like experience.
+            Add RydeGo to your home screen for faster access.
           </p>
         </div>
         <InstallPwaButton className="w-full sm:w-auto" />
-        <p className="text-xs text-muted-foreground">
-          This option appears when your browser supports installing the app and it is not already installed.
-        </p>
       </section>
     </main>
   )
