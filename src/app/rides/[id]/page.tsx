@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import Image from "next/image"
+import Link from "next/link"
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import {
@@ -19,8 +21,8 @@ import {
   IndianRupee,
   FileText,
   ArrowLeft,
+  Settings as SettingsIcon,
 } from "lucide-react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { notFound } from "next/navigation"
 import { RideStatus } from "@prisma/client"
@@ -29,6 +31,12 @@ import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
+import { LOGO_URL } from "@/lib/constants/brand"
+import { HeaderUserMenu } from "@/components/header-user-menu"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { AppBottomNav } from "@/components/app-bottom-nav"
 
 export const dynamic = "force-dynamic"
 
@@ -64,6 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function RideDetailPage({ params, searchParams }: Props) {
   const session = await auth()
   const userId = session?.user?.id
+  const isAdmin = session?.user?.role === "ADMIN"
 
   const { id } = await params
   const sp = await searchParams
@@ -137,7 +146,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   totalPrice: number | null
   passenger: { id: string; name: string | null; image: string | null; email: string | null }
 }
-const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => {
+  const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => {
     const withPassenger = b as typeof b & { passenger: { id: string; name: string | null; image: string | null; email: string | null } }
     return {
       id: withPassenger.id,
@@ -150,11 +159,24 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
     }
   })
 
-  return (
-    <main className="min-h-screen flex-1 space-y-6 p-4 md:p-8 pt-6">
+  const isLoggedIn = !!session?.user
+  const sidebarUser =
+    session?.user ?? {
+      name: "Guest",
+      email: "Sign in to save trips",
+      image: null,
+    }
+
+  const content = (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" nativeButton={false} render={<Link href={backToSearch} />}>
+          <Button
+            variant="ghost"
+            size="icon"
+            nativeButton={false}
+            render={<Link href={backToSearch} />}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h2 className="text-2xl font-bold tracking-tight">Ride details</h2>
@@ -187,17 +209,25 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">From</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                From
+              </p>
               <p className="font-semibold text-lg">{ride.fromLocation.city}</p>
               {ride.fromLocation.state && (
-                <p className="text-sm text-muted-foreground">{ride.fromLocation.state}, {ride.fromLocation.country}</p>
+                <p className="text-sm text-muted-foreground">
+                  {ride.fromLocation.state}, {ride.fromLocation.country}
+                </p>
               )}
             </div>
             <div className="border-l-2 border-primary/30 pl-4 ml-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">To</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                To
+              </p>
               <p className="font-semibold text-lg">{ride.toLocation.city}</p>
               {ride.toLocation.state && (
-                <p className="text-sm text-muted-foreground">{ride.toLocation.state}, {ride.toLocation.country}</p>
+                <p className="text-sm text-muted-foreground">
+                  {ride.toLocation.state}, {ride.toLocation.country}
+                </p>
               )}
             </div>
           </CardContent>
@@ -238,7 +268,12 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
             <CardDescription>Price and availability</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-2xl font-bold text-primary">₹{ride.pricePerSeat.toString()} <span className="text-sm font-normal text-muted-foreground">per seat</span></p>
+            <p className="text-2xl font-bold text-primary">
+              ₹{ride.pricePerSeat.toString()}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                per seat
+              </span>
+            </p>
             <p className="text-sm text-muted-foreground">
               <Users className="h-4 w-4 inline mr-1" />
               {ride.seatsAvailable} of {ride.seatsTotal} seats available
@@ -260,30 +295,26 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
               className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-muted/50 transition-colors"
             >
               <Avatar className="h-12 w-12">
-                <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? "Driver"} />
-                <AvatarFallback>{ride.driver.name?.[0] ?? "D"}</AvatarFallback>
+                <AvatarImage
+                  src={ride.driver.image ?? ""}
+                  alt={ride.driver.name ?? "Driver"}
+                />
+                <AvatarFallback>
+                  {ride.driver.name?.[0] ?? "D"}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold">{ride.driver.name ?? "Driver"}</p>
+                <p className="font-semibold">
+                  {ride.driver.name ?? "Driver"}
+                </p>
                 {ride.driver.email && (
-                  <p className="text-sm text-muted-foreground">{ride.driver.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {ride.driver.email}
+                  </p>
                 )}
                 <p className="text-xs text-primary mt-1">View profile →</p>
               </div>
             </Link>
-            {/* <div className="flex flex-wrap gap-2">
-              {ride.driver.phone && (
-                <Button variant="outline" size="sm">
-                  <a
-                    href={`https://wa.me/${ride.driver.phone.replace(/\\D/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Message driver
-                  </a>
-                </Button>
-              )}
-            </div> */}
           </CardContent>
         </Card>
       </div>
@@ -304,7 +335,12 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={ride.status === "CANCELLED" ? "destructive" : "secondary"} className="text-sm">
+        <Badge
+          variant={
+            ride.status === "CANCELLED" ? "destructive" : "secondary"
+          }
+          className="text-sm"
+        >
           {statusLabel[ride.status]}
         </Badge>
         {userId && (
@@ -312,7 +348,8 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
             {isDriver && "You are the driver"}
             {hasAcceptedBooking && !isDriver && "You're booked on this ride"}
             {hasPendingBooking && !isDriver && "Your request is pending"}
-            {userBooking?.status === "REJECTED" && "Your request was declined"}
+            {userBooking?.status === "REJECTED" &&
+              "Your request was declined"}
             {userBooking?.status === "CANCELLED" && "Booking cancelled"}
           </span>
         )}
@@ -328,7 +365,13 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
               className="w-full"
               size="lg"
               nativeButton={false}
-              render={<Link href={`/login?${new URLSearchParams({ callbackUrl: `/rides/${ride.id}` }).toString()}`} />}
+              render={
+                <Link
+                  href={`/login?${new URLSearchParams({
+                    callbackUrl: `/rides/${ride.id}`,
+                  }).toString()}`}
+                />
+              }
             >
               Book now
             </Button>
@@ -339,7 +382,9 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
       {canBook && (
         <Card>
           <CardHeader>
-            <CardTitle>{showRebook ? "Rebook this ride" : "Book this ride"}</CardTitle>
+            <CardTitle>
+              {showRebook ? "Rebook this ride" : "Book this ride"}
+            </CardTitle>
             <CardDescription>
               {showRebook
                 ? "Your previous booking was cancelled or declined. You can book again below."
@@ -364,18 +409,83 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
         <Card>
           <CardHeader>
             <CardTitle>Booking requests</CardTitle>
-            <CardDescription>Accept or reject passenger requests</CardDescription>
+            <CardDescription>
+              Accept or reject passenger requests
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DriverBookingList rideId={ride.id} bookings={driverBookingsSerialized} />
-            {ride.status === "SCHEDULED" && new Date(ride.departureTime) > new Date() && (
-              <div className="pt-2 border-t">
-                <CancelRideButton rideId={ride.id} />
-              </div>
-            )}
+            <DriverBookingList
+              rideId={ride.id}
+              bookings={driverBookingsSerialized}
+            />
+            {ride.status === "SCHEDULED" &&
+              new Date(ride.departureTime) > new Date() && (
+                <div className="pt-2 border-t">
+                  <CancelRideButton rideId={ride.id} />
+                </div>
+              )}
           </CardContent>
         </Card>
       )}
-    </main>
+    </>
+  )
+
+  return (
+    <SidebarProvider>
+      <AppSidebar user={sidebarUser} isAdmin={isAdmin} />
+      <SidebarInset>
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80 md:h-16 md:gap-4 md:px-6">
+          <span className="hidden md:inline-flex">
+            <SidebarTrigger className="-ml-1 size-9 rounded-md hover:bg-accent hover:text-accent-foreground" />
+          </span>
+          <Separator
+            orientation="vertical"
+            className="mr-1 hidden h-5 shrink-0 opacity-60 md:mr-2 md:block"
+          />
+          <Link
+            href="/search"
+            className="flex items-center gap-2 rounded-md outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <Image
+              src={LOGO_URL}
+              alt="RydeGo"
+              width={32}
+              height={32}
+              className="size-8 object-contain md:size-9"
+            />
+            <span className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
+              RydeGo
+            </span>
+          </Link>
+          <div className="ml-auto flex items-center gap-1">
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/settings"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors md:h-10 md:w-10"
+                  aria-label="Settings"
+                >
+                  <SettingsIcon className="h-4 w-4 md:h-5 md:w-5" />
+                </Link>
+                <HeaderUserMenu user={session.user} />
+              </>
+            ) : (
+              <Link
+                href={`/login?${new URLSearchParams({
+                  callbackUrl: `/rides/${ride.id}`,
+                }).toString()}`}
+                className="px-3 py-1.5 text-sm font-medium rounded-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                Log in
+              </Link>
+            )}
+          </div>
+        </header>
+        <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pb-20 pt-3 md:p-6 md:pb-6 md:pt-4">
+          {content}
+        </main>
+      </SidebarInset>
+      <AppBottomNav isAdmin={isAdmin} />
+    </SidebarProvider>
   )
 }
