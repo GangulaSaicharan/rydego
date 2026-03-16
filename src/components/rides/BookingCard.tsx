@@ -5,6 +5,7 @@ import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
+import { formatDateTimeIST } from "@/lib/date-time"
 
 const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   PENDING: "secondary",
@@ -63,15 +64,7 @@ export function BookingCard({
         </div>
         <p className="text-sm text-muted-foreground flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
-          {new Date(booking.ride.departureTime).toLocaleDateString("en-IN", {
-            timeZone: "Asia/Kolkata",
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatDateTimeIST(booking.ride.departureTime)}
         </p>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <Link

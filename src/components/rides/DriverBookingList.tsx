@@ -5,6 +5,16 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Check, X, Loader2 } from "lucide-react"
 import { updateBookingStatusAction } from "@/lib/actions/booking"
 import { toast } from "sonner"
@@ -41,6 +51,10 @@ const statusVariant: Record<string, "default" | "secondary" | "outline" | "destr
 export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) {
   const router = useRouter()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    bookingId: string
+    passengerName: string
+  } | null>(null)
 
   const pending = bookings.filter((b) => b.status === "PENDING")
   const others = bookings.filter((b) => b.status !== "PENDING")
@@ -52,7 +66,10 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
       if (result.success) {
         if (status === "ACCEPTED") toast.success("Request accepted")
         else if (status === "REJECTED") toast.success("Request rejected")
-        else toast.success("Passenger removed from ride")
+        else {
+          toast.success("Passenger removed from ride")
+          setRemoveConfirm(null)
+        }
         router.refresh()
       } else {
         toast.error(result.error ?? "Failed to update")
@@ -60,6 +77,11 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
     } finally {
       setUpdatingId(null)
     }
+  }
+
+  async function handleConfirmRemove() {
+    if (!removeConfirm) return
+    await handleStatus(removeConfirm.bookingId, "CANCELLED")
   }
 
   if (bookings.length === 0) {
@@ -153,7 +175,12 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
                     size="sm"
                     variant="ghost"
                     className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                    onClick={() => handleStatus(b.id, "CANCELLED")}
+                    onClick={() =>
+                      setRemoveConfirm({
+                        bookingId: b.id,
+                        passengerName: b.passenger.name ?? "this passenger",
+                      })
+                    }
                     disabled={updatingId !== null}
                   >
                     {updatingId === b.id ? (
@@ -168,6 +195,33 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
           </ul>
         </div>
       )}
+
+      <AlertDialog open={!!removeConfirm} onOpenChange={(open) => !open && setRemoveConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove passenger from ride?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeConfirm
+                ? `${removeConfirm.passengerName} will be removed from this ride. They will be notified and their booking will be cancelled. This cannot be undone.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleConfirmRemove}
+              disabled={updatingId !== null}
+            >
+              {removeConfirm && updatingId === removeConfirm.bookingId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Yes, remove passenger"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

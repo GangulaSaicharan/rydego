@@ -2,23 +2,17 @@ import * as admin from "firebase-admin"
 
 let app: admin.app.App | null = null
 
-function getServiceAccountJson(): string | null {
-  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-  return json?.trim() ? json.trim() : null
-}
-
 function getFirebaseApp(): admin.app.App | null {
   if (app) return app
 
-  // Reuse existing default app (e.g. already initialized by another route or serverless invocation)
   const existing = admin.apps?.find(Boolean)
   if (existing) {
     app = existing
     return app
   }
 
-  const json = getServiceAccountJson()
-  if (!json) {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+  if (!raw || typeof raw !== "string" || !raw.trim()) {
     console.warn(
       "[firebase-admin] FIREBASE_SERVICE_ACCOUNT_JSON not set or empty; push notifications disabled. Set it in Vercel env for production.",
     )
@@ -26,7 +20,7 @@ function getFirebaseApp(): admin.app.App | null {
   }
 
   try {
-    const serviceAccount = JSON.parse(json) as admin.ServiceAccount
+    const serviceAccount = JSON.parse(raw) as admin.ServiceAccount
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     })

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronRight, MapPin, User, Users } from "lucide-react"
 import Link from "next/link"
 import { RideRowAction } from "@/components/rides/RideRowAction"
+import { formatDateTimeIST, formatTimeIST } from "@/lib/date-time"
 
 export type RideRowRide = {
   id: string
@@ -46,16 +47,9 @@ export function RideRow({
             <span className="truncate">{ride.toLocation.city}</span>
           </div>
           <p className="text-[10px] md:text-xs text-muted-foreground font-medium mt-0.5">
-            {new Date(ride.departureTime).toLocaleDateString("en-IN", {
-              timeZone: "Asia/Kolkata",
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatDateTimeIST(ride.departureTime)}
             {ride.arrivalTime && (
-              <span className="ml-1">→ Arrives {new Date(ride.arrivalTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}</span>
+              <span className="ml-1">→ Arrives {formatTimeIST(ride.arrivalTime)}</span>
             )}
           </p>
           <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">

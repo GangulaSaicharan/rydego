@@ -3,10 +3,9 @@
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Users, ChevronRight, Timer } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { format } from "date-fns"
+import { Timer } from "lucide-react"
 import { differenceInMinutes } from "date-fns"
+import { formatDateTimeShortIST, formatTimeIST } from "@/lib/date-time"
 
 function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes}m`
@@ -73,7 +72,7 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
                         {ride.fromLocation.city}
                       </p>
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {format(departureDate, "EEE, d MMM · h:mm a")}
+                        {formatDateTimeShortIST(departureDate)}
                       </span>
                     </div>
                     {ride.fromLocation.state && (
@@ -89,7 +88,7 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
                       </p>
                       {arrivalDate && (
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {format(arrivalDate, "h:mm a")}
+                          {formatTimeIST(arrivalDate)}
                         </span>
                       )}
                     </div>
@@ -103,27 +102,18 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
               </div>
             </div>
 
-            {/* Price, seats & CTA */}
-            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-1 sm:gap-3 p-3 sm:p-4 border-t sm:border-t-0 sm:border-l bg-muted/30">
-              <div className="flex items-center gap-4 sm:flex-col sm:gap-2 sm:items-end">
-                <div className="flex justify-between">
-                  <p className="text-xl font-bold text-primary">₹{price}</p>
-                  <p className="text-xs text-muted-foreground ml-1">per seat</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>{ride.seatsAvailable} seat{ride.seatsAvailable !== 1 ? "s" : ""} left</span>
-                </div>
+            {/* Driver name (truncated) + cost adjacent */}
+            <div className="flex justify-between items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto p-3 sm:px-5 sm:py-4 border-t sm:border-t-0 sm:border-l border-border/50 bg-muted/30 sm:bg-muted/40">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
+                  <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? ""} />
+                  <AvatarFallback className="text-[10px] sm:text-xs">{ride.driver.name?.[0] ?? "D"}</AvatarFallback>
+                </Avatar>
+                <span className="truncate min-w-0 text-sm font-medium text-foreground" title={ride.driver.name ?? undefined}>
+                  {ride.driver.name ?? "Driver"}
+                </span>
               </div>
-              <span
-                className={cn(
-                  "inline-flex items-center justify-center gap-1 rounded-md text-sm font-medium h-9 px-4 shrink-0",
-                  "bg-primary text-primary-foreground shadow hover:bg-primary/90"
-                )}
-              >
-                Details
-                <ChevronRight className="h-4 w-4" />
-              </span>
+              <span className="shrink-0 text-base sm:text-lg font-bold text-primary">₹{price}</span>
             </div>
           </div>
         </CardContent>

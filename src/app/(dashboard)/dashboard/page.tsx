@@ -24,6 +24,7 @@ import { buttonVariants } from "@/components/ui/button-variants"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { formatDateShortIST, formatTimeIST } from "@/lib/date-time"
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -184,9 +185,9 @@ export default async function DashboardPage() {
                         <span className="truncate">{ride.toLocation.city}</span>
                       </div>
                       <p className="text-[10px] md:text-xs text-muted-foreground font-medium">
-                        {new Date(ride.departureTime).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {formatDateShortIST(ride.departureTime)} {formatTimeIST(ride.departureTime)}
                         {ride.arrivalTime && (
-                          <span className="ml-1">→ Arrives {new Date(ride.arrivalTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}</span>
+                          <span className="ml-1">→ Arrives {formatTimeIST(ride.arrivalTime)}</span>
                         )}
                       </p>
                     </div>
@@ -275,8 +276,8 @@ export default async function DashboardPage() {
                           {ride.toLocation.city}
                         </p>
                         <p className="text-[10px] font-medium text-muted-foreground">
-                          {new Date(ride.departureTime).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", month: "short", day: "numeric" })}
-                          {ride.arrivalTime && ` → ${new Date(ride.arrivalTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}`}
+                          {formatDateShortIST(ride.departureTime)}
+                          {ride.arrivalTime && ` → ${formatTimeIST(ride.arrivalTime)}`}
                           {" • "}{ride.driverId === userId ? "You drove" : `With ${ride.driver.name}`}
                         </p>
                       </div>

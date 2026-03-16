@@ -127,7 +127,9 @@ export async function createRideAction(formData: FormData) {
   }
 }
 
-/** Only driver can delete; ride must be SCHEDULED and before departure. Cancels the ride and all its bookings. */
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000
+
+/** Only driver can delete; ride must be SCHEDULED and more than 2 hours before departure. Cancels the ride and all its bookings. */
 export async function deleteRideAction(rideId: string) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -154,6 +156,7 @@ export async function deleteRideAction(rideId: string) {
     if (ride.driverId !== session.user.id) return { success: false, error: "Only the ride creator can delete this ride" }
     if (ride.status !== "SCHEDULED") return { success: false, error: "Only scheduled rides can be deleted" }
     if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot delete a ride after departure time" }
+    if (new Date(ride.departureTime).getTime() - Date.now() <= TWO_HOURS_MS) return { success: false, error: "Ride cannot be cancelled within 2 hours of departure" }
 
     await prisma.$transaction(async (tx) => {
       await tx.booking.updateMany({
@@ -175,7 +178,8 @@ export async function deleteRideAction(rideId: string) {
       await createNotifications(
         passengerIds,
         "Ride cancelled",
-        `The ride ${route} has been cancelled by the driver.`
+        `The ride ${route} has been cancelled by the driver.`,
+        "/bookings"
       )
     }
 

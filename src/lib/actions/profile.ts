@@ -49,3 +49,24 @@ export async function updateProfile(formData: FormData): Promise<{ success: true
   revalidatePath("/profile/edit")
   return { success: true }
 }
+
+export async function updatePhone(phone: string): Promise<{ success: true } | { success: false; error: string }> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, error: "Not authenticated" }
+  }
+
+  const trimmed = phone?.trim() ?? ""
+  if (!trimmed) {
+    return { success: false, error: "Please enter a mobile number." }
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { phone: trimmed },
+  })
+
+  revalidatePath("/profile")
+  revalidatePath("/profile/edit")
+  return { success: true }
+}

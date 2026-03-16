@@ -24,6 +24,8 @@ interface BookRideFormProps {
   seatsAvailable: number
   pricePerSeat: number
   instantBooking: boolean
+  /** Show "Rebook" instead of "Book" when passenger had a cancelled/declined booking */
+  isRebook?: boolean
 }
 
 export function BookRideForm({
@@ -31,6 +33,7 @@ export function BookRideForm({
   seatsAvailable,
   pricePerSeat,
   instantBooking,
+  isRebook = false,
 }: BookRideFormProps) {
   const router = useRouter()
   const [seats, setSeats] = useState(1)
@@ -123,8 +126,16 @@ export function BookRideForm({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {instantBooking ? "Booking…" : "Sending request…"}
+              {isRebook
+                ? instantBooking
+                  ? "Rebooking…"
+                  : "Sending rebook request…"
+                : instantBooking
+                  ? "Booking…"
+                  : "Sending request…"}
             </>
+          ) : isRebook ? (
+            instantBooking ? "Rebook now" : "Request to rebook"
           ) : instantBooking ? (
             "Book now"
           ) : (

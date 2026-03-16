@@ -2,50 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { getRouteShareParts } from "@/lib/constants/route-share";
+import { formatShareDateIST, formatShareTimeIST } from "@/lib/date-time";
 import { Share2 } from "lucide-react";
-
-function formatShareDate(departureTime: Date): { dateStr: string; relativeStr: string } {
-  const d = new Date(departureTime);
-  const day = d.getDate();
-  const month = d.getMonth() + 1;
-  const year = d.getFullYear();
-  const dateStr = `${day}/${month}/${year}`;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const depDate = new Date(d);
-  depDate.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((depDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-  let relativeStr = "";
-  if (diffDays === 0) relativeStr = "Today";
-  else if (diffDays === 1) relativeStr = "Tomorrow";
-  else if (diffDays === 2) relativeStr = "Day after tomorrow";
-  else if (diffDays > 2 && diffDays <= 7) relativeStr = `In ${diffDays} days`;
-
-  const hour = d.getHours();
-  const timeOfDay =
-    hour >= 4 && hour < 12
-      ? "Morning"
-      : hour >= 12 && hour < 17
-        ? "Afternoon"
-        : hour >= 17 && hour < 21
-          ? "Evening"
-          : "Night";
-  if (relativeStr) relativeStr = `${relativeStr} ${timeOfDay}`;
-
-  return { dateStr, relativeStr: relativeStr.trim() };
-}
-
-function formatShareTime(departureTime: Date, fromSlot: string | null): string {
-  if (fromSlot && fromSlot.trim()) return fromSlot.trim();
-  const d = new Date(departureTime);
-  const hours = d.getHours();
-  const mins = d.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const h = hours % 12 || 12;
-  return mins > 0 ? `${h}:${String(mins).padStart(2, "0")} ${ampm}` : `${h} ${ampm}`;
-}
 
 type Props = {
   rideId: string;
@@ -72,8 +30,8 @@ export function ShareRideWhatsAppButton({
 }: Props) {
   const handleShare = () => {
     const { fromPart, toPart } = getRouteShareParts(fromCity, toCity);
-    const { dateStr, relativeStr } = formatShareDate(departureTime);
-    const timeStr = formatShareTime(departureTime, fromSlot);
+    const { dateStr, relativeStr } = formatShareDateIST(departureTime);
+    const timeStr = formatShareTimeIST(departureTime, fromSlot);
 
     // Public ride details page: view details, contact & book (no login required to view)
     const url =

@@ -28,6 +28,7 @@ import { BookRideForm } from "@/components/rides/BookRideForm"
 import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
+import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
 
 const statusLabel: Record<RideStatus, string> = {
   SCHEDULED: "Upcoming",
@@ -90,6 +91,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
     const [booking, dBookings] = await Promise.all([
       prisma.booking.findFirst({
         where: { rideId: id, passengerId: userId },
+        orderBy: { createdAt: "desc" },
       }),
       isDriver
         ? prisma.booking.findMany({
@@ -105,14 +107,19 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
     driverBookings = dBookings
   }
 
+  const hasActiveBooking = userBooking && userBooking.status !== "CANCELLED" && userBooking.status !== "REJECTED"
   const rideIsBookable =
     ride.status === "SCHEDULED" &&
     ride.seatsAvailable > 0 &&
-    !userBooking
+    !hasActiveBooking
   const canBook =
     !!userId &&
     !isDriver &&
     rideIsBookable
+  const showRebook =
+    canBook &&
+    !!userBooking &&
+    (userBooking.status === "CANCELLED" || userBooking.status === "REJECTED")
   /** Show "Book now" → sign in for any guest who is not the driver */
   const showBookPromptForGuest = !userId && !isDriver
 
@@ -206,21 +213,15 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">
-                {new Date(ride.departureTime).toLocaleDateString("en-IN", {
-                  timeZone: "Asia/Kolkata",
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatDateLongIST(ride.departureTime)}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Departs at {new Date(ride.departureTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}
+              Departs at {formatTimeIST(ride.departureTime)}
             </p>
             {ride.arrivalTime && (
               <p className="text-sm text-muted-foreground">
-                Arrival: {new Date(ride.arrivalTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })}
+                Arrival: {formatTimeIST(ride.arrivalTime)}
               </p>
             )}
           </CardContent>
@@ -323,11 +324,13 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
       {canBook && (
         <Card>
           <CardHeader>
-            <CardTitle>Book this ride</CardTitle>
+            <CardTitle>{showRebook ? "Rebook this ride" : "Book this ride"}</CardTitle>
             <CardDescription>
-              {ride.instantBooking
-                ? "Confirm your seats — booking is instant."
-                : "Send a request. The driver will accept or reject."}
+              {showRebook
+                ? "Your previous booking was cancelled or declined. You can book again below."
+                : ride.instantBooking
+                  ? "Confirm your seats — booking is instant."
+                  : "Send a request. The driver will accept or reject."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -336,6 +339,7 @@ const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => 
               seatsAvailable={ride.seatsAvailable}
               pricePerSeat={Number(ride.pricePerSeat)}
               instantBooking={ride.instantBooking}
+              isRebook={showRebook}
             />
           </CardContent>
         </Card>

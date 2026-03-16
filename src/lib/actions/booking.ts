@@ -56,7 +56,7 @@ export async function createBookingAction(params: {
       return { success: false, error: `Only ${ride.seatsAvailable} seat(s) available` }
     }
 
-    const existingBooking = await prisma.booking.findFirst({
+    const existingActive = await prisma.booking.findFirst({
       where: {
         rideId,
         passengerId: session.user.id,
@@ -64,11 +64,11 @@ export async function createBookingAction(params: {
       },
     })
 
-    if (existingBooking) {
+    if (existingActive) {
       return {
         success: false,
         error:
-          existingBooking.status === "PENDING"
+          existingActive.status === "PENDING"
             ? "You already have a pending request for this ride"
             : "You are already booked on this ride",
       }
@@ -77,7 +77,45 @@ export async function createBookingAction(params: {
     const pricePerSeat = Number(ride.pricePerSeat)
     const totalPrice = pricePerSeat * seats
 
+    const existingCancelledOrRejected = await prisma.booking.findFirst({
+      where: {
+        rideId,
+        passengerId: session.user.id,
+        status: { in: ["CANCELLED", "REJECTED"] },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
     const booking = await prisma.$transaction(async (tx) => {
+      if (existingCancelledOrRejected) {
+        const newStatus: BookingStatus = ride.instantBooking ? "ACCEPTED" : "PENDING"
+        const updated = await tx.booking.update({
+          where: { id: existingCancelledOrRejected.id },
+          data: {
+            seats,
+            totalPrice,
+            status: newStatus,
+            pickupNote: pickupNote || null,
+            dropNote: dropNote || null,
+          },
+        })
+
+        if (ride.instantBooking) {
+          await tx.ride.update({
+            where: { id: rideId },
+            data: { seatsAvailable: { decrement: seats } },
+          })
+          await tx.bookingEvent.create({
+            data: { bookingId: updated.id, type: "AUTO_ACCEPTED" },
+          })
+        } else {
+          await tx.bookingEvent.create({
+            data: { bookingId: updated.id, type: "REQUESTED" },
+          })
+        }
+        return updated
+      }
+
       const newBooking = await tx.booking.create({
         data: {
           rideId,
@@ -127,30 +165,33 @@ export async function createBookingAction(params: {
         : "your ride"
     const passengerName = session.user.name ?? "A passenger"
 
+    const rideUrl = `/rides/${rideId}`
     console.info("[booking] Ride booked; sending notifications | rideId=", rideId, "| instant=", ride.instantBooking, "| driverId=", ride.driverId, "| passengerId=", session.user.id)
     if (ride.instantBooking) {
-      console.log("Sending notification to driver")
       await createNotification(
         ride.driverId,
         "New booking",
-        `${passengerName} booked ${seats} seat(s) on ${route}.`
+        `${passengerName} booked ${seats} seat(s) on ${route}.`,
+        rideUrl
       )
-      console.log("Sending notification to passenger")
       await createNotification(
         session.user.id,
         "Booking confirmed",
-        `You're booked on ${route}. The ride is confirmed.`
+        `You're booked on ${route}. The ride is confirmed.`,
+        rideUrl
       )
     } else {
       await createNotification(
         ride.driverId,
         "New booking request",
-        `${passengerName} requested ${seats} seat(s) on ${route}.`
+        `${passengerName} requested ${seats} seat(s) on ${route}.`,
+        rideUrl
       )
       await createNotification(
         session.user.id,
         "Request sent",
-        `Your booking request for ${route} was sent. The driver will confirm shortly.`
+        `Your booking request for ${route} was sent. The driver will confirm shortly.`,
+        rideUrl
       )
     }
 
@@ -343,18 +384,21 @@ export async function updateBookingStatusAction(
       booking.ride.fromLocation && booking.ride.toLocation
         ? `${booking.ride.fromLocation.city} → ${booking.ride.toLocation.city}`
         : "the ride"
+    const rideUrl = `/rides/${booking.rideId}`
 
     if (status === "ACCEPTED") {
       await createNotification(
         booking.passengerId,
         "Booking accepted",
-        `Your booking for ${route} was accepted by the driver.`
+        `Your booking for ${route} was accepted by the driver.`,
+        rideUrl
       )
     } else if (status === "REJECTED") {
       await createNotification(
         booking.passengerId,
         "Booking declined",
-        `Your booking request for ${route} was declined.`
+        `Your booking request for ${route} was declined.`,
+        rideUrl
       )
     } else if (status === "CANCELLED") {
       if (isPassenger) {
@@ -362,13 +406,15 @@ export async function updateBookingStatusAction(
         await createNotification(
           booking.ride.driverId,
           "Booking cancelled",
-          `${passengerName} cancelled their booking on ${route}.`
+          `${passengerName} cancelled their booking on ${route}.`,
+          rideUrl
         )
       } else {
         await createNotification(
           booking.passengerId,
           "Booking cancelled",
-          `Your booking for ${route} was cancelled by the driver.`
+          `Your booking for ${route} was cancelled by the driver.`,
+          rideUrl
         )
       }
     }

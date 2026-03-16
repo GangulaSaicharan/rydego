@@ -10,6 +10,7 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { formatRelativeTimeIST, formatDateLabelIST } from "@/lib/date-time"
 
 type NotificationItem = {
   id: string
@@ -25,41 +26,10 @@ type NotificationsResponse = {
   nextCursor: string | null
 }
 
-function formatTime(iso: string) {
-  const d = new Date(iso)
-  const now = new Date()
-  const diffMs = now.getTime() - d.getTime()
-  const diffMins = Math.floor(diffMs / 60_000)
-  const diffHours = Math.floor(diffMs / 3600_000)
-  const diffDays = Math.floor(diffMs / 86400_000)
-  if (diffMins < 1) return "Just now"
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  return d.toLocaleDateString()
-}
-
-function getDateLabel(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
-  const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  if (dateOnly.getTime() === today.getTime()) return "Today"
-  if (dateOnly.getTime() === yesterday.getTime()) return "Yesterday"
-  return d.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  })
-}
-
 function groupByDate(notifications: NotificationItem[]): Map<string, NotificationItem[]> {
   const map = new Map<string, NotificationItem[]>()
   for (const n of notifications) {
-    const label = getDateLabel(n.createdAt)
+    const label = formatDateLabelIST(n.createdAt)
     const list = map.get(label) ?? []
     list.push(n)
     map.set(label, list)
@@ -246,7 +216,7 @@ export function HeaderNotifications() {
                         {n.message}
                       </p>
                       <p className="mt-1 text-[10px] text-muted-foreground">
-                        {formatTime(n.createdAt)}
+                        {formatRelativeTimeIST(n.createdAt)}
                       </p>
                     </button>
                   </li>

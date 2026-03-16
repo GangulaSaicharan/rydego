@@ -5,6 +5,7 @@ import { AppBottomNav } from "@/components/app-bottom-nav"
 import { HeaderNotifications } from "@/components/header-notifications"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { PushRegistration } from "@/components/push-registration"
+import { AddMobileModal } from "@/components/add-mobile-modal"
 import { Separator } from "@/components/ui/separator"
 import { LOGO_URL } from "@/lib/constants/brand"
 import {
@@ -28,6 +29,7 @@ export default async function DashboardLayout({
   }
 
   const isAdmin = session.user.role === "ADMIN"
+  const hasPhone = !!(session.user as any).phone
 
   return (
     <SidebarProvider>
@@ -63,6 +65,7 @@ export default async function DashboardLayout({
         </header>
         <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pb-20 pt-3 md:p-6 md:pb-6 md:pt-4">
           <PushRegistration />
+          <AddMobileModal hasPhone={hasPhone} />
           {children}
         </main>
       </SidebarInset>

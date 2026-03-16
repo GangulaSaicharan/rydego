@@ -1,8 +1,10 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, TicketCheck, Loader2 } from "lucide-react"
+import { buttonVariants } from "@/components/ui"
+import { Calendar, Search, TicketCheck, Loader2 } from "lucide-react"
 import { BookingCard, type BookingCardBooking } from "./BookingCard"
 
 const emptyMessages: Record<string, string> = {
@@ -16,9 +18,12 @@ type Filter = (typeof filters)[number]
 
 function EmptySection({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed rounded-xl bg-muted/30">
-      <TicketCheck className="h-10 w-10 text-muted-foreground/20 mb-3" />
-      <p className="text-sm font-medium text-muted-foreground">{message}</p>
+    <div className="flex flex-col items-center gap-3 py-6 text-center">
+      <Search className="h-10 w-10 text-muted-foreground/60" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+      <Link href="/search" className={buttonVariants({ size: "sm" })}>
+        Search rides
+      </Link>
     </div>
   )
 }
@@ -45,7 +50,7 @@ export function BookingsFilterView({
       onValueChange={(v) => setFilter(v)}
       className="w-full"
     >
-      <TabsList className="mb-4">
+      <TabsList className="mb-4 mx-auto w-fit justify-center">
         <TabsTrigger value="upcoming" className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4 text-primary" />
           Upcoming

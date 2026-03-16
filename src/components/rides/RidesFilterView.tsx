@@ -1,16 +1,21 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Clock, Calendar, CheckCircle2, Loader2 } from "lucide-react"
+import { buttonVariants } from "@/components/ui"
+import { Calendar, CheckCircle2, Loader2, PlusCircle } from "lucide-react"
 import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { RideRow, type RideRowRide } from "./RideRow"
 
 function EmptySection({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed rounded-xl bg-muted/30">
-      <Clock className="h-10 w-10 text-muted-foreground/20 mb-3" />
-      <p className="text-sm font-medium text-muted-foreground">{message}</p>
+    <div className="flex flex-col items-center gap-3 py-6 text-center">
+      <PlusCircle className="h-10 w-10 text-muted-foreground/60" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+      <Link href="/publish" className={buttonVariants({ size: "sm" })}>
+        Publish a ride
+      </Link>
     </div>
   )
 }

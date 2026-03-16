@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { todayDateStringIST } from "@/lib/date-time"
 const STORAGE_KEY = "ride-search-prefs"
 
 type SearchParams = {
@@ -40,7 +41,7 @@ function buildSearchQuery(params: SearchParams): string {
 }
 
 function getTodayDate(): string {
-  return new Date().toISOString().slice(0, 10)
+  return todayDateStringIST()
 }
 
 // Only call on client after mount to avoid server/client hydration mismatch
