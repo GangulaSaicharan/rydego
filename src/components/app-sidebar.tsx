@@ -142,8 +142,13 @@ export function AppSidebar({ user, isAdmin = false, ...props }: AppSidebarProps)
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                    <Link
+                      href="/settings"
+                      className="flex w-full items-center gap-1.5 outline-none"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
