@@ -7,7 +7,7 @@ const prismaClientSingleton = () => {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL,  max: 5});
   // @ts-expect-error - version mismatch between @types/pg versions in @prisma/adapter-pg
   const adapter = new PrismaPg(pool);
 
