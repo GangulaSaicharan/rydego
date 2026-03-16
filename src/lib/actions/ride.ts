@@ -13,17 +13,9 @@ export async function getCitiesAction() {
   try {
     const cities = await prisma.location.findMany({
       where: { status: true },
-      select: {
-        city: true,
-        state: true,
-        country: true,
-        latitude: true,
-        longitude: true,
-      },
-      distinct: ['city'],
-      orderBy: {
-        city: 'asc'
-      }
+      select: { city: true },
+      distinct: ["city"],
+      orderBy: { city: "asc" },
     })
     return { success: true, cities }
   } catch (error) {
@@ -372,7 +364,6 @@ export async function searchRidesAction(params: {
     const rides = await prisma.ride.findMany({
       where: {
         status: "SCHEDULED",
-        seatsAvailable: { gt: 0 },
         fromLocation: fromCity ? { city: { contains: fromCity, mode: 'insensitive' } } : undefined,
         toLocation: toCity ? { city: { contains: toCity, mode: 'insensitive' } } : undefined,
         departureTime: date ? {
@@ -385,9 +376,7 @@ export async function searchRidesAction(params: {
         fromLocation: true,
         toLocation: true,
       },
-      orderBy: {
-        departureTime: 'asc'
-      },
+      orderBy: [{ seatsAvailable: "desc" }, { departureTime: "asc" }],
       skip,
       take: take + 1
     })
