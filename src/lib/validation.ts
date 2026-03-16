@@ -19,3 +19,25 @@ export const bookingCreateSchema = z.object({
   dropNote: z.string().max(500).optional(),
 })
 
+export const rideFormSchema = z.object({
+  fromCity: z.string().min(1, "From city is required."),
+  toCity: z.string().min(1, "To city is required."),
+  departureTime: z.string().min(1, "Departure time is required."),
+  arrivalTime: z.string().min(1, "Arrival time is required."),
+  pricePerSeat: z
+    .string()
+    .min(1, "Price is required.")
+    .refine((v) => !Number.isNaN(Number(v)) && Number(v) >= 0, {
+      message: "Price must be a valid non‑negative number.",
+    }),
+  seatsTotal: z
+    .string()
+    .min(1, "Seats are required.")
+    .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1 && Number(v) <= 10, {
+      message: "Seats must be between 1 and 10.",
+    }),
+  description: z.string().max(1000).optional(),
+  fromSlotStart: z.string().optional(),
+  fromSlotEnd: z.string().optional(),
+})
+

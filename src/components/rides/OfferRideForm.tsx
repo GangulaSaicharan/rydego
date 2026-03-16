@@ -141,7 +141,7 @@ export function OfferRideForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="arrivalTime">Arrival Time</Label>
-              <Input id="arrivalTime" name="arrivalTime" type="datetime-local" />
+              <Input id="arrivalTime" name="arrivalTime" type="datetime-local" required />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

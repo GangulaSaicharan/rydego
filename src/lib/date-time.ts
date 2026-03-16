@@ -140,6 +140,52 @@ export function todayDateStringIST(): string {
 }
 
 /**
+ * Parse a `datetime-local` string (from HTML inputs) as an instant in IST.
+ *
+ * Browsers treat `datetime-local` as a "wall clock" without timezone.
+ * On the server (usually running in UTC), `new Date(value)` interprets this
+ * as local server time, which shifts the actual instant when formatted in IST.
+ *
+ * This helper assumes the input is in IST and returns a UTC `Date` that
+ * represents that IST wall-clock moment.
+ *
+ * Example:
+ * - Input: "2025-03-15T21:00"
+ * - Intended: 9:00 PM IST (UTC+05:30)
+ * - Resulting UTC instant: 2025-03-15T15:30:00.000Z
+ */
+export function parseISTLocalDateTime(input: string | null | undefined): Date | null {
+  if (!input) return null
+
+  // Expect "YYYY-MM-DDTHH:mm"
+  const [datePart, timePart] = input.split("T")
+  if (!datePart || !timePart) return null
+
+  const [yearStr, monthStr, dayStr] = datePart.split("-")
+  const [hourStr, minuteStr] = timePart.split(":")
+  if (!yearStr || !monthStr || !dayStr || !hourStr || !minuteStr) return null
+
+  const year = Number(yearStr)
+  const month = Number(monthStr)
+  const day = Number(dayStr)
+  const hour = Number(hourStr)
+  const minute = Number(minuteStr)
+  if (
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    Number.isNaN(hour) ||
+    Number.isNaN(minute)
+  ) {
+    return null
+  }
+
+  // IST = UTC+5:30 → subtract 5h30m to get UTC instant.
+  const utcMillis = Date.UTC(year, month - 1, day, hour - 5, minute - 30)
+  return new Date(utcMillis)
+}
+
+/**
  * Relative time for notifications (IST-aware).
  * e.g. "Just now", "5m ago", "2h ago", "Yesterday", "Mon, 15 Mar"
  */

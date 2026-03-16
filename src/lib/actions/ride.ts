@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache"
 import { CITIES } from "@/lib/constants/locations"
 import { requireMobile } from "@/lib/require-mobile"
 import { createNotifications } from "@/lib/notifications"
+import { parseISTLocalDateTime } from "@/lib/date-time"
+import { rideFormSchema } from "@/lib/validation"
 
 export async function getCitiesAction() {
   try {
@@ -41,17 +43,48 @@ export async function createRideAction(formData: FormData) {
 
   const mobileError = await requireMobile(session.user.id, "create_ride")
   if (mobileError) return mobileError
+  const raw = {
+    fromCity: (formData.get("fromCity") as string | null) ?? "",
+    toCity: (formData.get("toCity") as string | null) ?? "",
+    departureTime: (formData.get("departureTime") as string | null) ?? "",
+    arrivalTime: (formData.get("arrivalTime") as string | null) ?? "",
+    pricePerSeat: (formData.get("pricePerSeat") as string | null) ?? "",
+    seatsTotal: (formData.get("seatsTotal") as string | null) ?? "",
+    description: (formData.get("description") as string | null) ?? "",
+    fromSlotStart: ((formData.get("fromSlotStart") as string | null) ?? "").trim(),
+    fromSlotEnd: ((formData.get("fromSlotEnd") as string | null) ?? "").trim(),
+  }
 
-  const fromCityName = formData.get("fromCity") as string
-  const toCityName = formData.get("toCity") as string
-  const departureTime = new Date(formData.get("departureTime") as string)
-  const arrivalTimeRaw = formData.get("arrivalTime") as string | null
-  const arrivalTime = arrivalTimeRaw ? new Date(arrivalTimeRaw) : null
-  const pricePerSeat = parseFloat(formData.get("pricePerSeat") as string)
-  const seatsTotal = parseInt(formData.get("seatsTotal") as string)
-  const description = formData.get("description") as string
-  const fromSlotStart = (formData.get("fromSlotStart") as string)?.trim() || ""
-  const fromSlotEnd = (formData.get("fromSlotEnd") as string)?.trim() || ""
+  const parsed = rideFormSchema.safeParse(raw)
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid ride details"
+    return { success: false, error: firstError }
+  }
+
+  const {
+    fromCity: fromCityName,
+    toCity: toCityName,
+    departureTime: departureTimeStr,
+    arrivalTime: arrivalTimeStr,
+    pricePerSeat: pricePerSeatStr,
+    seatsTotal: seatsTotalStr,
+    description,
+    fromSlotStart,
+    fromSlotEnd,
+  } = parsed.data
+
+  const departureTime = parseISTLocalDateTime(departureTimeStr)
+  const arrivalTime = parseISTLocalDateTime(arrivalTimeStr)
+
+  if (!departureTime) {
+    return { success: false, error: "Invalid departure time" }
+  }
+  if (!arrivalTime) {
+    return { success: false, error: "Invalid arrival time" }
+  }
+
+  const pricePerSeat = Number(pricePerSeatStr)
+  const seatsTotal = Number(seatsTotalStr)
   const fromSlot =
     fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
 
@@ -211,14 +244,46 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 
   const fromCityName = formData.get("fromCity") as string
   const toCityName = formData.get("toCity") as string
-  const departureTime = new Date(formData.get("departureTime") as string)
-  const arrivalTimeRaw = (formData.get("arrivalTime") as string)?.trim() || null
-  const arrivalTime = arrivalTimeRaw ? new Date(arrivalTimeRaw) : null
-  const pricePerSeat = parseFloat(formData.get("pricePerSeat") as string)
-  const seatsTotal = parseInt(formData.get("seatsTotal") as string)
-  const description = (formData.get("description") as string)?.trim() || ""
-  const fromSlotStart = (formData.get("fromSlotStart") as string)?.trim() || ""
-  const fromSlotEnd = (formData.get("fromSlotEnd") as string)?.trim() || ""
+  const raw = {
+    fromCity: fromCityName ?? "",
+    toCity: toCityName ?? "",
+    departureTime: (formData.get("departureTime") as string | null) ?? "",
+    arrivalTime: (formData.get("arrivalTime") as string | null) ?? "",
+    pricePerSeat: (formData.get("pricePerSeat") as string | null) ?? "",
+    seatsTotal: (formData.get("seatsTotal") as string | null) ?? "",
+    description: ((formData.get("description") as string | null) ?? "").trim(),
+    fromSlotStart: ((formData.get("fromSlotStart") as string | null) ?? "").trim(),
+    fromSlotEnd: ((formData.get("fromSlotEnd") as string | null) ?? "").trim(),
+  }
+
+  const parsed = rideFormSchema.safeParse(raw)
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid ride details"
+    return { success: false, error: firstError }
+  }
+
+  const {
+    departureTime: departureTimeStr,
+    arrivalTime: arrivalTimeStr,
+    pricePerSeat: pricePerSeatStr,
+    seatsTotal: seatsTotalStr,
+    description,
+    fromSlotStart,
+    fromSlotEnd,
+  } = parsed.data
+
+  const departureTime = parseISTLocalDateTime(departureTimeStr)
+  const arrivalTime = parseISTLocalDateTime(arrivalTimeStr)
+
+  if (!departureTime) {
+    return { success: false, error: "Invalid departure time" }
+  }
+  if (!arrivalTime) {
+    return { success: false, error: "Invalid arrival time" }
+  }
+
+  const pricePerSeat = Number(pricePerSeatStr)
+  const seatsTotal = Number(seatsTotalStr)
   const fromSlot = fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
 
   const fromCityData = CITIES.find(c => c.name === fromCityName && c.status)
@@ -262,7 +327,7 @@ export async function updateRideAction(rideId: string, formData: FormData) {
           fromLocationId: fromLocation.id,
           toLocationId: toLocation.id,
           departureTime,
-          arrivalTime,
+          arrivalTime: arrivalTime ?? undefined,
           pricePerSeat,
           seatsTotal,
           seatsAvailable: seatsTotal - bookedSeats,
