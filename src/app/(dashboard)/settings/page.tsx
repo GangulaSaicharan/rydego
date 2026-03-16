@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { InstallPwaButton } from "@/components/InstallPwaButton"
+import { NotificationSettings } from "@/components/NotificationSettings"
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -25,6 +26,8 @@ export default function SettingsPage() {
         </div>
         <InstallPwaButton className="w-full sm:w-auto" />
       </section>
+
+      <NotificationSettings />
     </main>
   )
 }
