@@ -30,6 +30,8 @@ import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
 
+export const dynamic = "force-dynamic"
+
 const statusLabel: Record<RideStatus, string> = {
   SCHEDULED: "Upcoming",
   STARTED: "In progress",
