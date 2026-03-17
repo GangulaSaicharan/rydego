@@ -2,10 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import prisma from "@/lib/db"
 import { Badge } from "@/components/ui/badge"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { updateUserRoleOwnerAction } from "@/lib/actions/owner-users"
-import { cn } from "@/lib/utils"
 
 // export const metadata: Metadata = {
 //   title: "Users • Owner dashboard",
@@ -145,10 +144,10 @@ export default async function AdminUsersPage({
               href={`/admin/users?page=${Math.max(1, page - 1)}`}
               aria-disabled={!canPrev}
               tabIndex={canPrev ? 0 : -1}
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                !canPrev && "pointer-events-none opacity-50",
-              )}
+              className={[
+                "inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                !canPrev ? "pointer-events-none opacity-50" : "",
+              ].join(" ")}
             >
               Previous
             </Link>
@@ -168,10 +167,10 @@ export default async function AdminUsersPage({
               href={`/admin/users?page=${page + 1}`}
               aria-disabled={!canNext}
               tabIndex={canNext ? 0 : -1}
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                !canNext && "pointer-events-none opacity-50",
-              )}
+              className={[
+                "inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                !canNext ? "pointer-events-none opacity-50" : "",
+              ].join(" ")}
             >
               Next
             </Link>
