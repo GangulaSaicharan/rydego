@@ -23,5 +23,7 @@ export const authConfig = {
   },
   pages: {
     signIn: "/login",
+    // Redirect auth errors (e.g. OAuth state mismatch after back button) to login so user can retry
+    error: "/login",
   },
 } satisfies NextAuthConfig
