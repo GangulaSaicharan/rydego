@@ -3,18 +3,16 @@
 import prisma from "@/lib/db"
 import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
-import { CITIES } from "@/lib/constants/locations"
 import { requireMobile } from "@/lib/require-mobile"
 import { createNotifications } from "@/lib/notifications"
 import { parseISTLocalDateTime } from "@/lib/date-time"
-import { rideFormSchema } from "@/lib/validation"
+import { rideFormSchema, rideSearchSchema } from "@/lib/validation"
 
 export async function getCitiesAction() {
   try {
     const cities = await prisma.location.findMany({
       where: { status: true },
-      select: { city: true },
-      distinct: ["city"],
+      select: { id: true, city: true },
       orderBy: { city: "asc" },
     })
     return { success: true, cities }
@@ -29,15 +27,27 @@ export async function createRideAction(formData: FormData) {
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
-  if (session.user.role !== "ADMIN") {
+  // Always trust DB for authorization (session can be stale).
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, isBlocked: true },
+  })
+  if (!dbUser) {
+    return { success: false, error: "User not found." }
+  }
+  if (dbUser.isBlocked) {
+    return { success: false, error: "Your account is blocked." }
+  }
+  if (dbUser.role !== "ADMIN") {
     return { success: false, error: "Only admins can publish rides." }
   }
 
   const mobileError = await requireMobile(session.user.id, "create_ride")
   if (mobileError) return mobileError
   const raw = {
-    fromCity: (formData.get("fromCity") as string | null) ?? "",
-    toCity: (formData.get("toCity") as string | null) ?? "",
+    vehicleId: (formData.get("vehicleId") as string | null) ?? "",
+    fromLocationId: (formData.get("fromLocationId") as string | null) ?? "",
+    toLocationId: (formData.get("toLocationId") as string | null) ?? "",
     departureTime: (formData.get("departureTime") as string | null) ?? "",
     arrivalTime: (formData.get("arrivalTime") as string | null) ?? "",
     pricePerSeat: (formData.get("pricePerSeat") as string | null) ?? "",
@@ -54,8 +64,9 @@ export async function createRideAction(formData: FormData) {
   }
 
   const {
-    fromCity: fromCityName,
-    toCity: toCityName,
+    vehicleId,
+    fromLocationId,
+    toLocationId,
     departureTime: departureTimeStr,
     arrivalTime: arrivalTimeStr,
     pricePerSeat: pricePerSeatStr,
@@ -87,54 +98,37 @@ export async function createRideAction(formData: FormData) {
   const fromSlot =
     fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
 
-  const fromCityData = CITIES.find(c => c.name === fromCityName && c.status)
-  const toCityData = CITIES.find(c => c.name === toCityName && c.status)
-
-  if (!fromCityData || !toCityData) {
-    return { success: false, error: "Invalid city selection" }
+  if (fromLocationId === toLocationId) {
+    return { success: false, error: "From and To city cannot be the same" }
   }
 
   try {
     const ride = await prisma.$transaction(async (tx) => {
-      // Find or create locations
-      let fromLocation = await tx.location.findFirst({
-        where: { city: fromCityName }
-      })
-
-      if (!fromLocation) {
-        fromLocation = await tx.location.create({
-          data: {
-            city: fromCityName,
-            state: fromCityData.state,
-            country: fromCityData.country,
-            latitude: fromCityData.latitude,
-            longitude: fromCityData.longitude,
-          }
-        })
+      const [fromLocation, toLocation, vehicle] = await Promise.all([
+        tx.location.findFirst({ where: { id: fromLocationId, status: true }, select: { id: true} }),
+        tx.location.findFirst({ where: { id: toLocationId, status: true }, select: { id: true } }),
+        tx.vehicle.findFirst({
+          where: { id: vehicleId, ownerId: session.user!.id!, deletedAt: null },
+          select: { id: true, seats: true },
+        }),
+      ])
+      if (!fromLocation || !toLocation) {
+        throw new Error("Invalid location selection")
       }
-
-      let toLocation = await tx.location.findFirst({
-        where: { city: toCityName }
-      })
-
-      if (!toLocation) {
-        toLocation = await tx.location.create({
-          data: {
-            city: toCityName,
-            state: toCityData.state,
-            country: toCityData.country,
-            latitude: toCityData.latitude,
-            longitude: toCityData.longitude,
-          }
-        })
+      if (!vehicle) {
+        throw new Error("Invalid vehicle selection")
+      }
+      if (seatsTotal > vehicle.seats) {
+        throw new Error(`Seats cannot exceed vehicle capacity (${vehicle.seats})`)
       }
 
       // Create ride
       return await tx.ride.create({
         data: {
           driverId: session.user!.id!,
-          fromLocationId: fromLocation.id,
-          toLocationId: toLocation.id,
+          vehicleId: vehicle.id,
+          fromLocationId,
+          toLocationId,
           departureTime,
           arrivalTime,
           pricePerSeat,
@@ -155,7 +149,11 @@ export async function createRideAction(formData: FormData) {
     return { success: true, rideId: ride.id }
   } catch (error) {
     console.error("Failed to create ride:", error)
-    return { success: false, error: "Failed to create ride" }
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Failed to create ride"
+    return { success: false, error: message }
   }
 }
 
@@ -234,18 +232,24 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 
   const ride = await prisma.ride.findUnique({
     where: { id: rideId },
-    select: { driverId: true, status: true, departureTime: true, seatsTotal: true, seatsAvailable: true },
+    select: {
+      driverId: true,
+      status: true,
+      departureTime: true,
+      seatsTotal: true,
+      seatsAvailable: true,
+      vehicleId: true,
+    },
   })
   if (!ride) return { success: false, error: "Ride not found" }
   if (ride.driverId !== session.user.id) return { success: false, error: "Only the ride creator can edit this ride" }
   if (ride.status !== "SCHEDULED") return { success: false, error: "Only scheduled rides can be edited" }
   if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot edit a ride after departure time" }
 
-  const fromCityName = formData.get("fromCity") as string
-  const toCityName = formData.get("toCity") as string
   const raw = {
-    fromCity: fromCityName ?? "",
-    toCity: toCityName ?? "",
+    vehicleId: (formData.get("vehicleId") as string | null) ?? ride.vehicleId ?? "",
+    fromLocationId: (formData.get("fromLocationId") as string | null) ?? "",
+    toLocationId: (formData.get("toLocationId") as string | null) ?? "",
     departureTime: (formData.get("departureTime") as string | null) ?? "",
     arrivalTime: (formData.get("arrivalTime") as string | null) ?? "",
     pricePerSeat: (formData.get("pricePerSeat") as string | null) ?? "",
@@ -262,6 +266,9 @@ export async function updateRideAction(rideId: string, formData: FormData) {
   }
 
   const {
+    vehicleId,
+    fromLocationId,
+    toLocationId,
     departureTime: departureTimeStr,
     arrivalTime: arrivalTimeStr,
     pricePerSeat: pricePerSeatStr,
@@ -288,9 +295,9 @@ export async function updateRideAction(rideId: string, formData: FormData) {
   const seatsTotal = Number(seatsTotalStr)
   const fromSlot = fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
 
-  const fromCityData = CITIES.find(c => c.name === fromCityName && c.status)
-  const toCityData = CITIES.find(c => c.name === toCityName && c.status)
-  if (!fromCityData || !toCityData) return { success: false, error: "Invalid city selection" }
+  if (fromLocationId === toLocationId) {
+    return { success: false, error: "From and To city cannot be the same" }
+  }
 
   const bookedSeats = ride.seatsTotal - ride.seatsAvailable
   if (seatsTotal < bookedSeats) {
@@ -299,35 +306,29 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
-      let fromLocation = await tx.location.findFirst({ where: { city: fromCityName } })
-      if (!fromLocation) {
-        fromLocation = await tx.location.create({
-          data: {
-            city: fromCityName,
-            state: fromCityData.state,
-            country: fromCityData.country,
-            latitude: fromCityData.latitude,
-            longitude: fromCityData.longitude,
-          },
-        })
+      const [fromLocation, toLocation, vehicle] = await Promise.all([
+        tx.location.findFirst({ where: { id: fromLocationId, status: true } }),
+        tx.location.findFirst({ where: { id: toLocationId, status: true } }),
+        tx.vehicle.findFirst({
+          where: { id: vehicleId, ownerId: session.user!.id!, deletedAt: null },
+          select: { id: true, seats: true },
+        }),
+      ])
+      if (!fromLocation || !toLocation) {
+        throw new Error("Invalid location selection")
       }
-      let toLocation = await tx.location.findFirst({ where: { city: toCityName } })
-      if (!toLocation) {
-        toLocation = await tx.location.create({
-          data: {
-            city: toCityName,
-            state: toCityData.state,
-            country: toCityData.country,
-            latitude: toCityData.latitude,
-            longitude: toCityData.longitude,
-          },
-        })
+      if (!vehicle) {
+        throw new Error("Invalid vehicle selection")
+      }
+      if (seatsTotal > vehicle.seats) {
+        throw new Error(`Seats cannot exceed vehicle capacity (${vehicle.seats})`)
       }
       return await tx.ride.update({
         where: { id: rideId },
         data: {
-          fromLocationId: fromLocation.id,
-          toLocationId: toLocation.id,
+          vehicleId: vehicle.id,
+          fromLocationId,
+          toLocationId,
           departureTime,
           arrivalTime: arrivalTime ?? undefined,
           pricePerSeat,
@@ -352,31 +353,71 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 const SEARCH_PAGE_SIZE = 10
 
 export async function searchRidesAction(params: {
-  fromCity?: string
-  toCity?: string
+  fromLocationId?: string
+  toLocationId?: string
   date?: string
+  sort?: "soonest" | "cheapest" | "most_seats"
   skip?: number
   take?: number
 }) {
-  const { fromCity, toCity, date, skip = 0, take = SEARCH_PAGE_SIZE } = params
+  const parsed = rideSearchSchema.safeParse({
+    ...params,
+    sort: params.sort ?? "soonest",
+    skip: params.skip ?? 0,
+    take: params.take ?? SEARCH_PAGE_SIZE,
+  })
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0]?.message ?? "Invalid search"
+    return { success: false, error: firstError }
+  }
+
+  const { fromLocationId, toLocationId, date, sort } = parsed.data
+  const skip = parsed.data.skip ?? 0
+  const take = parsed.data.take ?? SEARCH_PAGE_SIZE
 
   try {
+    const now = new Date()
+    const orderBy = (() => {
+      switch (sort) {
+        case "cheapest":
+          return [{ pricePerSeat: "asc" as const }, { departureTime: "asc" as const }]
+        case "most_seats":
+          return [{ seatsAvailable: "desc" as const }, { departureTime: "asc" as const }]
+        case "soonest":
+        default:
+          return [{ departureTime: "asc" as const }]
+      }
+    })()
+
     const rides = await prisma.ride.findMany({
       where: {
         status: "SCHEDULED",
-        fromLocation: fromCity ? { city: { contains: fromCity, mode: 'insensitive' } } : undefined,
-        toLocation: toCity ? { city: { contains: toCity, mode: 'insensitive' } } : undefined,
-        departureTime: date ? {
+        AND: [
+          // Hide rides that already completed their trip:
+          // - if arrivalTime is present, ensure arrivalTime >= now
+          // - if arrivalTime is missing, fall back to departureTime >= now
+          {
+            OR: [
+              { arrivalTime: { gte: now } },
+              { arrivalTime: null, departureTime: { gte: now } },
+            ],
+          },
+        ],
+        fromLocationId: fromLocationId || undefined,
+        toLocationId: toLocationId || undefined,
+        departureTime: date
+          ? {
           gte: new Date(date),
           lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000)
-        } : undefined
+        }
+          : undefined
       },
       include: {
         driver: true,
         fromLocation: true,
         toLocation: true,
       },
-      orderBy: [{ seatsAvailable: "desc" }, { departureTime: "asc" }],
+      orderBy,
       skip,
       take: take + 1
     })

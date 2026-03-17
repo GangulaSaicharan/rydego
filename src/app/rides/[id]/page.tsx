@@ -23,6 +23,7 @@ import {
   FileText,
   ArrowLeft,
   Settings as SettingsIcon,
+  Car,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { notFound } from "next/navigation"
@@ -50,7 +51,15 @@ const statusLabel: Record<RideStatus, string> = {
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ fromCity?: string; toCity?: string; date?: string }>
+  searchParams: Promise<{
+    fromLocationId?: string
+    toLocationId?: string
+    date?: string
+    sort?: string
+    priceMin?: string
+    priceMax?: string
+    seatsNeeded?: string
+  }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -78,10 +87,18 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
 
   const { id } = await params
   const sp = await searchParams
-  const backToSearch =
-    sp?.fromCity && sp?.toCity && sp?.date
-      ? `/search?${new URLSearchParams({ fromCity: sp.fromCity, toCity: sp.toCity, date: sp.date }).toString()}`
-      : "/rides"
+  const backToSearch = (() => {
+    if (!(sp?.fromLocationId && sp?.toLocationId && sp?.date)) return "/rides"
+    const q = new URLSearchParams()
+    q.set("fromLocationId", sp.fromLocationId)
+    q.set("toLocationId", sp.toLocationId)
+    q.set("date", sp.date)
+    if (sp.sort) q.set("sort", sp.sort)
+    if (sp.priceMin) q.set("priceMin", sp.priceMin)
+    if (sp.priceMax) q.set("priceMax", sp.priceMax)
+    if (sp.seatsNeeded) q.set("seatsNeeded", sp.seatsNeeded)
+    return `/search?${q.toString()}`
+  })()
 
   const ride = await prisma.ride.findUnique({
     where: { id },
@@ -89,7 +106,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
       fromLocation: true,
       toLocation: true,
-      vehicle: { select: { brand: true, model: true } },
+      vehicle: { select: { brand: true, model: true, plateNumber: true, color: true, seats: true } },
     },
   })
 
@@ -260,6 +277,27 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
             )}
           </CardContent>
         </Card>
+
+        {ride.vehicle && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Car className="h-5 w-5 text-primary" />
+                Vehicle
+              </CardTitle>
+              <CardDescription>Selected for this ride</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-lg font-semibold">
+                {ride.vehicle.brand} {ride.vehicle.model}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {ride.vehicle.plateNumber}
+                {ride.vehicle.color ? ` • ${ride.vehicle.color}` : ""} • {ride.vehicle.seats} seats
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

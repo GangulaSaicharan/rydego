@@ -1,6 +1,7 @@
 import { auth } from "@/auth"
 import { isSuperAdmin } from "@/lib/super-admin"
 import { redirect } from "next/navigation"
+import { OwnerDashboardSidebar } from "@/components/owner-dashboard/OwnerDashboardSidebar"
 
 /**
  * Owner-only admin area. Access is restricted to emails listed in
@@ -21,5 +22,12 @@ export default async function AdminLayout({
     redirect("/dashboard")
   }
 
-  return <>{children}</>
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <div className="mx-auto flex max-w-7xl gap-6 p-4 md:p-6">
+        <OwnerDashboardSidebar />
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    </div>
+  )
 }

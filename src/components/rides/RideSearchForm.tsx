@@ -26,17 +26,17 @@ import { todayDateStringIST } from "@/lib/date-time"
 const STORAGE_KEY = "ride-search-prefs"
 
 type SearchParams = {
-  fromCity: string
-  toCity: string
+  fromLocationId: string
+  toLocationId: string
   date: string
 }
 
 function buildSearchQuery(params: SearchParams): string {
-  return new URLSearchParams({
-    fromCity: params.fromCity,
-    toCity: params.toCity,
-    date: params.date,
-  }).toString()
+  const sp = new URLSearchParams()
+  sp.set("fromLocationId", params.fromLocationId)
+  sp.set("toLocationId", params.toLocationId)
+  sp.set("date", params.date)
+  return sp.toString()
 }
 
 function getTodayDate(): string {
@@ -44,14 +44,14 @@ function getTodayDate(): string {
 }
 
 // Only call on client after mount to avoid server/client hydration mismatch
-function getStoredDefaultsFromStorage(): Pick<SearchParams, "fromCity" | "toCity"> {
+function getStoredDefaultsFromStorage(): Pick<SearchParams, "fromLocationId" | "toLocationId"> {
   try {
     const s = localStorage.getItem(STORAGE_KEY)
-    if (!s) return { fromCity: "", toCity: "" }
+    if (!s) return { fromLocationId: "", toLocationId: "" }
     const j = JSON.parse(s) as Partial<SearchParams>
-    return { fromCity: j.fromCity ?? "", toCity: j.toCity ?? "" }
+    return { fromLocationId: j.fromLocationId ?? "", toLocationId: j.toLocationId ?? "" }
   } catch {
-    return { fromCity: "", toCity: "" }
+    return { fromLocationId: "", toLocationId: "" }
   }
 }
 
@@ -64,14 +64,18 @@ function saveToStorage(params: SearchParams) {
 }
 
 // Stable initial state so server and client render the same (avoids hydration error)
-const INITIAL_DEFAULTS: SearchParams = { fromCity: "", toCity: "", date: "" }
+const INITIAL_DEFAULTS: SearchParams = {
+  fromLocationId: "",
+  toLocationId: "",
+  date: "",
+}
 
 export function RideSearchForm() {
   const router = useRouter()
   const searchParamsFromUrl = useSearchParams()
   const [defaults, setDefaults] = useState<SearchParams>(INITIAL_DEFAULTS)
   const [minDate, setMinDate] = useState("")
-  const [cities, setCities] = useState<{ city: string }[]>([])
+  const [cities, setCities] = useState<{ id: string; city: string }[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -130,12 +134,12 @@ export function RideSearchForm() {
   // Restore search from URL when user returns from ride details
   useEffect(() => {
     if (hasRestoredFromUrl.current) return
-    const fromCity = searchParamsFromUrl.get("fromCity")
-    const toCity = searchParamsFromUrl.get("toCity")
+    const fromLocationId = searchParamsFromUrl.get("fromLocationId")
+    const toLocationId = searchParamsFromUrl.get("toLocationId")
     const date = searchParamsFromUrl.get("date")
-    if (!fromCity || !toCity || !date) return
+    if (!fromLocationId || !toLocationId || !date) return
     hasRestoredFromUrl.current = true
-    const params: SearchParams = { fromCity, toCity, date }
+    const params: SearchParams = { fromLocationId, toLocationId, date }
     setSearchParams(params)
     saveToStorage(params)
     setSearched(true)
@@ -184,8 +188,8 @@ export function RideSearchForm() {
 
     const formData = new FormData(event.currentTarget)
     const params: SearchParams = {
-      fromCity: formData.get("fromCity") as string,
-      toCity: formData.get("toCity") as string,
+      fromLocationId: formData.get("fromLocationId") as string,
+      toLocationId: formData.get("toLocationId") as string,
       date: formData.get("date") as string,
     }
     setSearchParams(params)
@@ -202,7 +206,7 @@ export function RideSearchForm() {
         setResults([])
         setHasMore(false)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
       setResults([])
       setHasMore(false)
@@ -237,11 +241,11 @@ export function RideSearchForm() {
                     From
                   </label>
                   <Select
-                    name="fromCity"
+                    name="fromLocationId"
                     required
-                    value={defaults.fromCity || null}
+                    value={defaults.fromLocationId || null}
                     onValueChange={(v) =>
-                      setDefaults((prev) => ({ ...prev, fromCity: v ?? "" }))
+                      setDefaults((prev) => ({ ...prev, fromLocationId: v ?? "" }))
                     }
                   >
                     <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
@@ -254,7 +258,7 @@ export function RideSearchForm() {
                         </SelectItem>
                       ) : (
                         cities.map((city) => (
-                          <SelectItem key={city.city} value={city.city}>
+                          <SelectItem key={city.id} value={city.id}>
                             {city.city}
                           </SelectItem>
                         ))
@@ -271,11 +275,11 @@ export function RideSearchForm() {
                     To
                   </label>
                   <Select
-                    name="toCity"
+                    name="toLocationId"
                     required
-                    value={defaults.toCity || null}
+                    value={defaults.toLocationId || null}
                     onValueChange={(v) =>
-                      setDefaults((prev) => ({ ...prev, toCity: v ?? "" }))
+                      setDefaults((prev) => ({ ...prev, toLocationId: v ?? "" }))
                     }
                   >
                     <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
@@ -288,7 +292,7 @@ export function RideSearchForm() {
                         </SelectItem>
                       ) : (
                         cities.map((city) => (
-                          <SelectItem key={city.city} value={city.city}>
+                          <SelectItem key={city.id} value={city.id}>
                             {city.city}
                           </SelectItem>
                         ))
