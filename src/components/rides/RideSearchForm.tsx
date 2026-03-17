@@ -20,7 +20,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select"
 import { todayDateStringIST } from "@/lib/date-time"
 const STORAGE_KEY = "ride-search-prefs"
@@ -29,6 +28,18 @@ type SearchParams = {
   fromLocationId: string
   toLocationId: string
   date: string
+}
+
+type RideSearchResult = {
+  id: string
+  departureTime: string | Date
+  arrivalTime?: string | Date | null
+  pricePerSeat: string | number
+  seatsAvailable: number
+  seatsTotal: number
+  fromLocation: { city: string; state?: string | null }
+  toLocation: { city: string; state?: string | null }
+  driver: { id: string; name: string | null; image: string | null }
 }
 
 function buildSearchQuery(params: SearchParams): string {
@@ -79,7 +90,7 @@ export function RideSearchForm() {
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<RideSearchResult[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [searchParams, setSearchParams] = useState<SearchParams | null>(null)
   const [searched, setSearched] = useState(false)
@@ -225,6 +236,15 @@ export function RideSearchForm() {
     router.replace("/search", { scroll: false })
   }
 
+  const fromCityLabel =
+    defaults.fromLocationId
+      ? cities.find((c) => c.id === defaults.fromLocationId)?.city ?? defaults.fromLocationId
+      : ""
+  const toCityLabel =
+    defaults.toLocationId
+      ? cities.find((c) => c.id === defaults.toLocationId)?.city ?? defaults.toLocationId
+      : ""
+
   return (
     <div className="space-y-8">
       {!searched && (
@@ -243,13 +263,19 @@ export function RideSearchForm() {
                   <Select
                     name="fromLocationId"
                     required
-                    value={defaults.fromLocationId || null}
+                    value={defaults.fromLocationId}
                     onValueChange={(v) =>
                       setDefaults((prev) => ({ ...prev, fromLocationId: v ?? "" }))
                     }
                   >
                     <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
-                      <SelectValue placeholder="City or area" />
+                      {fromCityLabel ? (
+                        <span className="flex flex-1 text-left">{fromCityLabel}</span>
+                      ) : (
+                        <span className="flex flex-1 text-left text-muted-foreground">
+                          City or area
+                        </span>
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {citiesLoading ? (
@@ -277,13 +303,19 @@ export function RideSearchForm() {
                   <Select
                     name="toLocationId"
                     required
-                    value={defaults.toLocationId || null}
+                    value={defaults.toLocationId}
                     onValueChange={(v) =>
                       setDefaults((prev) => ({ ...prev, toLocationId: v ?? "" }))
                     }
                   >
                     <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
-                      <SelectValue placeholder="City or area" />
+                      {toCityLabel ? (
+                        <span className="flex flex-1 text-left">{toCityLabel}</span>
+                      ) : (
+                        <span className="flex flex-1 text-left text-muted-foreground">
+                          City or area
+                        </span>
+                      )}
                     </SelectTrigger>
                     <SelectContent>
                       {citiesLoading ? (
