@@ -34,6 +34,7 @@ export async function createBookingAction(params: {
         pricePerSeat: true,
         instantBooking: true,
         status: true,
+        departureTime: true,
       },
     })
 
@@ -47,6 +48,10 @@ export async function createBookingAction(params: {
 
     if (ride.status !== "SCHEDULED") {
       return { success: false, error: "This ride is no longer available for booking" }
+    }
+
+    if (new Date(ride.departureTime) <= new Date()) {
+      return { success: false, error: "Cannot book a ride whose departure time has passed" }
     }
 
     if (ride.seatsAvailable < seats) {
