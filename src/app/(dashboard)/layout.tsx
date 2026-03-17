@@ -33,6 +33,7 @@ const AppBottomNav = dynamic(() =>
 )
 
 import { auth } from "@/auth"
+import { isSuperAdmin } from "@/lib/super-admin"
 import prisma from "@/lib/db"
 import { redirect } from "next/navigation"
 
@@ -48,6 +49,7 @@ export default async function DashboardLayout({
   }
 
   const isAdmin = session.user.role === "ADMIN"
+  const isOwner = isSuperAdmin(session)
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -57,7 +59,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar user={session.user} isAdmin={isAdmin} />
+      <AppSidebar user={session.user} isAdmin={isAdmin} isSuperAdmin={isOwner} />
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80 md:h-16 md:gap-4 md:px-6">
           <span className="hidden md:inline-flex">

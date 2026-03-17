@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { auth } from "@/auth"
+import { isSuperAdmin } from "@/lib/super-admin"
 import prisma from "@/lib/db"
 import {
   Card,
@@ -73,6 +74,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   const session = await auth()
   const userId = session?.user?.id
   const isAdmin = session?.user?.role === "ADMIN"
+  const isOwner = session ? isSuperAdmin(session) : false
 
   const { id } = await params
   const sp = await searchParams
@@ -432,7 +434,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
 
   return (
     <SidebarProvider>
-      <AppSidebar user={sidebarUser} isAdmin={isAdmin} />
+      <AppSidebar user={sidebarUser} isAdmin={isAdmin} isSuperAdmin={isOwner} />
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80 md:h-16 md:gap-4 md:px-6">
           <span className="hidden md:inline-flex">

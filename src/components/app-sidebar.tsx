@@ -13,6 +13,7 @@ import {
   LogOut,
   LayoutDashboard,
   TicketCheck,
+  ShieldCheck,
 } from "lucide-react"
 import { LOGO_URL } from "@/lib/constants/brand"
 
@@ -44,6 +45,7 @@ const navMainAll = [
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },
   { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Admin", url: "/admin", icon: ShieldCheck, superAdminOnly: true },
 ]
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -53,15 +55,21 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     image?: string | null
   }
   isAdmin?: boolean
+  isSuperAdmin?: boolean
 }
 
-export function AppSidebar({ user, isAdmin = false, ...props }: AppSidebarProps) {
-  // Defer isAdmin to after mount so server and client always render the same nav list
+export function AppSidebar({ user, isAdmin = false, isSuperAdmin = false, ...props }: AppSidebarProps) {
+  // Defer isAdmin/isSuperAdmin to after mount so server and client always render the same nav list
   // and avoid hydration mismatch (session/role can differ between server and client initially).
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
   const effectiveAdmin = mounted ? isAdmin : false
-  const navMain = navMainAll.filter((item) => !("adminOnly" in item && item.adminOnly) || effectiveAdmin)
+  const effectiveSuperAdmin = mounted ? isSuperAdmin : false
+  const navMain = navMainAll.filter((item) => {
+    if ("superAdminOnly" in item && item.superAdminOnly) return effectiveSuperAdmin
+    if ("adminOnly" in item && item.adminOnly) return effectiveAdmin
+    return true
+  })
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

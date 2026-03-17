@@ -3,6 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { MapPin, Settings as SettingsIcon } from "lucide-react"
 import { auth } from "@/auth"
+import { isSuperAdmin } from "@/lib/super-admin"
 import { RideSearchForm } from "@/components/rides/RideSearchForm"
 import { LOGO_URL } from "@/lib/constants/brand"
 import { HeaderUserMenu } from "@/components/header-user-menu"
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export default async function SearchPage() {
   const session = await auth()
   const isAdmin = session?.user?.role === "ADMIN"
+  const isOwner = session ? isSuperAdmin(session) : false
   const isLoggedIn = !!session?.user
   const sidebarUser =
     session?.user ?? {
@@ -30,7 +32,7 @@ export default async function SearchPage() {
 
   return (
     <SidebarProvider>
-      <AppSidebar user={sidebarUser} isAdmin={isAdmin} />
+      <AppSidebar user={sidebarUser} isAdmin={isAdmin} isSuperAdmin={isOwner} />
       <SidebarInset>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/95 px-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-background/80 md:h-16 md:gap-4 md:px-6">
           <span className="hidden md:inline-flex">
