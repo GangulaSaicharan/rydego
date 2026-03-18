@@ -60,6 +60,11 @@ export const vehicleCreateSchema = z.object({
     }),
 })
 
+export const updateUserRoleSchema = z.object({
+  userId: z.string().uuid("Invalid user ID."),
+  role: z.enum(["USER", "ADMIN"]),
+})
+
 export const rideSearchSchema = z
   .object({
     fromLocationId: z.string().min(1, "From city is required."),

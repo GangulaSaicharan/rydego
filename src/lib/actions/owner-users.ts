@@ -3,12 +3,10 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/db"
 import { getSuperAdminEmails, isSuperAdmin } from "@/lib/super-admin"
+import { updateUserRoleSchema } from "@/lib/validation"
 import { revalidatePath } from "next/cache"
 
-export async function updateUserRoleOwnerAction(input: {
-  userId: string
-  role: "USER" | "ADMIN"
-}) {
+export async function updateUserRoleOwnerAction(input: unknown) {
   const session = await auth()
   if (!session?.user?.id) {
     return { success: false as const, error: "Unauthorized" }
@@ -17,8 +15,18 @@ export async function updateUserRoleOwnerAction(input: {
     return { success: false as const, error: "Forbidden" }
   }
 
+  const parsed = updateUserRoleSchema.safeParse(input)
+  if (!parsed.success) {
+    const first = parsed.error.flatten().fieldErrors
+    const message =
+      first.userId?.[0] ?? first.role?.[0] ?? "Invalid input."
+    return { success: false as const, error: message }
+  }
+
+  const { userId, role } = parsed.data
+
   const user = await prisma.user.findUnique({
-    where: { id: input.userId },
+    where: { id: userId },
     select: { id: true, email: true, role: true, deletedAt: true },
   })
   if (!user || user.deletedAt) {
@@ -34,15 +42,19 @@ export async function updateUserRoleOwnerAction(input: {
     }
   }
 
-  if (user.role === input.role) {
+  if (user.role === role) {
     return { success: true as const }
   }
 
-  await prisma.user.update({
-    where: { id: input.userId },
-    data: { role: input.role },
-    select: { id: true },
-  })
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+      select: { id: true },
+    })
+  } catch {
+    return { success: false as const, error: "Failed to update role. Please try again." }
+  }
 
   revalidatePath("/admin")
   revalidatePath("/admin/users")
