@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { FileText, Star, Car, ArrowLeft, Phone } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
+import { APP_NAME } from "@/lib/constants/brand"
 
 type Props = { params: Promise<{ userId: string }> }
 
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = user.name || "Driver"
   return {
     title: `${name}'s Profile`,
-    description: `View ${name}'s driver profile, ratings, and ride history on RydeGo.`,
+    description: `View ${name}'s driver profile, ratings, and ride history on ${APP_NAME}.`,
   }
 }
 
@@ -45,7 +46,8 @@ export default async function DriverProfilePage({ params }: Props) {
       bio: true,
       ratingAverage: true,
       ratingCount: true,
-      driverProfile: { select: { totalRides: true, verified: true } },
+      totalRides: true,
+      driverProfile: { select: { verified: true } },
     },
   })
 
@@ -54,7 +56,7 @@ export default async function DriverProfilePage({ params }: Props) {
   const initials = user.name?.[0] ?? "U"
   const hasStats =
     (user.ratingCount && user.ratingCount > 0) ||
-    (user.driverProfile && user.driverProfile.totalRides > 0)
+    user.totalRides > 0
 
   const formattedPhone = (() => {
     if (!user.phone) return null
@@ -124,7 +126,7 @@ export default async function DriverProfilePage({ params }: Props) {
               </CardContent>
             </Card>
           )}
-          {user.driverProfile && user.driverProfile.totalRides > 0 && (
+          {user.totalRides > 0 && (
             <Card size="sm" className="overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -132,10 +134,10 @@ export default async function DriverProfilePage({ params }: Props) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg font-semibold tabular-nums">
-                    {user.driverProfile.totalRides}
+                    {user.totalRides}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    ride{user.driverProfile.totalRides !== 1 ? "s" : ""} given
+                    ride{user.totalRides !== 1 ? "s" : ""} given
                   </p>
                 </div>
               </CardContent>

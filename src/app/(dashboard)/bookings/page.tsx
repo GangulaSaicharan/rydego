@@ -5,10 +5,11 @@ import prisma from "@/lib/db"
 import type { Prisma } from "@prisma/client"
 import { BookingStatus, RideStatus } from "@prisma/client"
 import { BookingsFilterView } from "@/components/rides/BookingsFilterView"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "My Bookings",
-  description: "View and manage your ride bookings on RydeGo.",
+  description: `View and manage your ride bookings on ${APP_NAME}.`,
 }
 
 const bookingInclude = {

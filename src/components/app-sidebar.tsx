@@ -15,7 +15,7 @@ import {
   TicketCheck,
   ShieldCheck,
 } from "lucide-react"
-import { LOGO_URL } from "@/lib/constants/brand"
+import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 
 import {
   Sidebar,
@@ -79,14 +79,14 @@ export function AppSidebar({ user, isAdmin = false, isSuperAdmin = false, ...pro
               <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg bg-primary text-primary-foreground">
                 <Image
                   src={LOGO_URL}
-                  alt="RydeGo"
+                  alt={APP_NAME}
                   width={32}
                   height={32}
                   className="size-8 object-contain"
                 />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">RydeGo</span>
+                <span className="truncate font-semibold">{APP_NAME}</span>
                 <span className="truncate text-xs">Ride Sharing</span>
               </div>
             </SidebarMenuButton>

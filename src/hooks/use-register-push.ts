@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { getFirebaseApp, getFirebaseConfig } from "@/lib/firebase-client"
 import { toast } from "sonner"
+import { LOGO_URL } from "@/lib/constants/brand"
 
 const LOG_PREFIX = "[FCM]"
 
@@ -53,8 +54,7 @@ export function useRegisterPush() {
     let cancelled = false
     done.current = true
 
-    const NOTIFICATION_ICON =
-      "https://res.cloudinary.com/dx0tk0a56/image/upload/v1773498043/ChatGPT_Image_Mar_14__2026__07_43_04_PM-removebg-preview_jhsapl.png"
+    const NOTIFICATION_ICON = LOGO_URL
 
     async function completeRegistration(app: import("firebase/app").FirebaseApp) {
       if (cancelled) return

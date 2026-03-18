@@ -25,10 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { formatDateShortIST, formatTimeIST } from "@/lib/date-time"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Your RydeGo overview – stats, quick actions, and recent activity.",
+  description: `Your ${APP_NAME} overview – stats, quick actions, and recent activity.`,
 };
 
 export default async function DashboardPage() {
@@ -43,8 +44,8 @@ export default async function DashboardPage() {
   // Fetch stats and data in parallel (skip publishedRidesCount for non-admin)
   const [
     user,
-    publishedRidesCount,
-    bookingsCount,
+    ridesOfferedCount,
+    bookingsMadeCount,
     upcomingRides,
     pendingBookingsCount,
     recentRides
@@ -100,11 +101,18 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      title: "Total Rides",
-      value: isAdmin ? (bookingsCount + publishedRidesCount).toString() : bookingsCount.toString(),
-      description: isAdmin ? "Taken & Offered" : "Rides taken",
+      title: "Rides offered",
+      value: ridesOfferedCount.toString(),
+      description: "You are the driver",
       icon: Car,
       color: "text-blue-500",
+    },
+    {
+      title: "Bookings made",
+      value: bookingsMadeCount.toString(),
+      description: "You are the passenger",
+      icon: Users,
+      color: "text-violet-500",
     },
     ...(isAdmin
       ? [
@@ -132,7 +140,7 @@ export default async function DashboardPage() {
     <main className="flex-1 space-y-5 md:space-y-6 p-0 md:p-0">
       {/* Mobile-first app header */}
       <section className="space-y-1">
-        <p className="text-sm text-muted-foreground">Welcome back to Rydego</p>
+        <p className="text-sm text-muted-foreground">Welcome back to {APP_NAME}</p>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
           Hi, {firstName}
         </h1>

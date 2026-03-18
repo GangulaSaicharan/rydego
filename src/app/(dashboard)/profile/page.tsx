@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Mail, Phone, FileText, Star, Car } from "lucide-react"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Profile",
-  description: "Your RydeGo profile – edit details, ratings, and driver info.",
+  description: `Your ${APP_NAME} profile – edit details, ratings, and driver info.`,
 };
 
 export default async function ProfilePage() {
@@ -30,13 +31,14 @@ export default async function ProfilePage() {
       bio: true,
       ratingAverage: true,
       ratingCount: true,
-      driverProfile: { select: { totalRides: true, verified: true } },
+      totalRides: true,
+      driverProfile: { select: { verified: true } },
     },
   })
   if (!user) redirect("/login")
 
   const initials = user.name?.[0] ?? user.email?.[0] ?? "U"
-  const hasStats = (user.ratingCount && user.ratingCount > 0) || (user.driverProfile && user.driverProfile.totalRides > 0)
+  const hasStats = (user.ratingCount && user.ratingCount > 0) || user.totalRides > 0
 
   const formattedPhone = (() => {
     if (!user.phone) return null
@@ -107,15 +109,15 @@ export default async function ProfilePage() {
               </CardContent>
             </Card>
           )}
-          {user.driverProfile && user.driverProfile.totalRides > 0 && (
+          {user.totalRides > 0 && (
             <Card size="sm" className="overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Car className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-lg font-semibold tabular-nums">{user.driverProfile.totalRides}</p>
-                  <p className="text-xs text-muted-foreground">ride{user.driverProfile.totalRides !== 1 ? "s" : ""} given</p>
+                  <p className="text-lg font-semibold tabular-nums">{user.totalRides}</p>
+                  <p className="text-xs text-muted-foreground">ride{user.totalRides !== 1 ? "s" : ""} given</p>
                 </div>
               </CardContent>
             </Card>

@@ -11,14 +11,29 @@ export const authConfig = {
   ],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isHomePage = nextUrl.pathname === "/";
-      
-      if (isHomePage) {
-        if (isLoggedIn) return true;
-        return false; // Redirect unauthenticated users to login page
+      const isLoggedIn = !!auth?.user
+      const { pathname } = nextUrl
+
+      // Public pages (guest-accessible)
+      if (
+        pathname === "/" ||
+        pathname === "/login" ||
+        pathname.startsWith("/search") ||
+        pathname.startsWith("/rides") ||
+        pathname.startsWith("/profile") ||
+        pathname.startsWith("/privacy") ||
+        pathname.startsWith("/terms")
+      ) {
+        return true
       }
-      return true;
+
+      // Lock down API routes (except /api/auth which is excluded by middleware matcher)
+      if (pathname.startsWith("/api")) {
+        return isLoggedIn
+      }
+
+      // Everything else requires login
+      return isLoggedIn
     },
   },
   pages: {

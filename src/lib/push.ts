@@ -55,7 +55,7 @@ export async function sendPushToUser(
     const dataPayload = {
       title: formattedTitle,
       body: message,
-      tag: "rydego-notification",
+      tag: "app-notification",
       url,
     }
     const send = tokens.map(({ token }) =>

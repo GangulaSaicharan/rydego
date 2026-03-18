@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { APP_NAME } from "@/lib/constants/brand"
 
 function isIOS() {
   if (typeof navigator === "undefined") return false
@@ -9,18 +10,12 @@ function isIOS() {
 }
 
 export function NotificationSettings() {
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default")
-  const [ios, setIos] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    setIos(isIOS())
-    if (!("Notification" in window)) {
-      setPermission("unsupported")
-      return
-    }
-    setPermission(Notification.permission)
-  }, [])
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(() => {
+    if (typeof window === "undefined") return "default"
+    if (!("Notification" in window)) return "unsupported"
+    return Notification.permission
+  })
+  const [ios] = useState(() => isIOS())
 
   const handleEnable = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return
@@ -82,7 +77,7 @@ export function NotificationSettings() {
 
       {ios && (
         <p className="text-xs text-muted-foreground">
-          On iPhone/iPad, make sure you open RydeGo in Safari and add it to your Home Screen to receive push notifications.
+          On iPhone/iPad, make sure you open {APP_NAME} in Safari and add it to your Home Screen to receive push notifications.
         </p>
       )}
     </section>

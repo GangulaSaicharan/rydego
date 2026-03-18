@@ -5,10 +5,11 @@ import { auth } from "@/auth"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Settings",
-  description: "Manage your RydeGo app settings.",
+  description: `Manage your ${APP_NAME} app settings.`,
 }
 
 export default async function SettingsPage() {
@@ -28,7 +29,7 @@ export default async function SettingsPage() {
         <div>
           <h3 className="text-base font-semibold">Install app</h3>
           <p className="text-sm text-muted-foreground">
-            Add RydeGo to your home screen for faster access.
+            Add {APP_NAME} to your home screen for faster access.
           </p>
         </div>
         <InstallPwaButton className="w-full sm:w-auto" />

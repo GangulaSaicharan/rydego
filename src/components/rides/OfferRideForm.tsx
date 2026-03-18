@@ -130,7 +130,12 @@ export function OfferRideForm() {
       const result = await createRideAction(formData)
       if (result.success) {
         toast.success("Ride published successfully")
-        router.push("/dashboard")
+        if (result.rideId) {
+          router.push(`/rides/${result.rideId}`)
+          router.refresh()
+        } else {
+          router.push("/dashboard")
+        }
       } else {
         setError(result.error || "Failed to create ride")
         setRequiresProfile("requiresProfile" in result && result.requiresProfile === true)

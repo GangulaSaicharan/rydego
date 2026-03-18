@@ -6,10 +6,11 @@ import { RideStatus } from "@prisma/client"
 import { RidesFilterView } from "@/components/rides/RidesFilterView"
 import { buttonVariants } from "@/components/ui"
 import { PlusCircle } from "lucide-react"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "My Rides",
-  description: "View and manage your offered and taken rides on RydeGo.",
+  description: `View and manage your offered and taken rides on ${APP_NAME}.`,
 }
 
 const rideInclude = {

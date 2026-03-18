@@ -33,7 +33,7 @@ import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
-import { LOGO_URL } from "@/lib/constants/brand"
+import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const route = `${ride.fromLocation.city} → ${ride.toLocation.city}`
   return {
     title: `Ride: ${route}`,
-    description: `View ride details: ${route}. Date & time, driver, price on RydeGo.`,
+    description: `View ride details: ${route}. Date & time, driver, price on ${APP_NAME}.`,
   }
 }
 
@@ -116,6 +116,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
 
   let userBooking: Awaited<ReturnType<typeof prisma.booking.findFirst>> = null
   let driverBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> = []
+  let acceptedBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> = []
 
   if (userId) {
     const [booking, dBookings] = await Promise.all([
@@ -135,6 +136,21 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
     ])
     userBooking = booking
     driverBookings = dBookings
+
+    const hasAccepted = booking?.status === "ACCEPTED"
+    const canSeeOtherPassengers = isDriver || isAdmin || isOwner || hasAccepted
+
+    if (canSeeOtherPassengers) {
+      acceptedBookings = isDriver
+        ? dBookings.filter((b) => b.status === "ACCEPTED")
+        : await prisma.booking.findMany({
+            where: { rideId: id, status: "ACCEPTED" },
+            include: {
+              passenger: { select: { id: true, name: true, image: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          })
+    }
   }
 
   const hasActiveBooking = userBooking && userBooking.status !== "CANCELLED" && userBooking.status !== "REJECTED"
@@ -155,6 +171,35 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
 
   const hasPendingBooking = userBooking?.status === "PENDING"
   const hasAcceptedBooking = userBooking?.status === "ACCEPTED"
+
+  type AcceptedPassengerItem = {
+    passengerId: string
+    seats: number
+    passenger: { id: string; name: string | null; image: string | null }
+  }
+  const acceptedPassengersSerialized: AcceptedPassengerItem[] = (() => {
+    if (!acceptedBookings?.length) return []
+
+    const items = acceptedBookings
+      .map((b) => {
+        const withPassenger = b as typeof b & {
+          passenger: { id: string; name: string | null; image: string | null }
+        }
+        return {
+          passengerId: withPassenger.passengerId,
+          seats: withPassenger.seats,
+          passenger: withPassenger.passenger,
+        }
+      })
+      .filter((x) => x.passenger.id !== userId)
+
+    const byPassengerId = new Map<string, AcceptedPassengerItem>()
+    for (const item of items) {
+      // defensive: ensure uniqueness if data ever contains duplicates
+      if (!byPassengerId.has(item.passengerId)) byPassengerId.set(item.passengerId, item)
+    }
+    return Array.from(byPassengerId.values())
+  })()
 
   type DriverBookingItem = {
   id: string
@@ -357,6 +402,50 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
             </Link>
           </CardContent>
         </Card>
+
+        {acceptedPassengersSerialized.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Booked passengers
+              </CardTitle>
+              <CardDescription>
+                People already booked on this ride
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {acceptedPassengersSerialized.map((b) => (
+                <Link
+                  key={b.passenger.id}
+                  href={`/profile/${b.passenger.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg p-2 -m-2 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage
+                        src={b.passenger.image ?? ""}
+                        alt={b.passenger.name ?? "Passenger"}
+                      />
+                      <AvatarFallback>
+                        {b.passenger.name?.[0] ?? "P"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium leading-tight">
+                        {b.passenger.name ?? "Passenger"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {b.seats} seat{b.seats === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-primary">View →</span>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {ride.description && (
@@ -488,13 +577,13 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           >
             <Image
               src={LOGO_URL}
-              alt="RydeGo"
+              alt={APP_NAME}
               width={32}
               height={32}
               className="size-8 object-contain md:size-9"
             />
             <span className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
-              RydeGo
+              {APP_NAME}
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-1">

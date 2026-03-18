@@ -2,10 +2,11 @@ import type { Metadata } from "next"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { OfferRideForm } from "@/components/rides/OfferRideForm"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Publish a Ride",
-  description: "Offer a ride on RydeGo. Set route, date, time, and price.",
+  description: `Offer a ride on ${APP_NAME}. Set route, date, time, and price.`,
 };
 
 export default async function PublishPage() {

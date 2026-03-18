@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { toast } from "sonner"
+import { APP_NAME } from "@/lib/constants/brand"
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice?: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>
 }
 
-const STORAGE_KEY = "rydego_install_prompt_last"
+const STORAGE_KEY = "pwa_install_prompt_last"
 
 function isInstalled() {
   if (typeof window === "undefined") return false
@@ -47,8 +48,8 @@ export function InstallPwaLoginPrompt() {
       const last = window.localStorage.getItem(STORAGE_KEY)
       if (last === today) return
 
-      toast("Install RydeGo app", {
-        description: "Add RydeGo to your home screen for faster access.",
+      toast(`Install ${APP_NAME} app`, {
+        description: `Add ${APP_NAME} to your home screen for faster access.`,
         action: {
           label: "Install",
           onClick: async () => {

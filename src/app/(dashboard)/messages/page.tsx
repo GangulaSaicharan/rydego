@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageSquare } from "lucide-react"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Messages",
-  description: "Chat with drivers and passengers on RydeGo.",
+  description: `Chat with drivers and passengers on ${APP_NAME}.`,
 };
 
 export default function MessagesPage() {
@@ -24,7 +25,7 @@ export default function MessagesPage() {
           <MessageSquare className="h-12 w-12 text-muted-foreground/20 mb-4" />
           <p className="text-lg font-medium text-muted-foreground">Messaging is coming soon!</p>
           <p className="text-sm text-muted-foreground max-w-sm mt-2">
-            Communicate easily with other members of the RydeGo community.
+            Communicate easily with other members of the {APP_NAME} community.
           </p>
         </CardContent>
       </Card>

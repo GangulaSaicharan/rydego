@@ -4,21 +4,21 @@ enum ReviewTargetType {
 }
 
 model Review {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  rideId    String
+  rideId String
 
-  authorId  String
-  targetId  String
+  authorId String
+  targetId String
 
   targetType ReviewTargetType
 
-  rating    Int
-  comment   String?
+  rating  Int
+  comment String?
 
   createdAt DateTime @default(now())
 
-  ride   Ride @relation(fields: [rideId], references: [id])
+  ride Ride @relation(fields: [rideId], references: [id])
 
   author User @relation("ReviewAuthor", fields: [authorId], references: [id])
   target User @relation("ReviewTarget", fields: [targetId], references: [id])

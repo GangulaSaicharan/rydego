@@ -6,8 +6,7 @@ importScripts(
   "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"
 );
 
-const DEFAULT_ICON =
-  "https://res.cloudinary.com/dx0tk0a56/image/upload/v1773498043/ChatGPT_Image_Mar_14__2026__07_43_04_PM-removebg-preview_jhsapl.png";
+const DEFAULT_ICON = null;
 
 const firebaseConfig = {
   apiKey: "AIzaSyClSELcZe1BVkfv5FvVqPZUOhJposY1Mrc",
@@ -27,16 +26,18 @@ messaging.onBackgroundMessage(function (payload) {
   const data = payload.data || {};
   const title = n.title || data.title || "Notification";
   const body = n.body || data.body || "";
-  const icon = n.icon || n.image || data.icon || DEFAULT_ICON;
-  return self.registration.showNotification(title, {
+  const icon = n.icon || n.image || data.icon || DEFAULT_ICON || undefined;
+  const badge = n.badge || icon || undefined;
+  const options = {
     body,
-    icon,
-    badge: n.badge || icon,
     tag: data.tag || "fcm-default",
     requireInteraction: false,
     vibrate: [200, 100, 200],
     data: { url: data.url || "/dashboard", payload: data },
-  });
+    ...(icon ? { icon } : {}),
+    ...(badge ? { badge } : {}),
+  };
+  return self.registration.showNotification(title, options);
 });
 
 self.addEventListener("notificationclick", function (event) {

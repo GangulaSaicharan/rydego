@@ -4,12 +4,12 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { GoogleSignInButton } from "@/components/auth/google-auth-button"
 import { LoginErrorToast } from "@/components/auth/login-error-toast"
-import { LOGO_URL } from "@/lib/constants/brand"
+import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { auth } from "@/auth"
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to RydeGo to find or offer rides and manage your trips.",
+  description: `Sign in to ${APP_NAME} to find or offer rides and manage your trips.`,
 }
 
 const LINK_CLASS =
@@ -45,7 +45,7 @@ function LoginHeader() {
       <div className="inline-flex items-center justify-center [&_img]:w-28 [&_img]:h-28 sm:[&_img]:w-32 sm:[&_img]:h-32">
         <Image
           src={LOGO_URL}
-          alt="RydeGo"
+          alt={APP_NAME}
           width={128}
           height={128}
           className="object-contain"
@@ -54,7 +54,7 @@ function LoginHeader() {
       </div>
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Welcome to RydeGo
+          Welcome to {APP_NAME}
         </h1>
         <p className="text-muted-foreground text-base sm:text-lg max-w-[280px] mx-auto">
           Sign in to find rides.
@@ -137,7 +137,7 @@ function SignInBlock({
 function LoginFooter() {
   return (
     <p className="text-center text-sm text-muted-foreground">
-      Powered by <span className="font-semibold text-foreground">RydeGo</span>
+      Powered by <span className="font-semibold text-foreground">{APP_NAME}</span>
     </p>
   )
 }

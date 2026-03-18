@@ -5,7 +5,6 @@ import Link from "next/link"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { buttonVariants } from "@/components/ui"
 import { Calendar, CheckCircle2, Loader2, PlusCircle } from "lucide-react"
-import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { RideRow, type RideRowRide } from "./RideRow"
 
 function EmptySection({ message }: { message: string }) {
@@ -94,11 +93,7 @@ export function RidesFilterView({
                       ? "default"
                       : "outline"
                 }
-                action={
-                  currentFilter === "upcoming" && ride.driverId === userId ? (
-                    <CancelRideButton rideId={ride.id} size="icon" compact />
-                  ) : undefined
-                }
+                action={undefined}
               />
             ))}
           </div>

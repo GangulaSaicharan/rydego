@@ -4,41 +4,43 @@ enum UserRole {
 }
 
 model User {
-  id              String   @id @default(uuid())
-  name            String?
-  email           String?  @unique
-  emailVerified   DateTime?
-  image           String?
-  phone           String?
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
 
-  role            UserRole @default(USER)
+  role UserRole @default(USER)
 
-  bio             String?
-  ratingAverage   Float    @default(0)
-  ratingCount     Int      @default(0)
+  bio           String?
+  ratingAverage Float   @default(0)
+  ratingCount   Int     @default(0)
+  totalRides    Int     @default(0)
+  totalBookings Int     @default(0)
 
-  isBlocked       Boolean  @default(false)
-  lastLoginAt     DateTime?
+  isBlocked   Boolean   @default(false)
+  lastLoginAt DateTime?
 
-  accounts        Account[]
-  sessions        Session[]
+  accounts Account[]
+  sessions Session[]
 
-  driverProfile   DriverProfile?
+  driverProfile DriverProfile?
 
-  vehicles        Vehicle[]
-  rides           Ride[]     @relation("DriverRides")
-  bookings        Booking[]
+  vehicles Vehicle[]
+  rides    Ride[]    @relation("DriverRides")
+  bookings Booking[]
 
-  reviewsGiven    Review[]   @relation("ReviewAuthor")
-  reviewsReceived Review[]   @relation("ReviewTarget")
+  reviewsGiven    Review[] @relation("ReviewAuthor")
+  reviewsReceived Review[] @relation("ReviewTarget")
 
-  notifications   Notification[]
-  fcmTokens       UserFcmToken[]
+  notifications Notification[]
+  fcmTokens     UserFcmToken[]
 
-  deletedAt       DateTime?
+  deletedAt DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model UserFcmToken {
@@ -57,7 +59,6 @@ model DriverProfile {
   userId        String  @unique
   licenseNumber String?
   verified      Boolean @default(false)
-  totalRides    Int     @default(0)
 
   user User @relation(fields: [userId], references: [id])
 }

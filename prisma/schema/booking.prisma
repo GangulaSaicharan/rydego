@@ -8,19 +8,19 @@ enum BookingStatus {
 }
 
 model Booking {
-  id          String @id @default(uuid())
+  id String @id @default(uuid())
 
   rideId      String
   passengerId String
 
-  seats       Int
+  seats Int
 
-  totalPrice  Decimal? @db.Decimal(10,2)
+  totalPrice Decimal? @db.Decimal(10, 2)
 
-  status      BookingStatus @default(PENDING)
+  status BookingStatus @default(PENDING)
 
-  pickupNote  String?
-  dropNote    String?
+  pickupNote String?
+  dropNote   String?
 
   events BookingEvent[]
 
@@ -35,10 +35,13 @@ model Booking {
 
   @@index([rideId])
   @@index([passengerId])
+  @@index([passengerId, status])
+  @@index([rideId, status])
+  @@index([rideId, passengerId, status])
 }
 
 model BookingEvent {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
   bookingId String
   type      String

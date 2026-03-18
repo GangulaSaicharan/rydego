@@ -1,9 +1,9 @@
 model Location {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  city      String
-  state     String?
-  country   String?
+  city    String
+  state   String?
+  country String?
 
   latitude  Float
   longitude Float

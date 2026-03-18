@@ -2,19 +2,29 @@
 
 import prisma from "@/lib/db"
 import { auth } from "@/auth"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
 import { requireMobile } from "@/lib/require-mobile"
 import { createNotifications } from "@/lib/notifications"
 import { parseISTLocalDateTime } from "@/lib/date-time"
 import { rideFormSchema, rideSearchSchema } from "@/lib/validation"
 
-export async function getCitiesAction() {
-  try {
-    const cities = await prisma.location.findMany({
+const CITIES_CACHE_TAG = "cities"
+
+const getCachedCities = unstable_cache(
+  async () => {
+    return await prisma.location.findMany({
       where: { status: true },
       select: { id: true, city: true },
       orderBy: { city: "asc" },
     })
+  },
+  ["locations", "cities", "active", "v1"],
+  { tags: [CITIES_CACHE_TAG] }
+)
+
+export async function getCitiesAction() {
+  try {
+    const cities = await getCachedCities()
     return { success: true, cities }
   } catch (error) {
     console.error("Failed to fetch cities:", error)
@@ -123,7 +133,7 @@ export async function createRideAction(formData: FormData) {
       }
 
       // Create ride
-      return await tx.ride.create({
+      const created = await tx.ride.create({
         data: {
           driverId: session.user!.id!,
           vehicleId: vehicle.id,
@@ -140,6 +150,14 @@ export async function createRideAction(formData: FormData) {
           status: "SCHEDULED"
         }
       })
+
+      await tx.user.update({
+        where: { id: session.user!.id! },
+        data: { totalRides: { increment: 1 } },
+        select: { id: true },
+      })
+
+      return created
     })
 
     revalidatePath("/dashboard")
@@ -188,18 +206,36 @@ export async function deleteRideAction(rideId: string) {
     if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot delete a ride after departure time" }
     if (new Date(ride.departureTime).getTime() - Date.now() <= TWO_HOURS_MS) return { success: false, error: "Ride cannot be cancelled within 2 hours of departure" }
 
+    const passengerIds = Array.from(new Set(ride.bookings.map((b) => b.passengerId)))
+
     await prisma.$transaction(async (tx) => {
       await tx.booking.updateMany({
         where: { rideId, status: { in: ["PENDING", "ACCEPTED"] } },
         data: { status: "CANCELLED" },
       })
+
+      if (passengerIds.length > 0) {
+        await Promise.all(
+          passengerIds.map((passengerId) =>
+            tx.user.update({
+              where: { id: passengerId },
+              data: { totalBookings: { decrement: 1 } },
+            })
+          )
+        )
+      }
+
       await tx.ride.update({
         where: { id: rideId },
         data: { status: "CANCELLED" },
       })
+
+      await tx.user.update({
+        where: { id: ride.driverId },
+        data: { totalRides: { decrement: 1 } },
+      })
     })
 
-    const passengerIds = ride.bookings.map((b) => b.passengerId)
     const route =
       ride.fromLocation && ride.toLocation
         ? `${ride.fromLocation.city} → ${ride.toLocation.city}`
@@ -239,6 +275,12 @@ export async function updateRideAction(rideId: string, formData: FormData) {
       seatsTotal: true,
       seatsAvailable: true,
       vehicleId: true,
+      pricePerSeat: true,
+      fromLocationId: true,
+      toLocationId: true,
+      arrivalTime: true,
+      description: true,
+      fromSlot: true,
     },
   })
   if (!ride) return { success: false, error: "Ride not found" }
@@ -246,6 +288,60 @@ export async function updateRideAction(rideId: string, formData: FormData) {
   if (ride.status !== "SCHEDULED") return { success: false, error: "Only scheduled rides can be edited" }
   if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot edit a ride after departure time" }
 
+  const activeBookingsCount = await prisma.booking.count({
+    where: { rideId, status: { in: ["PENDING", "ACCEPTED"] } },
+  })
+
+  const bookedSeats = ride.seatsTotal - ride.seatsAvailable
+
+  // If there are any active bookings, only seats can be changed.
+  if (activeBookingsCount > 0) {
+    const nextSeatsTotalStr = (formData.get("seatsTotal") as string | null) ?? ""
+    const parsedSeats = rideFormSchema.shape.seatsTotal.safeParse(nextSeatsTotalStr)
+    if (!parsedSeats.success) {
+      const firstError = parsedSeats.error.issues[0]?.message ?? "Invalid seats"
+      return { success: false, error: firstError }
+    }
+    const seatsTotal = Number(parsedSeats.data)
+    if (seatsTotal < bookedSeats) {
+      return { success: false, error: `Cannot set fewer than ${bookedSeats} seats (already booked)` }
+    }
+    if (!ride.vehicleId) {
+      return { success: false, error: "Ride has no vehicle assigned" }
+    }
+    const vehicleId = ride.vehicleId!
+
+    try {
+      const updated = await prisma.$transaction(async (tx) => {
+        const vehicle = await tx.vehicle.findFirst({
+          where: { id: vehicleId, ownerId: session.user!.id!, deletedAt: null },
+          select: { id: true, seats: true },
+        })
+        if (!vehicle) throw new Error("Invalid vehicle selection")
+        if (seatsTotal > vehicle.seats) {
+          throw new Error(`Seats cannot exceed vehicle capacity (${vehicle.seats})`)
+        }
+        return await tx.ride.update({
+          where: { id: rideId },
+          data: {
+            seatsTotal,
+            seatsAvailable: seatsTotal - bookedSeats,
+          },
+        })
+      })
+      revalidatePath("/dashboard")
+      revalidatePath("/rides")
+      revalidatePath("/rides/[id]", "page")
+      revalidatePath("/search")
+      return { success: true, rideId: updated.id }
+    } catch (error) {
+      console.error("Failed to update ride seats:", error)
+      const message = error instanceof Error && error.message ? error.message : "Failed to update ride"
+      return { success: false, error: message }
+    }
+  }
+
+  // No active bookings: allow full edit (time, locations, notes, etc.)
   const raw = {
     vehicleId: (formData.get("vehicleId") as string | null) ?? ride.vehicleId ?? "",
     fromLocationId: (formData.get("fromLocationId") as string | null) ?? "",
@@ -293,13 +389,13 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 
   const pricePerSeat = Number(pricePerSeatStr)
   const seatsTotal = Number(seatsTotalStr)
-  const fromSlot = fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
+  const fromSlot =
+    fromSlotStart && fromSlotEnd ? `${fromSlotStart} to ${fromSlotEnd}` : fromSlotStart || fromSlotEnd || null
 
   if (fromLocationId === toLocationId) {
     return { success: false, error: "From and To city cannot be the same" }
   }
 
-  const bookedSeats = ride.seatsTotal - ride.seatsAvailable
   if (seatsTotal < bookedSeats) {
     return { success: false, error: `Cannot set fewer than ${bookedSeats} seats (already booked)` }
   }
@@ -346,7 +442,8 @@ export async function updateRideAction(rideId: string, formData: FormData) {
     return { success: true, rideId: updated.id }
   } catch (error) {
     console.error("Failed to update ride:", error)
-    return { success: false, error: "Failed to update ride" }
+    const message = error instanceof Error && error.message ? error.message : "Failed to update ride"
+    return { success: false, error: message }
   }
 }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = "rydego-pwa-v2";
+const CACHE_NAME = "pwa-cache-v2";
 
 // Don't cache API, auth, or dynamic endpoints
 function shouldSkipCache(url) {

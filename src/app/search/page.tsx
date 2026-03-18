@@ -1,21 +1,26 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { MapPin, Settings as SettingsIcon } from "lucide-react"
 import { auth } from "@/auth"
 import { isSuperAdmin } from "@/lib/super-admin"
 import { RideSearchForm } from "@/components/rides/RideSearchForm"
-import { LOGO_URL } from "@/lib/constants/brand"
+import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppBottomNav } from "@/components/app-bottom-nav"
 
+const HeaderNotifications = dynamic(() =>
+  import("@/components/header-notifications").then((m) => m.HeaderNotifications),
+)
+
 export const metadata: Metadata = {
   title: "Find a Ride",
   description:
-    "Search for rides by route and date. Share trips and save with RydeGo.",
+    `Search for rides by route and date. Share trips and save with ${APP_NAME}.`,
 }
 
 export default async function SearchPage() {
@@ -48,18 +53,19 @@ export default async function SearchPage() {
           >
             <Image
               src={LOGO_URL}
-              alt="RydeGo"
+              alt={APP_NAME}
               width={32}
               height={32}
               className="size-8 object-contain md:size-9"
             />
             <span className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
-              RydeGo
+              {APP_NAME}
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-1">
             {isLoggedIn ? (
               <>
+                <HeaderNotifications />
                 <Link
                   href="/settings"
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors md:h-10 md:w-10"

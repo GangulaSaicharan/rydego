@@ -7,7 +7,7 @@ import { HeaderUserMenu } from "@/components/header-user-menu"
 import { AddMobileModal } from "@/components/add-mobile-modal"
 import { InstallPwaLoginPrompt } from "@/components/InstallPwaLoginPrompt"
 import { Separator } from "@/components/ui/separator"
-import { LOGO_URL } from "@/lib/constants/brand"
+import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import {
   SidebarInset,
   SidebarProvider,
@@ -75,13 +75,13 @@ export default async function DashboardLayout({
           >
             <Image
               src={LOGO_URL}
-              alt="RydeGo"
+              alt={APP_NAME}
               width={32}
               height={32}
               className="size-8 object-contain md:size-9"
             />
             <span className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
-              RydeGo
+              {APP_NAME}
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-1">

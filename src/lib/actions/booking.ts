@@ -102,6 +102,12 @@ export async function createBookingAction(params: {
           },
         })
 
+        await tx.user.update({
+          where: { id: session.user!.id! },
+          data: { totalBookings: { increment: 1 } },
+          select: { id: true },
+        })
+
         if (ride.instantBooking) {
           await tx.ride.update({
             where: { id: rideId },
@@ -128,6 +134,12 @@ export async function createBookingAction(params: {
           pickupNote: pickupNote || null,
           dropNote: dropNote || null,
         },
+      })
+
+      await tx.user.update({
+        where: { id: session.user!.id! },
+        data: { totalBookings: { increment: 1 } },
+        select: { id: true },
       })
 
       if (ride.instantBooking) {
@@ -375,6 +387,13 @@ export async function updateBookingStatusAction(
         where: { id: bookingId },
         data: { status },
       })
+
+      if (status === "CANCELLED" || status === "REJECTED") {
+        await tx.user.update({
+          where: { id: booking.passengerId },
+          data: { totalBookings: { decrement: 1 } },
+        })
+      }
     })
 
     revalidatePath("/rides")

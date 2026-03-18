@@ -11,35 +11,35 @@ enum GenderPreference {
 }
 
 model Ride {
-  id               String @id @default(uuid())
+  id String @id @default(uuid())
 
-  driverId         String
-  vehicleId        String?
+  driverId  String
+  vehicleId String?
 
-  fromLocationId   String
-  toLocationId     String
+  fromLocationId String
+  toLocationId   String
 
-  departureTime    DateTime
-  arrivalTime      DateTime?
+  departureTime DateTime
+  arrivalTime   DateTime?
 
-  pricePerSeat     Decimal @db.Decimal(10,2)
-  currency         String  @default("INR")
+  pricePerSeat Decimal @db.Decimal(10, 2)
+  currency     String  @default("INR")
 
-  seatsTotal       Int
-  seatsAvailable   Int
+  seatsTotal     Int
+  seatsAvailable Int
 
-  instantBooking   Boolean @default(true)
+  instantBooking Boolean @default(true)
 
   genderPreference GenderPreference @default(NONE)
 
-  status           RideStatus @default(SCHEDULED)
+  status RideStatus @default(SCHEDULED)
 
-  description      String?
+  description String?
 
   /// Slot time e.g. "5am to 6am"
-  fromSlot         String?
+  fromSlot String?
 
-  deletedAt        DateTime?
+  deletedAt DateTime?
 
   driver User @relation("DriverRides", fields: [driverId], references: [id])
 
@@ -57,6 +57,10 @@ model Ride {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([driverId])
+  @@index([status, departureTime])
+  @@index([fromLocationId, toLocationId, departureTime])
+  @@index([deletedAt])
   @@index([departureTime])
   @@index([fromLocationId])
   @@index([toLocationId])
@@ -65,8 +69,8 @@ model Ride {
 }
 
 model RideStop {
-  id        String @id @default(uuid())
-  rideId    String
+  id     String @id @default(uuid())
+  rideId String
 
   order     Int
   city      String
@@ -75,6 +79,6 @@ model RideStop {
 
   ride Ride @relation(fields: [rideId], references: [id])
 
-  @@index([rideId])
   @@unique([rideId, order])
+  @@index([rideId])
 }

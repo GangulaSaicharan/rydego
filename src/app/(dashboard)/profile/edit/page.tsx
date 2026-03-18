@@ -8,10 +8,11 @@ import { EditProfileForm } from "./edit-profile-form"
 import { Card, CardContent,  buttonVariants} from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { ArrowLeft } from "lucide-react"
+import { APP_NAME } from "@/lib/constants/brand"
 
 export const metadata: Metadata = {
   title: "Edit Profile",
-  description: "Update your name, phone, and bio on RydeGo.",
+  description: `Update your name, phone, and bio on ${APP_NAME}.`,
 };
 
 export default async function EditProfilePage() {
