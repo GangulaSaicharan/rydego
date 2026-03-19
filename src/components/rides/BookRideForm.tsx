@@ -4,9 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -37,8 +35,6 @@ export function BookRideForm({
 }: BookRideFormProps) {
   const router = useRouter()
   const [seats, setSeats] = useState(1)
-  const [pickupNote, setPickupNote] = useState("")
-  const [dropNote, setDropNote] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profileError, setProfileError] = useState<boolean>(false)
 
@@ -54,8 +50,6 @@ export function BookRideForm({
       const result = await createBookingAction({
         rideId,
         seats,
-        pickupNote: pickupNote.trim() || undefined,
-        dropNote: dropNote.trim() || undefined,
       })
       if (result.success) {
         toast.success(result.message ?? "Booking request sent")
@@ -90,30 +84,6 @@ export function BookRideForm({
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="pickupNote">Pickup note (optional)</Label>
-        <Textarea
-          id="pickupNote"
-          placeholder="e.g. Near the main gate"
-          value={pickupNote}
-          onChange={(e) => setPickupNote(e.target.value)}
-          rows={2}
-          className="resize-none"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="dropNote">Drop note (optional)</Label>
-        <Textarea
-          id="dropNote"
-          placeholder="e.g. Drop at bus stop"
-          value={dropNote}
-          onChange={(e) => setDropNote(e.target.value)}
-          rows={2}
-          className="resize-none"
-        />
       </div>
 
       <div className="flex items-center gap-2 text-lg font-bold text-primary pt-2">

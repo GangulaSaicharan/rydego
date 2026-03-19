@@ -25,8 +25,6 @@ type BookingWithPassenger = {
   seats: number
   totalPrice: number | null
   status: string
-  pickupNote: string | null
-  dropNote: string | null
   passenger: {
     id: string
     name: string | null

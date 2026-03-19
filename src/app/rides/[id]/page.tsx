@@ -205,8 +205,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   id: string
   seats: number
   status: string
-  pickupNote: string | null
-  dropNote: string | null
   totalPrice: number | null
   passenger: { id: string; name: string | null; image: string | null; email: string | null }
 }
@@ -216,8 +214,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       id: withPassenger.id,
       seats: withPassenger.seats,
       status: withPassenger.status,
-      pickupNote: withPassenger.pickupNote,
-      dropNote: withPassenger.dropNote,
       totalPrice: withPassenger.totalPrice ? Number(withPassenger.totalPrice) : null,
       passenger: withPassenger.passenger,
     }
@@ -269,7 +265,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <MapPin className="h-5 w-5 text-primary" />
               Route
             </CardTitle>
-            <CardDescription>From and to</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -303,7 +298,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <Calendar className="h-5 w-5 text-primary" />
               Date & time
             </CardTitle>
-            <CardDescription>Departure and arrival</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2">
@@ -330,7 +324,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
                 <Car className="h-5 w-5 text-primary" />
                 Vehicle
               </CardTitle>
-              <CardDescription>Selected for this ride</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-lg font-semibold">
@@ -350,7 +343,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <IndianRupee className="h-5 w-5 text-primary" />
               Fare & seats
             </CardTitle>
-            <CardDescription>Price and availability</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-2xl font-bold text-primary">
@@ -372,7 +364,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <User className="h-5 w-5 text-primary" />
               Driver
             </CardTitle>
-            <CardDescription>Who&apos;s driving</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Link
@@ -403,7 +394,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           </CardContent>
         </Card>
 
-        {acceptedPassengersSerialized.length > 0 && (
+        {!isDriver && acceptedPassengersSerialized.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -455,10 +446,9 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <FileText className="h-5 w-5 text-primary" />
               Notes
             </CardTitle>
-            <CardDescription>Ride description</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm whitespace-pre-wrap">{ride.description}</p>
+            <p className="text-sm whitespace-pre-wrap font-bold">{ride.description}</p>
           </CardContent>
         </Card>
       )}
