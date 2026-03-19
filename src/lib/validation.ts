@@ -40,6 +40,7 @@ export const rideFormSchema = z.object({
   description: z.string().max(1000).optional(),
   fromSlotStart: z.string().optional(),
   fromSlotEnd: z.string().optional(),
+  stopLocationIds: z.array(z.string().min(1)).optional(),
 })
 
 export const vehicleCreateSchema = z.object({

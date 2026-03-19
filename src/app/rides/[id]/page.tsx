@@ -106,6 +106,12 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
       fromLocation: true,
       toLocation: true,
+      stops: {
+        orderBy: { order: "asc" },
+        include: {
+          location: { select: { city: true, } },
+        },
+      },
       vehicle: { select: { brand: true, model: true, plateNumber: true, color: true, seats: true } },
     },
   })
@@ -245,6 +251,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           rideId={ride.id}
           fromCity={ride.fromLocation.city}
           toCity={ride.toLocation.city}
+          stopsCities={ride.stops.map((s) => s.location.city)}
           departureTime={ride.departureTime}
           seatsAvailable={ride.seatsAvailable}
           driverName={ride.driver.name}
@@ -277,6 +284,29 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
                 </p>
               )}
             </div>
+            {ride.stops.length > 0 && (
+              <details className="space-y-3">
+                <summary className="cursor-pointer select-none text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                   Stops ({ride.stops.length})
+                </summary>
+                <div className="border-l-2 border-primary/30 pl-4 ml-2 space-y-3">
+                  {ride.stops.map((stop, idx) => (
+                    <div key={stop.id}>
+                      {/* <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Stop {idx + 1}
+                      </p> */}
+                      <p className="font-semibold text-lg">{stop.location.city}</p>
+                      {/* {stop.location.state && (
+                        <p className="text-sm text-muted-foreground">
+                          {stop.location.state}
+                          {stop.location.country ? `, ${stop.location.country}` : ""}
+                        </p>
+                      )} */}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
             <div className="border-l-2 border-primary/30 pl-4 ml-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 To
@@ -400,9 +430,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
                 <Users className="h-5 w-5 text-primary" />
                 Booked passengers
               </CardTitle>
-              <CardDescription>
-                People already booked on this ride
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {acceptedPassengersSerialized.map((b) => (

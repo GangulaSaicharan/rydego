@@ -60,6 +60,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Some browsers are less consistent with metadata.icons; add explicit icon link. */}
+        <link rel="icon" href={LOGO_URL} type="image/png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

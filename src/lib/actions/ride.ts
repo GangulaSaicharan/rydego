@@ -10,21 +10,22 @@ import { rideFormSchema, rideSearchSchema } from "@/lib/validation"
 
 const CITIES_CACHE_TAG = "cities"
 
-const getCachedCities = unstable_cache(
-  async () => {
-    return await prisma.location.findMany({
-      where: { status: true },
-      select: { id: true, city: true },
-      orderBy: { city: "asc" },
-    })
-  },
-  ["locations", "cities", "active", "v1"],
-  { tags: [CITIES_CACHE_TAG] }
-)
+async function fetchActiveCities() {
+  return prisma.location.findMany({
+    where: { status: true },
+    select: { id: true, city: true },
+    orderBy: { city: "asc" },
+  })
+}
+
+const getCachedCities = unstable_cache(fetchActiveCities, ["locations", "cities", "active", "v1"], {
+  tags: [CITIES_CACHE_TAG],
+})
 
 export async function getCitiesAction() {
   try {
-    const cities = await getCachedCities()
+    const cities =
+      process.env.NODE_ENV === "development" ? await fetchActiveCities() : await getCachedCities()
     return { success: true, cities }
   } catch (error) {
     console.error("Failed to fetch cities:", error)
@@ -65,6 +66,11 @@ export async function createRideAction(formData: FormData) {
     description: (formData.get("description") as string | null) ?? "",
     fromSlotStart: ((formData.get("fromSlotStart") as string | null) ?? "").trim(),
     fromSlotEnd: ((formData.get("fromSlotEnd") as string | null) ?? "").trim(),
+    stopLocationIds: formData
+      .getAll("stopLocationIds")
+      .map((v) => (typeof v === "string" ? v : ""))
+      .map((v) => v.trim())
+      .filter(Boolean),
   }
 
   const parsed = rideFormSchema.safeParse(raw)
@@ -84,6 +90,7 @@ export async function createRideAction(formData: FormData) {
     description,
     fromSlotStart,
     fromSlotEnd,
+    stopLocationIds,
   } = parsed.data
 
   const departureTime = parseISTLocalDateTime(departureTimeStr)
@@ -110,6 +117,14 @@ export async function createRideAction(formData: FormData) {
 
   if (fromLocationId === toLocationId) {
     return { success: false, error: "From and To city cannot be the same" }
+  }
+
+  const uniqueStops = Array.from(new Set(stopLocationIds ?? []))
+  if (uniqueStops.length !== (stopLocationIds ?? []).length) {
+    return { success: false, error: "Duplicate stops are not allowed" }
+  }
+  if (uniqueStops.some((id) => id === fromLocationId || id === toLocationId)) {
+    return { success: false, error: "Stops cannot be the same as from/to city" }
   }
 
   try {
@@ -150,6 +165,27 @@ export async function createRideAction(formData: FormData) {
           status: "SCHEDULED"
         }
       })
+
+      // Create intermediate stops (optional)
+      if (uniqueStops.length > 0) {
+        const stopLocations = await tx.location.findMany({
+          where: { id: { in: uniqueStops }, status: true },
+          select: { id: true },
+        })
+        const found = new Set(stopLocations.map((l) => l.id))
+        const missing = uniqueStops.filter((id) => !found.has(id))
+        if (missing.length > 0) {
+          throw new Error("Invalid stop selection")
+        }
+
+        await tx.rideStop.createMany({
+          data: uniqueStops.map((locationId, i) => ({
+            rideId: created.id,
+            order: i + 1,
+            locationId,
+          })),
+        })
+      }
 
       await tx.user.update({
         where: { id: session.user!.id! },
@@ -353,6 +389,11 @@ export async function updateRideAction(rideId: string, formData: FormData) {
     description: ((formData.get("description") as string | null) ?? "").trim(),
     fromSlotStart: ((formData.get("fromSlotStart") as string | null) ?? "").trim(),
     fromSlotEnd: ((formData.get("fromSlotEnd") as string | null) ?? "").trim(),
+    stopLocationIds: formData
+      .getAll("stopLocationIds")
+      .map((v) => (typeof v === "string" ? v : ""))
+      .map((v) => v.trim())
+      .filter(Boolean),
   }
 
   const parsed = rideFormSchema.safeParse(raw)
@@ -372,6 +413,7 @@ export async function updateRideAction(rideId: string, formData: FormData) {
     description,
     fromSlotStart,
     fromSlotEnd,
+    stopLocationIds,
   } = parsed.data
 
   const departureTime = parseISTLocalDateTime(departureTimeStr)
@@ -394,6 +436,14 @@ export async function updateRideAction(rideId: string, formData: FormData) {
 
   if (fromLocationId === toLocationId) {
     return { success: false, error: "From and To city cannot be the same" }
+  }
+
+  const uniqueStops = Array.from(new Set(stopLocationIds ?? []))
+  if (uniqueStops.length !== (stopLocationIds ?? []).length) {
+    return { success: false, error: "Duplicate stops are not allowed" }
+  }
+  if (uniqueStops.some((id) => id === fromLocationId || id === toLocationId)) {
+    return { success: false, error: "Stops cannot be the same as from/to city" }
   }
 
   if (seatsTotal < bookedSeats) {
@@ -419,6 +469,30 @@ export async function updateRideAction(rideId: string, formData: FormData) {
       if (seatsTotal > vehicle.seats) {
         throw new Error(`Seats cannot exceed vehicle capacity (${vehicle.seats})`)
       }
+
+      // Replace stops (RideStop.order is based on form order)
+      await tx.rideStop.deleteMany({ where: { rideId } })
+
+      if (uniqueStops.length > 0) {
+        const stopLocations = await tx.location.findMany({
+          where: { id: { in: uniqueStops }, status: true },
+          select: { id: true },
+        })
+        const found = new Set(stopLocations.map((l) => l.id))
+        const missing = uniqueStops.filter((id) => !found.has(id))
+        if (missing.length > 0) {
+          throw new Error("Invalid stop selection")
+        }
+
+        await tx.rideStop.createMany({
+          data: uniqueStops.map((locationId, i) => ({
+            rideId,
+            order: i + 1,
+            locationId,
+          })),
+        })
+      }
+
       return await tx.ride.update({
         where: { id: rideId },
         data: {
@@ -499,9 +573,20 @@ export async function searchRidesAction(params: {
               { arrivalTime: null, departureTime: { gte: now } },
             ],
           },
+          // If user-selected cities appear as intermediate stops, still include the ride.
+          {
+            OR: [
+              { fromLocationId },
+              { stops: { some: { locationId: fromLocationId } } },
+            ],
+          },
+          {
+            OR: [
+              { toLocationId },
+              { stops: { some: { locationId: toLocationId } } },
+            ],
+          },
         ],
-        fromLocationId: fromLocationId || undefined,
-        toLocationId: toLocationId || undefined,
         departureTime: date
           ? {
           gte: new Date(date),

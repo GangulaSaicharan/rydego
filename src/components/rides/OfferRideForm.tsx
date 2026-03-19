@@ -52,6 +52,21 @@ export function OfferRideForm() {
   const [vehicleId, setVehicleId] = useState<string>("")
   const [fromLocationId, setFromLocationId] = useState<string>("")
   const [toLocationId, setToLocationId] = useState<string>("")
+  const [stopLocationIds, setStopLocationIds] = useState<string[]>([])
+
+  const MAX_STOPS = 3
+
+  function addStop() {
+    setStopLocationIds((prev) => (prev.length >= MAX_STOPS ? prev : [...prev, ""]))
+  }
+
+  function removeStop(idx: number) {
+    setStopLocationIds((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  function updateStop(idx: number, next: string) {
+    setStopLocationIds((prev) => prev.map((v, i) => (i === idx ? next : v)))
+  }
 
   useEffect(() => {
     async function fetchCities() {
@@ -269,6 +284,87 @@ export function OfferRideForm() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Intermediate Stops (optional)</Label>
+                <p className="text-sm text-muted-foreground">Add up to {MAX_STOPS} stops on the way.</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0"
+                onClick={addStop}
+                disabled={stopLocationIds.length >= MAX_STOPS}
+              >
+                + Add stop
+              </Button>
+            </div>
+
+            {stopLocationIds.length > 0 && (
+              <div className="space-y-3">
+                {stopLocationIds.map((stopId, idx) => {
+                  const usedStopIds = new Set(stopLocationIds.filter((v, i) => i !== idx && v))
+                  const options = cities.filter((c) => {
+                    if (c.id === fromLocationId || c.id === toLocationId) return false
+                    if (usedStopIds.has(c.id) && c.id !== stopId) return false
+                    return true
+                  })
+
+                  return (
+                    <div key={idx} className="flex items-end gap-3">
+                      <div className="flex-1 space-y-2">
+                        <Label>{`Stop ${idx + 1}`}</Label>
+                        <Select
+                          name="stopLocationIds"
+                          value={stopId || null}
+                          onValueChange={(v) => updateStop(idx, v ?? "")}
+                        >
+                          <SelectTrigger className="w-full">
+                            {stopId ? (
+                              <span className="flex flex-1 text-left">
+                                {cities.find((c) => c.id === stopId)?.city ?? "Selected stop"}
+                              </span>
+                            ) : (
+                              <span className="flex flex-1 text-left text-muted-foreground">Select stop city</span>
+                            )}
+                          </SelectTrigger>
+                          <SelectContent>
+                            {citiesLoading ? (
+                              <SelectItem value="loading" disabled>
+                                Loading cities...
+                              </SelectItem>
+                            ) : options.length === 0 ? (
+                              <SelectItem value="none" disabled>
+                                No other stops available
+                              </SelectItem>
+                            ) : (
+                              options.map((city) => (
+                                <SelectItem key={city.id} value={city.id}>
+                                  {city.city}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-9 px-2.5 text-destructive"
+                        onClick={() => removeStop(idx)}
+                        aria-label={`Remove stop ${idx + 1}`}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

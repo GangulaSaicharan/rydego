@@ -14,4 +14,6 @@ model Location {
 
   ridesFrom Ride[] @relation("RideFrom")
   ridesTo   Ride[] @relation("RideTo")
+
+  stops RideStop[] @relation("RideStopLocation")
 }

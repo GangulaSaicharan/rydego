@@ -33,11 +33,8 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([rideId])
-  @@index([passengerId])
-  @@index([passengerId, status])
   @@index([rideId, status])
-  @@index([rideId, passengerId, status])
+  @@index([passengerId, status])
 }
 
 model BookingEvent {

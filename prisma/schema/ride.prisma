@@ -57,15 +57,10 @@ model Ride {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([driverId])
+  @@index([driverId, status, departureTime])
   @@index([status, departureTime])
   @@index([fromLocationId, toLocationId, departureTime])
-  @@index([deletedAt])
   @@index([departureTime])
-  @@index([fromLocationId])
-  @@index([toLocationId])
-  @@index([fromLocationId, departureTime])
-  @@index([toLocationId, departureTime])
 }
 
 model RideStop {
@@ -73,12 +68,12 @@ model RideStop {
   rideId String
 
   order     Int
-  city      String
-  latitude  Float
-  longitude Float
+  locationId String
 
   ride Ride @relation(fields: [rideId], references: [id])
 
+  location Location @relation("RideStopLocation", fields: [locationId], references: [id])
+
   @@unique([rideId, order])
-  @@index([rideId])
+  @@unique([rideId, locationId])
 }

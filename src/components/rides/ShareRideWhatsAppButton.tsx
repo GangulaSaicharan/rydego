@@ -9,6 +9,7 @@ type Props = {
   rideId: string;
   fromCity: string;
   toCity: string;
+  stopsCities?: string[];
   departureTime: Date;
   seatsAvailable: number;
   driverName: string | null;
@@ -20,6 +21,7 @@ export function ShareRideWhatsAppButton({
   rideId,
   fromCity,
   toCity,
+  stopsCities,
   departureTime,
   seatsAvailable,
   driverName,
@@ -27,7 +29,9 @@ export function ShareRideWhatsAppButton({
   vehicleInfo,
 }: Props) {
   const handleShare = () => {
-    const { fromPart, toPart } = getRouteShareParts(fromCity, toCity);
+    const intermediateStops = (stopsCities ?? []).map((s) => s.trim()).filter(Boolean);
+    const { fromPart, toPart } =
+      intermediateStops.length > 0 ? { fromPart: fromCity, toPart: toCity } : getRouteShareParts(fromCity, toCity);
     const { dateStr, relativeStr } = formatShareDateIST(departureTime);
     const timeStr = formatShareTimeIST(departureTime);
 
@@ -45,6 +49,10 @@ export function ShareRideWhatsAppButton({
       seat: String.fromCodePoint(0x1f4ba),
       point: String.fromCodePoint(0x1f449),
       link: String.fromCodePoint(0x1f517),
+      routeMap: String.fromCodePoint(0x1f5fa, 0xfe0f),
+      pin: String.fromCodePoint(0x1f4cd),
+      stop: String.fromCodePoint(0x1f6d1),
+      check: String.fromCodePoint(0x2705),
     };
 
     const message = [
@@ -54,15 +62,19 @@ export function ShareRideWhatsAppButton({
       ...(relativeStr ? [relativeStr, ""] : [""]),
       `${E.clock} *Time:* ${timeStr}`,
       "",
-      "*From*",
+      `*Route*`,
+      `${E.pin} *From*`,
       fromPart,
+      ...(intermediateStops.length > 0
+        ? ["", `${E.stop} *Stops/Via*`, intermediateStops.join(", ")]
+        : []),
       "",
-      "*To*",
+      `${E.pin} *To*`,
       toPart,
       "",
       `${E.seat} *Seats available:* ${seatsAvailable}`,
       "",
-      `${E.point} Book now — ${E.link} View details & contact:`,
+      `${E.check} Book now — ${E.link} View details & contact:`,
       url,
     ]
       .filter((line) => line !== undefined)
