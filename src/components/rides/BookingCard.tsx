@@ -109,6 +109,12 @@ export function BookingCard({
         </p>
       </div>
       <div className="flex justify-between items-center gap-2">
+          <Link
+            href={`/rides/${booking.ride.id}`}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
+          >
+            View ride
+          </Link>
           {/* <Link
             href={`/profile/${booking.ride.driver.id}#contact`}
             className={cn(buttonVariants({ variant: "ghost", size: "xs" }), "gap-1 text-xs")}

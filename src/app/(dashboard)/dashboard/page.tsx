@@ -182,7 +182,11 @@ export default async function DashboardPage() {
             <div className="space-y-3">
               {upcomingRides.length > 0 ? (
                 upcomingRides.map((ride) => (
-                  <div key={ride.id} className="flex items-center p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 active:bg-muted/70 transition-colors">
+                  <Link
+                    key={ride.id}
+                    href={`/rides/${ride.id}`}
+                    className="flex items-center p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 active:bg-muted/70 transition-colors"
+                  >
                     <div className="h-9 w-9 shrink-0 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                       <Clock className="h-4 w-4 text-primary" />
                     </div>
@@ -205,7 +209,7 @@ export default async function DashboardPage() {
                         {ride.driverId === userId ? "Driving" : "Booked"}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed rounded-xl bg-card">
