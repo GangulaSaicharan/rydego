@@ -19,9 +19,7 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { formatDateShortIST, formatTimeIST } from "@/lib/date-time"
@@ -44,21 +42,17 @@ export default async function DashboardPage() {
   // Fetch stats and data in parallel (skip publishedRidesCount for non-admin)
   const [
     user,
-    ridesOfferedCount,
-    bookingsMadeCount,
     upcomingRides,
-    pendingBookingsCount,
-    recentRides
+    pendingBookingsCount
   ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { ratingAverage: true, ratingCount: true },
-    }),
-    prisma.ride.count({
-      where: { driverId: userId },
-    }),
-    prisma.booking.count({
-      where: { passengerId: userId, status: "ACCEPTED" },
+      select: {
+        ratingAverage: true,
+        ratingCount: true,
+        totalRides: true,
+        totalBookings: true,
+      },
     }),
     prisma.ride.findMany({
       where: {
@@ -82,35 +76,20 @@ export default async function DashboardPage() {
         status: "PENDING",
       },
     }),
-    prisma.ride.findMany({
-      where: {
-        OR: [
-          { driverId: userId },
-          { bookings: { some: { passengerId: userId, status: "ACCEPTED" } } },
-        ],
-      },
-      take: 5,
-      orderBy: { departureTime: "desc" },
-      include: {
-        driver: { select: { name: true, image: true } },
-        fromLocation: { select: { city: true } },
-        toLocation: { select: { city: true } },
-      },
-    }),
   ])
 
   const stats = [
     {
       title: "Rides offered",
-      value: ridesOfferedCount.toString(),
-      description: "You are the driver",
+      value: user?.totalRides?.toString() ?? "0",
+      description: "",
       icon: Car,
       color: "text-blue-500",
     },
     {
       title: "Bookings made",
-      value: bookingsMadeCount.toString(),
-      description: "You are the passenger",
+      value: user?.totalBookings?.toString() ?? "0",
+      description: "",
       icon: Users,
       color: "text-violet-500",
     },
@@ -119,7 +98,6 @@ export default async function DashboardPage() {
           {
             title: "Active Requests",
             value: pendingBookingsCount.toString(),
-            description: "Pending approvals",
             icon: AlertCircle,
             color: (pendingBookingsCount > 0 ? "text-orange-500" : "text-muted-foreground") as string,
           },
@@ -128,7 +106,6 @@ export default async function DashboardPage() {
     {
       title: "Avg. Rating",
       value: user?.ratingAverage.toFixed(1) ?? "0.0",
-      description: `From ${user?.ratingCount ?? 0} reviews`,
       icon: Star,
       color: "text-yellow-500",
     },
@@ -158,9 +135,6 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 pb-4">
               <div className="text-xl md:text-2xl font-bold tabular-nums">{stat.value}</div>
-              <p className="text-[10px] md:text-xs text-muted-foreground leading-none mt-1">
-                {stat.description}
-              </p>
             </CardContent>
           </Card>
         ))}
@@ -263,53 +237,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity Section */}
-        <Card className="lg:col-span-7">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">Recent History</CardTitle>
-              <CardDescription className="text-xs">Your last 5 activities</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentRides.length > 0 ? (
-                recentRides.map((ride) => (
-                  <div key={ride.id} className="flex items-center justify-between group py-1">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                        <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? "User"} />
-                        <AvatarFallback className="text-xs">{ride.driver.name?.[0] ?? "U"}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold truncate flex items-center">
-                          {ride.fromLocation.city}
-                          <ChevronRight className="h-3 w-3 mx-1 text-muted-foreground" />
-                          {ride.toLocation.city}
-                        </p>
-                        <p className="text-[10px] font-medium text-muted-foreground">
-                          {formatDateShortIST(ride.departureTime)}
-                          {ride.arrivalTime && ` → ${formatTimeIST(ride.arrivalTime)}`}
-                          {" • "}{ride.driverId === userId ? "You drove" : `With ${ride.driver.name}`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-black">₹{ride.pricePerSeat.toString()}</div>
-                      <Link href={`/rides/${ride.id}`} className="text-[10px] font-bold text-primary hover:underline">
-                        Details
-                      </Link>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-10 bg-accent/20 rounded-xl border border-dashed">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">No history yet</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </main>
   )

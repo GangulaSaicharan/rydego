@@ -151,10 +151,6 @@ export function OfferRideForm() {
 
   return (
     <Card className="max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle>Ride Details</CardTitle>
-        <CardDescription>Enter the details of the ride you&apos;re offering.</CardDescription>
-      </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-3">
           {error && !requiresProfile && (
@@ -272,27 +268,6 @@ export function OfferRideForm() {
                   )}
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>From Slot</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="fromSlotStart"
-                name="fromSlotStart"
-                type="text"
-                placeholder="e.g. 5am"
-                className="flex-1"
-              />
-              <span className="shrink-0 text-sm text-muted-foreground font-medium">to</span>
-              <Input
-                id="fromSlotEnd"
-                name="fromSlotEnd"
-                type="text"
-                placeholder="e.g. 6am"
-                className="flex-1"
-              />
             </div>
           </div>
 
