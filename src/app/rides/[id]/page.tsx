@@ -246,7 +246,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           fromCity={ride.fromLocation.city}
           toCity={ride.toLocation.city}
           departureTime={ride.departureTime}
-          fromSlot={ride.fromSlot}
           seatsAvailable={ride.seatsAvailable}
           driverName={ride.driver.name}
           driverPhone={ride.driver.phone ?? null}

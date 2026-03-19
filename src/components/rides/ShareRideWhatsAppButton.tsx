@@ -10,7 +10,6 @@ type Props = {
   fromCity: string;
   toCity: string;
   departureTime: Date;
-  fromSlot: string | null;
   seatsAvailable: number;
   driverName: string | null;
   driverPhone: string | null;
@@ -22,7 +21,6 @@ export function ShareRideWhatsAppButton({
   fromCity,
   toCity,
   departureTime,
-  fromSlot,
   seatsAvailable,
   driverName,
   driverPhone,
@@ -31,7 +29,7 @@ export function ShareRideWhatsAppButton({
   const handleShare = () => {
     const { fromPart, toPart } = getRouteShareParts(fromCity, toCity);
     const { dateStr, relativeStr } = formatShareDateIST(departureTime);
-    const timeStr = formatShareTimeIST(departureTime, fromSlot);
+    const timeStr = formatShareTimeIST(departureTime);
 
     // Public ride details page: view details, contact & book (no login required to view)
     const url =

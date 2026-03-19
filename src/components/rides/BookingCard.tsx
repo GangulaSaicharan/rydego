@@ -127,7 +127,6 @@ export function BookingCard({
             fromCity={booking.ride.fromLocation.city}
             toCity={booking.ride.toLocation.city}
             departureTime={new Date(booking.ride.departureTime)}
-            fromSlot={null}
             seatsAvailable={booking.seats}
             driverName={booking.ride.driver.name}
             driverPhone={null}

@@ -283,14 +283,15 @@ export function formatShareDateIST(
 }
 
 /**
- * Time string for share message in IST (e.g. "2:30 PM").
+ * Time range string for share message in IST.
+ * e.g. "1:30 PM - 2:30 PM" (1 hour before departure to departure)
  */
 export function formatShareTimeIST(
-  departureTime: Date | string,
-  fromSlot: string | null
+  departureTime: Date | string
 ): string {
-  if (fromSlot?.trim()) return fromSlot.trim()
-  return formatTimeIST(departureTime)
+  const departure = new Date(departureTime)
+  const from = new Date(departure.getTime() - 60 * 60 * 1000)
+  return `${formatTimeIST(from)} - ${formatTimeIST(departure)}`
 }
 
 /**
