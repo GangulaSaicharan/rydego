@@ -146,7 +146,6 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between px-4 md:px-6">
             <div className="space-y-0.5">
               <CardTitle className="text-base md:text-lg">Upcoming Rides</CardTitle>
-              <CardDescription className="text-xs">Your next trips</CardDescription>
             </div>
             <Link href="/rides" className="text-xs text-primary font-medium hover:underline flex items-center active:opacity-80">
               View all <ChevronRight className="h-3 w-3 ml-0.5" />
@@ -205,7 +204,6 @@ export default async function DashboardPage() {
         <Card className="lg:col-span-3 rounded-2xl border shadow-sm">
           <CardHeader className="px-4 md:px-6">
             <CardTitle className="text-base md:text-lg">Quick Actions</CardTitle>
-            <CardDescription className="text-xs">Take the next step</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 px-4 md:px-6 pb-4">
             <Link 

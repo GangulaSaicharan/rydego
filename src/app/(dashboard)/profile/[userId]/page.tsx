@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Star, Car, ArrowLeft, Phone } from "lucide-react"
+import { FileText, Car, ArrowLeft, Phone } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
 import { APP_NAME } from "@/lib/constants/brand"
@@ -44,8 +44,6 @@ export default async function DriverProfilePage({ params }: Props) {
       image: true,
       phone: true,
       bio: true,
-      ratingAverage: true,
-      ratingCount: true,
       totalRides: true,
       driverProfile: { select: { verified: true } },
     },
@@ -54,9 +52,7 @@ export default async function DriverProfilePage({ params }: Props) {
   if (!user) notFound()
 
   const initials = user.name?.[0] ?? "U"
-  const hasStats =
-    (user.ratingCount && user.ratingCount > 0) ||
-    user.totalRides > 0
+  const hasStats = user.totalRides > 0
 
   const formattedPhone = (() => {
     if (!user.phone) return null
@@ -109,23 +105,6 @@ export default async function DriverProfilePage({ params }: Props) {
       {/* Stats row */}
       {hasStats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {user.ratingCount && user.ratingCount > 0 && (
-            <Card size="sm" className="overflow-hidden">
-              <CardContent className="flex items-center gap-3 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
-                  <Star className="h-5 w-5 fill-current" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-lg font-semibold tabular-nums">
-                    {user.ratingAverage.toFixed(1)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {user.ratingCount} review{user.ratingCount !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
           {user.totalRides > 0 && (
             <Card size="sm" className="overflow-hidden">
               <CardContent className="flex items-center gap-3 p-4">

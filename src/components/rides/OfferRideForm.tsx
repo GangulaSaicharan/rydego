@@ -293,7 +293,7 @@ export function OfferRideForm() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="seatsTotal">Available Seats</Label>
               <Input id="seatsTotal" name="seatsTotal" type="number" min="1" max="10" defaultValue="1" required />
