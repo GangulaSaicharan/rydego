@@ -126,7 +126,7 @@ export default async function DashboardPage() {
       {/* Stats - app-style cards */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
         {stats.map((stat, index) => (
-          <Card key={stat.title} className={cn("overflow-hidden rounded-2xl border shadow-sm", index === stats.length - 1 && stats.length === 3 && "col-span-2 lg:col-span-1")}>
+          <Card key={stat.title} className={cn("p-0 overflow-hidden rounded-2xl border shadow-sm", index === stats.length - 1 && stats.length === 3 && "col-span-2 lg:col-span-1")}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-1">
               <CardTitle className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {stat.title}
