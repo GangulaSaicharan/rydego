@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -7,17 +8,16 @@ import {
   Search,
   PlusCircle,
   Clock,
-  MessageSquare,
   TicketCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItemsAll = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/publish", label: "Publish", icon: PlusCircle, adminOnly: true },
   { href: "/search", label: "Search", icon: Search },
-  { href: "/rides", label: "Rides", icon: Clock, driverOnly: true },
+  { href: "/rides", label: "Rides", icon: Clock, adminOnly: true },
   { href: "/bookings", label: "Bookings", icon: TicketCheck },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
 ]
 
 export function AppBottomNav({
@@ -28,9 +28,14 @@ export function AppBottomNav({
   hasDriverProfile?: boolean
 }) {
   const pathname = usePathname()
+
+  // Match sidebar: hide admin-only items until mounted (avoids hydration mismatch)
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => setMounted(true), [])
+  const effectiveAdmin = mounted ? isAdmin : false
   const navItems = navItemsAll.filter((item) => {
-    if ("adminOnly" in item && item.adminOnly && !isAdmin) return false
-    if ("driverOnly" in item && item.driverOnly && !hasDriverProfile && !isAdmin) return false
+    if ("adminOnly" in item && item.adminOnly && !effectiveAdmin) return false
+    if ("driverOnly" in item && item.driverOnly && !hasDriverProfile && !effectiveAdmin) return false
     return true
   })
 

@@ -7,7 +7,6 @@ import {
   Search,
   PlusCircle,
   Clock,
-  MessageSquare,
   User,
   Settings,
   LogOut,
@@ -40,10 +39,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const navMainAll = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Publish", url: "/publish", icon: PlusCircle, adminOnly: true },
   { title: "Find a Ride", url: "/search", icon: Search },
   { title: "My Rides", url: "/rides", icon: Clock, adminOnly: true },
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },
-  { title: "Messages", url: "/messages", icon: MessageSquare },
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Admin", url: "/admin", icon: ShieldCheck, superAdminOnly: true },
 ]
