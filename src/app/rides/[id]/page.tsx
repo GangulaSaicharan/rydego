@@ -42,6 +42,14 @@ import { AppBottomNav } from "@/components/app-bottom-nav"
 
 export const dynamic = "force-dynamic"
 
+const SITE_URL =
+  (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
+    /\/$/,
+    "",
+  )
+
+const logoUrl = `${SITE_URL}/logo.png`
+
 const statusLabel: Record<RideStatus, string> = {
   SCHEDULED: "Upcoming",
   STARTED: "In progress",
@@ -73,9 +81,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
   if (!ride) return { title: "Ride" }
   const route = `${ride.fromLocation.city} → ${ride.toLocation.city}`
+  const canonical = `/rides/${id}`
   return {
     title: `Ride: ${route}`,
     description: `View ride details: ${route}. Date & time, driver, price on ${APP_NAME}.`,
+    alternates: {
+      canonical,
+    },
   }
 }
 
@@ -117,6 +129,37 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   })
 
   if (!ride) notFound()
+
+  const canonicalRideUrl = `${SITE_URL}/rides/${ride.id}`
+  const rideJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Trip",
+    name: `Ride: ${ride.fromLocation.city} to ${ride.toLocation.city}`,
+    url: canonicalRideUrl,
+    description: `Ride details from ${ride.fromLocation.city} to ${ride.toLocation.city} on ${APP_NAME}.`,
+    startDate: ride.departureTime.toISOString(),
+    endDate: ride.arrivalTime?.toISOString(),
+    provider: {
+      "@type": "Organization",
+      name: APP_NAME,
+      url: SITE_URL,
+      logo: logoUrl,
+    },
+    image: ride.driver.image ?? undefined,
+    author: {
+      "@type": "Person",
+      name: ride.driver.name ?? "Driver",
+      url: `${SITE_URL}/profile/${ride.driver.id}`,
+      image: ride.driver.image ?? undefined,
+    },
+    offers: {
+      "@type": "Offer",
+      url: canonicalRideUrl,
+      price: Number(String(ride.pricePerSeat)),
+      priceCurrency: ride.currency ?? "INR",
+      availability: "https://schema.org/InStock",
+    },
+  }
 
   const isDriver = userId ? ride.driverId === userId : false
 
@@ -235,6 +278,10 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
 
   const content = (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(rideJsonLd) }}
+      />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button

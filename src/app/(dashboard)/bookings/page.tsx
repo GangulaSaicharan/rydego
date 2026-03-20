@@ -10,6 +10,10 @@ import { APP_NAME } from "@/lib/constants/brand"
 export const metadata: Metadata = {
   title: "My Bookings",
   description: `View and manage your ride bookings on ${APP_NAME}.`,
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 const bookingInclude = {

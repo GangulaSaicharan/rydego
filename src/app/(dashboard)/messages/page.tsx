@@ -6,6 +6,10 @@ import { APP_NAME } from "@/lib/constants/brand"
 export const metadata: Metadata = {
   title: "Messages",
   description: `Chat with drivers and passengers on ${APP_NAME}.`,
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function MessagesPage() {

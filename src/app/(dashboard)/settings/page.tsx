@@ -10,6 +10,10 @@ import { APP_NAME } from "@/lib/constants/brand"
 export const metadata: Metadata = {
   title: "Settings",
   description: `Manage your ${APP_NAME} app settings.`,
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function SettingsPage() {

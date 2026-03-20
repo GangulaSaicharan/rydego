@@ -5,6 +5,9 @@ import { APP_DESCRIPTION, APP_NAME } from "@/lib/constants/brand";
 export const metadata: Metadata = {
   title: `${APP_NAME} - Search for rides`,
   description: APP_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default async function Home() {

@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: "Find a Ride",
   description:
     `Search for rides by route and date. Share trips and save with ${APP_NAME}.`,
+  alternates: {
+    canonical: "/search",
+  },
 }
 
 export default async function SearchPage() {

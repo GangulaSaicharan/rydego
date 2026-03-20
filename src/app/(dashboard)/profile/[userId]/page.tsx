@@ -11,6 +11,14 @@ import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
 import { APP_NAME } from "@/lib/constants/brand"
 
+const SITE_URL =
+  (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
+    /\/$/,
+    "",
+  )
+
+const logoUrl = `${SITE_URL}/logo.png`
+
 type Props = { params: Promise<{ userId: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -24,6 +32,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${name}'s Profile`,
     description: `View ${name}'s driver profile, ratings, and ride history on ${APP_NAME}.`,
+    alternates: {
+      canonical: `/profile/${userId}`,
+    },
   }
 }
 
@@ -64,8 +75,28 @@ export default async function DriverProfilePage({ params }: Props) {
   })()
   const telHref = user.phone ? `tel:${user.phone}` : undefined
 
+  const canonicalProfileUrl = `${SITE_URL}/profile/${user.id}`
+  const driverJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: user.name ?? "Driver",
+    url: canonicalProfileUrl,
+    image: user.image ?? undefined,
+    jobTitle: user.driverProfile?.verified ? "Verified driver" : "Driver",
+    worksFor: {
+      "@type": "Organization",
+      name: APP_NAME,
+      url: SITE_URL,
+      logo: logoUrl,
+    },
+  }
+
   return (
     <main className="flex-1 space-y-6 max-w-2xl mx-auto">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(driverJsonLd) }}
+      />
       <Link
         href="/search"
         className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-2 -ml-2")}

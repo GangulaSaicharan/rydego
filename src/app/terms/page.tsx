@@ -5,6 +5,9 @@ import { APP_NAME } from "@/lib/constants/brand";
 export const metadata: Metadata = {
   title: "Terms and Conditions",
   description: `Terms and Conditions for using ${APP_NAME} – ride-sharing platform.`,
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function TermsPage() {

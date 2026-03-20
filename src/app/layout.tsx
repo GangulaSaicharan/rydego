@@ -4,6 +4,14 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { APP_NAME, APP_DESCRIPTION, LOGO_URL } from "@/lib/constants/brand";
 
+const SITE_URL =
+  (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
+    /\/$/,
+    "",
+  );
+const siteUrlObj = new URL(SITE_URL);
+const logoUrl = `${SITE_URL}${LOGO_URL}`;
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -24,6 +32,7 @@ export const metadata: Metadata = {
     template: `${APP_NAME} | %s`,
   },
   description: APP_DESCRIPTION,
+  metadataBase: siteUrlObj,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -38,13 +47,15 @@ export const metadata: Metadata = {
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: [{ url: LOGO_URL, alt: APP_NAME }],
+    url: SITE_URL,
+    type: "website",
+    images: [{ url: logoUrl, alt: APP_NAME }],
   },
   twitter: {
     card: "summary",
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: [LOGO_URL],
+    images: [logoUrl],
   },
 };
 
@@ -63,6 +74,19 @@ export default function RootLayout({
       <head>
         {/* Some browsers are less consistent with metadata.icons; add explicit icon link. */}
         <link rel="icon" href={LOGO_URL} type="image/png" />
+        <script
+          type="application/ld+json"
+          // Organization JSON-LD improves basic entity understanding in search results.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: APP_NAME,
+              url: SITE_URL,
+              logo: logoUrl,
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
