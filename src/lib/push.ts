@@ -50,7 +50,10 @@ export async function sendPushToUser(
     console.info("[push] Sending to", tokens.length, "token(s) for user", userId, "| title:", title)
 
     const formattedTitle = formatNotificationTitle(title)
-    // Data-only payload so the foreground page receives the message in onMessage.
+    // Send both:
+    // - `data` for reliable routing + deep-link metadata
+    // - `notification` so the browser can display a system notification reliably
+    //   when the app is in the background (e.g. "recent apps" on Android).
     const invalidTokens: string[] = []
     const dataPayload = {
       title: formattedTitle,
@@ -63,6 +66,7 @@ export async function sendPushToUser(
         .send({
           token,
           data: dataPayload,
+          notification: { title: formattedTitle, body: message },
           android: { priority: "high" },
           apns: { payload: { aps: { sound: "default" } } },
           webpush: { fcmOptions: { link: url } },

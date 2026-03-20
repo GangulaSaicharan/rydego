@@ -103,8 +103,16 @@ export function useRegisterPush() {
 
       let token: string | null = null
       try {
+        // Bind token registration to the correct service worker instance.
+        // This improves reliability for background notifications on Android/PWA.
+        const swRegistration =
+          typeof navigator !== "undefined" && "serviceWorker" in navigator
+            ? await navigator.serviceWorker.ready
+            : undefined
+
         token = await getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
         })
         if (typeof window !== "undefined") {
           console.info(LOG_PREFIX, "Token obtained; registering with server.")
