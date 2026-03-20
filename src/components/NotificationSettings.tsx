@@ -22,10 +22,6 @@ export function NotificationSettings() {
     try {
       const result = await Notification.requestPermission()
       setPermission(result)
-      if (result === "granted") {
-        // Let the already-mounted `useRegisterPush` hook continue token registration.
-        window.dispatchEvent(new CustomEvent("fcm:notification-permission-granted"))
-      }
     } catch {
       // ignore
     }

@@ -27,8 +27,6 @@ function log(reason: string, detail?: unknown) {
 export function useRegisterPush() {
   const { status } = useSession()
   const done = useRef(false)
-  const registered = useRef(false)
-  const firebaseAppRef = useRef<import("firebase/app").FirebaseApp | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -55,7 +53,6 @@ export function useRegisterPush() {
 
     let cancelled = false
     done.current = true
-    registered.current = false
 
     const NOTIFICATION_ICON = LOGO_URL
 
@@ -147,33 +144,7 @@ export function useRegisterPush() {
         LOG_PREFIX,
         "Token registered. This device will receive push notifications. To verify server-side: GET /api/notifications/debug",
       )
-      registered.current = true
     }
-
-    function maybeCompleteAfterPermissionGrant() {
-      if (cancelled) return
-      if (registered.current) return
-      if (Notification.permission !== "granted") return
-      const app = firebaseAppRef.current
-      if (app) {
-        completeRegistration(app).catch(() => {})
-        return
-      }
-
-      // In case the Firebase app is still loading, fetch it on-demand.
-      getFirebaseApp()
-        .then(({ app: nextApp }) => {
-          if (cancelled || !nextApp) return
-          firebaseAppRef.current = nextApp
-          completeRegistration(nextApp).catch(() => {})
-        })
-        .catch(() => {})
-    }
-
-    window.addEventListener(
-      "fcm:notification-permission-granted",
-      maybeCompleteAfterPermissionGrant,
-    )
 
     async function register() {
       try {
@@ -182,7 +153,6 @@ export function useRegisterPush() {
           log("Skipped: getFirebaseApp() returned no app")
           return
         }
-        firebaseAppRef.current = app
 
         if (typeof Notification !== "undefined") {
           if (Notification.permission === "denied") {
@@ -228,10 +198,6 @@ export function useRegisterPush() {
     register()
     return () => {
       cancelled = true
-      window.removeEventListener(
-        "fcm:notification-permission-granted",
-        maybeCompleteAfterPermissionGrant,
-      )
     }
   }, [status])
 }
