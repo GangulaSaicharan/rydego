@@ -9,13 +9,13 @@ importScripts(
 const DEFAULT_ICON = null;
 
 const firebaseConfig = {
-  apiKey: "AIzaSyClSELcZe1BVkfv5FvVqPZUOhJposY1Mrc",
-  authDomain: "ride-dev-c73f1.firebaseapp.com",
-  projectId: "ride-dev-c73f1",
-  storageBucket: "ride-dev-c73f1.firebasestorage.app",
-  messagingSenderId: "572434196141",
-  appId: "1:572434196141:web:a5ae0155134d2990efc824",
-  measurementId: "G-X30H45ND2W",
+  apiKey: "AIzaSyB_DCtWyUK2PSXOIqc0A9RCcBgll-aVTxI",
+  authDomain: "rydixo-b47c0.firebaseapp.com",
+  projectId: "rydixo-b47c0",
+  storageBucket: "rydixo-b47c0.firebasestorage.app",
+  messagingSenderId: "353048977456",
+  appId: "1:353048977456:web:4f8b76c447ec62d8d34df5",
+  measurementId: "G-ZBB7506KVG"
 };
 
 firebase.initializeApp(firebaseConfig);

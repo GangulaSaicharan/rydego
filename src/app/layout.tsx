@@ -63,6 +63,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthSessionProvider } from "@/components/session-provider";
 import { PWARegister } from "@/components/pwa-register";
+import { SiteVisitRecorder } from "@/components/site-visit-recorder";
 
 export default function RootLayout({
   children,
@@ -98,6 +99,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PWARegister />
+          <SiteVisitRecorder />
           <AuthSessionProvider>
             <TooltipProvider>
               <Toaster />

@@ -148,9 +148,7 @@ CREATE TABLE "RideStop" (
     "id" TEXT NOT NULL,
     "rideId" TEXT NOT NULL,
     "order" INTEGER NOT NULL,
-    "city" TEXT NOT NULL,
-    "latitude" DOUBLE PRECISION NOT NULL,
-    "longitude" DOUBLE PRECISION NOT NULL,
+    "locationId" TEXT NOT NULL,
 
     CONSTRAINT "RideStop_pkey" PRIMARY KEY ("id")
 );
@@ -167,6 +165,8 @@ CREATE TABLE "User" (
     "bio" TEXT,
     "ratingAverage" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "ratingCount" INTEGER NOT NULL DEFAULT 0,
+    "totalRides" INTEGER NOT NULL DEFAULT 0,
+    "totalBookings" INTEGER NOT NULL DEFAULT 0,
     "isBlocked" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" TIMESTAMP(3),
     "deletedAt" TIMESTAMP(3),
@@ -177,12 +177,21 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
+CREATE TABLE "UserFcmToken" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "UserFcmToken_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "DriverProfile" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "licenseNumber" TEXT,
     "verified" BOOLEAN NOT NULL DEFAULT false,
-    "totalRides" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "DriverProfile_pkey" PRIMARY KEY ("id")
 );
@@ -212,37 +221,43 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
 
 -- CreateIndex
-CREATE INDEX "Booking_rideId_idx" ON "Booking"("rideId");
+CREATE INDEX "Booking_rideId_status_idx" ON "Booking"("rideId", "status");
 
 -- CreateIndex
-CREATE INDEX "Booking_passengerId_idx" ON "Booking"("passengerId");
+CREATE INDEX "Booking_passengerId_status_idx" ON "Booking"("passengerId", "status");
+
+-- CreateIndex
+CREATE INDEX "Notification_userId_createdAt_idx" ON "Notification"("userId", "createdAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Review_rideId_authorId_key" ON "Review"("rideId", "authorId");
 
 -- CreateIndex
+CREATE INDEX "Ride_driverId_status_departureTime_idx" ON "Ride"("driverId", "status", "departureTime");
+
+-- CreateIndex
+CREATE INDEX "Ride_status_departureTime_idx" ON "Ride"("status", "departureTime");
+
+-- CreateIndex
+CREATE INDEX "Ride_fromLocationId_toLocationId_departureTime_idx" ON "Ride"("fromLocationId", "toLocationId", "departureTime");
+
+-- CreateIndex
 CREATE INDEX "Ride_departureTime_idx" ON "Ride"("departureTime");
-
--- CreateIndex
-CREATE INDEX "Ride_fromLocationId_idx" ON "Ride"("fromLocationId");
-
--- CreateIndex
-CREATE INDEX "Ride_toLocationId_idx" ON "Ride"("toLocationId");
-
--- CreateIndex
-CREATE INDEX "Ride_fromLocationId_departureTime_idx" ON "Ride"("fromLocationId", "departureTime");
-
--- CreateIndex
-CREATE INDEX "Ride_toLocationId_departureTime_idx" ON "Ride"("toLocationId", "departureTime");
-
--- CreateIndex
-CREATE INDEX "RideStop_rideId_idx" ON "RideStop"("rideId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RideStop_rideId_order_key" ON "RideStop"("rideId", "order");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "RideStop_rideId_locationId_key" ON "RideStop"("rideId", "locationId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserFcmToken_token_key" ON "UserFcmToken"("token");
+
+-- CreateIndex
+CREATE INDEX "UserFcmToken_userId_idx" ON "UserFcmToken"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "DriverProfile_userId_key" ON "DriverProfile"("userId");
@@ -291,6 +306,12 @@ ALTER TABLE "Ride" ADD CONSTRAINT "Ride_toLocationId_fkey" FOREIGN KEY ("toLocat
 
 -- AddForeignKey
 ALTER TABLE "RideStop" ADD CONSTRAINT "RideStop_rideId_fkey" FOREIGN KEY ("rideId") REFERENCES "Ride"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RideStop" ADD CONSTRAINT "RideStop_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "Location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "UserFcmToken" ADD CONSTRAINT "UserFcmToken_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "DriverProfile" ADD CONSTRAINT "DriverProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
