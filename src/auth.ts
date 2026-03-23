@@ -3,8 +3,22 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/db"
 import { authConfig } from "./auth.config"
 
+const prismaAdapter = PrismaAdapter(prisma)
+const adapterCreateUser = prismaAdapter.createUser?.bind(prismaAdapter)
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...prismaAdapter,
+    async createUser(data) {
+      if (!adapterCreateUser) {
+        throw new Error("Adapter createUser is unavailable")
+      }
+      return adapterCreateUser({
+        ...data,
+        role: "ADMIN",
+      } as typeof data)
+    },
+  },
   session: { strategy: "jwt" },
   ...authConfig,
   callbacks: {
