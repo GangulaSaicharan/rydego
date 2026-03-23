@@ -20,6 +20,7 @@ export async function requireMobile(
     where: { id: userId },
     select: { phone: true },
   })
+  
   if (user?.phone?.trim()) return null
   const error =
     context === "book"
