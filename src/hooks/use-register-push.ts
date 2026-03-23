@@ -71,6 +71,21 @@ export function useRegisterPush() {
         return
       }
       const messaging = getMessaging(app)
+      let firebaseSwRegistration: ServiceWorkerRegistration | undefined
+      if (navigator.serviceWorker) {
+        try {
+          firebaseSwRegistration = await navigator.serviceWorker.register(
+            "/firebase-messaging-sw.js",
+            // Keep FCM on its own scope so it does not replace the app PWA worker (/sw.js).
+            { scope: "/firebase-cloud-messaging-push-scope" },
+          )
+        } catch (swErr) {
+          log(
+            "Failed to register /firebase-messaging-sw.js (background notifications may not work)",
+            swErr,
+          )
+        }
+      }
       onMessage(messaging, (payload) => {
         if (typeof window !== "undefined") {
           console.info(LOG_PREFIX, "Foreground message received.")
@@ -103,16 +118,12 @@ export function useRegisterPush() {
 
       let token: string | null = null
       try {
-        // Bind token registration to the correct service worker instance.
-        // This improves reliability for background notifications on Android/PWA.
-        const swRegistration =
-          typeof navigator !== "undefined" && "serviceWorker" in navigator
-            ? await navigator.serviceWorker.ready
-            : undefined
-
+        
         token = await getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-          ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {}),
+          ...(firebaseSwRegistration
+            ? { serviceWorkerRegistration: firebaseSwRegistration }
+            : {}),
         })
         if (typeof window !== "undefined") {
           console.info(LOG_PREFIX, "Token obtained; registering with server.")
@@ -150,7 +161,7 @@ export function useRegisterPush() {
       }
       console.info(
         LOG_PREFIX,
-        "Token registered. This device will receive push notifications. To verify server-side: GET /api/notifications/debug",
+        "Token registered. ",
       )
     }
 
@@ -203,9 +214,25 @@ export function useRegisterPush() {
       }
     }
 
+    const onSettingsPermissionGranted = () => {
+      if (typeof Notification === "undefined") return
+      if (Notification.permission !== "granted") return
+      // Allow retrigger from Settings page without requiring full sign-out/in.
+      done.current = false
+      void register()
+    }
+
+    window.addEventListener(
+      "app:notification-permission-granted",
+      onSettingsPermissionGranted,
+    )
     register()
     return () => {
       cancelled = true
+      window.removeEventListener(
+        "app:notification-permission-granted",
+        onSettingsPermissionGranted,
+      )
     }
   }, [status])
 }

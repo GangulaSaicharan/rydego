@@ -2,6 +2,31 @@ import * as admin from "firebase-admin"
 
 let app: admin.app.App | null = null
 
+function parseServiceAccountFromEnv(raw: string): admin.ServiceAccount {
+  const trimmed = raw.trim()
+
+  // Common case: valid JSON object string.
+  try {
+    return JSON.parse(trimmed) as admin.ServiceAccount
+  } catch {
+    // continue with fallback parsing
+  }
+
+  // Some env providers/dev setups wrap JSON in quotes, e.g. '{"type":"service_account",...}'
+  const unwrapped =
+    (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+    (trimmed.startsWith('"') && trimmed.endsWith('"'))
+      ? trimmed.slice(1, -1)
+      : trimmed
+
+  // Handle escaped JSON string values and escaped private key newlines.
+  const normalized = unwrapped
+    .replace(/\\"/g, '"')
+    .replace(/\\n/g, "\n")
+
+  return JSON.parse(normalized) as admin.ServiceAccount
+}
+
 function getFirebaseApp(): admin.app.App | null {
   if (app) return app
 
@@ -20,7 +45,7 @@ function getFirebaseApp(): admin.app.App | null {
   }
 
   try {
-    const serviceAccount = JSON.parse(raw) as admin.ServiceAccount
+    const serviceAccount = parseServiceAccountFromEnv(raw)
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     })

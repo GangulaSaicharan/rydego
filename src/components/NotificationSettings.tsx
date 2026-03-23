@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useState } from "react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { APP_NAME } from "@/lib/constants/brand"
 
@@ -10,26 +11,37 @@ function isIOS() {
 }
 
 export function NotificationSettings() {
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(() => {
-    if (typeof window === "undefined") return "default"
-    if (!("Notification" in window)) return "unsupported"
-    return Notification.permission
-  })
-  const [ios] = useState(() => isIOS())
+  const [mounted, setMounted] = useState(false)
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default")
+  const [ios, setIos] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    setMounted(true)
+    setIos(isIOS())
+    if (!("Notification" in window)) {
+      setPermission("unsupported")
+      return
+    }
+    setPermission(Notification.permission)
+  }, [])
 
   const handleEnable = useCallback(async () => {
     if (typeof window === "undefined" || !("Notification" in window)) return
     try {
       const result = await Notification.requestPermission()
       setPermission(result)
+      if (result === "granted") {
+        window.dispatchEvent(new Event("app:notification-permission-granted"))
+      }
     } catch {
       // ignore
     }
   }, [])
 
-  const showEnableButton = permission === "default"
-  const blocked = permission === "denied"
-  const enabled = permission === "granted"
+  const showEnableButton = !mounted || permission === "default"
+  const blocked = mounted && permission === "denied"
+  const enabled = mounted && permission === "granted"
 
   return (
     <section className="space-y-3 rounded-lg border bg-card p-4">
@@ -69,13 +81,13 @@ export function NotificationSettings() {
         </p>
       )}
 
-      {permission === "unsupported" && (
+      {mounted && permission === "unsupported" && (
         <p className="text-xs text-muted-foreground">
           Notifications are not supported in this browser on this device.
         </p>
       )}
 
-      {ios && (
+      {mounted && ios && (
         <p className="text-xs text-muted-foreground">
           On iPhone/iPad, make sure you open {APP_NAME} in Safari and add it to your Home Screen to receive push notifications.
         </p>
