@@ -240,8 +240,12 @@ export async function deleteRideAction(rideId: string) {
     if (ride.driverId !== session.user.id) return { success: false, error: "Only the ride creator can delete this ride" }
     if (ride.status !== "SCHEDULED") return { success: false, error: "Only scheduled rides can be deleted" }
     if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot delete a ride after departure time" }
-    if (new Date(ride.departureTime).getTime() - Date.now() <= TWO_HOURS_MS) return { success: false, error: "Ride cannot be cancelled within 2 hours of departure" }
-
+    
+    if (new Date(ride.departureTime).getTime() - Date.now() <= TWO_HOURS_MS) {
+      if (ride?.bookings?.length > 0) {
+        return { success: false, error: "Ride cannot be cancelled within 2 hours of departure if there are bookings" }
+      }
+    }
     const passengerIds = Array.from(new Set(ride.bookings.map((b) => b.passengerId)))
 
     await prisma.$transaction(async (tx) => {
