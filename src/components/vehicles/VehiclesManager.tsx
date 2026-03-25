@@ -145,16 +145,8 @@ export function VehiclesManager({ initialVehicles }: { initialVehicles: Vehicle[
   }
 
   return (
-    <Card className="max-w-3xl">
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div className="space-y-1">
-          <CardTitle className="flex items-center gap-2">
-            <Car className="h-5 w-5" />
-            Vehicles
-          </CardTitle>
-          <CardDescription>{subtitle}</CardDescription>
-        </div>
-
+    <div className="max-w-3xl">
+      <div className="flex flex-row items-start justify-end mb-3">
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger
             render={<Button className="shrink-0" disabled={!canAddMore} />}
@@ -211,9 +203,9 @@ export function VehiclesManager({ initialVehicles }: { initialVehicles: Vehicle[
             </form>
           </AlertDialogContent>
         </AlertDialog>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-3">
+      <div className="space-y-3">
         <AlertDialog open={!!editing} onOpenChange={(v) => (v ? null : setEditing(null))}>
           <AlertDialogContent className="max-w-lg" size="default">
             <AlertDialogHeader>
@@ -343,8 +335,8 @@ export function VehiclesManager({ initialVehicles }: { initialVehicles: Vehicle[
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

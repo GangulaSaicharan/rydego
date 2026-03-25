@@ -10,7 +10,7 @@ const SITE_URL =
     "",
   );
 const siteUrlObj = new URL(SITE_URL);
-const logoUrl = `${SITE_URL}${LOGO_URL}`;
+const logoUrl = `${SITE_URL}${"/logo-bg.png"}`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,9 +40,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: LOGO_URL,
-    shortcut: LOGO_URL,
-    apple: LOGO_URL,
+    icon: logoUrl,
+    shortcut: logoUrl,
+    apple: logoUrl,
   },
   openGraph: {
     title: APP_NAME,
@@ -75,7 +75,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Some browsers are less consistent with metadata.icons; add explicit icon link. */}
-        <link rel="icon" href={LOGO_URL} type="image/png" />
         <script
           type="application/ld+json"
           // Organization JSON-LD improves basic entity understanding in search results.

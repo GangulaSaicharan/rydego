@@ -168,7 +168,7 @@ export function InstallPwaLoginPrompt() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
-          <AlertDialogAction type="button" onClick={handleInstall}>
+          <AlertDialogAction autoFocus type="button" onClick={handleInstall}>
             Install app
           </AlertDialogAction>
         </AlertDialogFooter>

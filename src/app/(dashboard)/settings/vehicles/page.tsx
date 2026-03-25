@@ -43,9 +43,6 @@ export default async function VehiclesPage() {
     <main className="flex-1 space-y-6">
       <div className="space-y-1">
         <h2 className="text-3xl font-bold tracking-tight">Vehicles</h2>
-        <p className="text-sm text-muted-foreground">
-          Add and manage the vehicles you can select while publishing a ride.
-        </p>
       </div>
 
       <VehiclesManager initialVehicles={serializedVehicles} />
