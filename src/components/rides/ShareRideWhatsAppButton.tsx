@@ -56,25 +56,23 @@ export function ShareRideWhatsAppButton({
     };
 
     const message = [
-      `${E.car} *CAB AVAILABLE* ${E.car}`,
+      `${E.car} *CAR AVAILABLE* ${E.car}`,
       "",
-      `${E.calendar} *Date:* ${dateStr}`,
-      ...(relativeStr ? [relativeStr, ""] : [""]),
+      `${E.calendar} *Date:* ${dateStr}`, ...(relativeStr ? [relativeStr, ""] : [""]),
       `${E.clock} *Time:* ${timeStr}`,
       "",
-      `*Route*`,
-      `${E.pin} *From*`,
-      fromPart,
+      `${E.pin} From`,
+      `*${fromPart}*`,
       ...(intermediateStops.length > 0
-        ? ["", `${E.stop} *Stops/Via*`, intermediateStops.join(", ")]
+        ? ["", `${E.stop} Stops/Via`,  `*${intermediateStops.join(", ")}*`]
         : []),
       "",
-      `${E.pin} *To*`,
-      toPart,
+      `${E.pin} To`,
+      `*${toPart}*`,
       "",
       `${E.seat} *Seats available:* ${seatsAvailable}`,
       "",
-      `${E.check} Book now — ${E.link} View details & contact:`,
+      `${E.check} Book now — ${E.link}:`,
       url,
     ]
       .filter((line) => line !== undefined)
