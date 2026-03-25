@@ -64,6 +64,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthSessionProvider } from "@/components/session-provider";
 import { PWARegister } from "@/components/pwa-register";
 import { SiteVisitRecorder } from "@/components/site-visit-recorder";
+import { InstallPwaLoginPrompt } from "@/components/InstallPwaLoginPrompt";
 
 export default function RootLayout({
   children,
@@ -103,6 +104,7 @@ export default function RootLayout({
           <AuthSessionProvider>
             <TooltipProvider>
               <Toaster />
+              <InstallPwaLoginPrompt />
               {children}
             </TooltipProvider>
           </AuthSessionProvider>
