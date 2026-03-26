@@ -22,7 +22,9 @@ export const authConfig = {
         pathname.startsWith("/rides") ||
         pathname.startsWith("/profile") ||
         pathname.startsWith("/privacy") ||
-        pathname.startsWith("/terms")
+        pathname.startsWith("/terms") ||
+        pathname === "/contact" ||
+        pathname === "/about"
       ) {
         return true
       }

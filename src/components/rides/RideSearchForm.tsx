@@ -416,6 +416,11 @@ export function RideSearchForm() {
               />
             ))}
 
+            {loading && (
+              <div className="flex items-center justify-center py-4 h-96">
+              </div>
+            )}
+
             {!loading && results.length === 0 && !error && (
               <Card className="border-2 border-dashed bg-muted/20">
                 <CardContent className="flex flex-col items-center justify-center py-16 text-center">

@@ -6,6 +6,7 @@ import { GoogleSignInButton } from "@/components/auth/google-auth-button"
 import { LoginErrorToast } from "@/components/auth/login-error-toast"
 import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { auth } from "@/auth"
+import { SiteFooter } from "@/components/site-footer"
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -19,40 +20,21 @@ type LoginPageProps = {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>
 }
 
-function LoginLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-linear-to-br from-background via-background to-primary/6">
-      <div
-        className="absolute top-[-12%] left-[-8%] w-[55%] aspect-square rounded-full bg-primary/15 blur-[80px] pointer-events-none"
-        aria-hidden
-      />
-      <div
-        className="absolute bottom-[-18%] right-[-8%] w-[50%] aspect-square rounded-full bg-primary/12 blur-[80px] pointer-events-none"
-        aria-hidden
-      />
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] aspect-square rounded-full bg-primary/4 blur-[100px] pointer-events-none"
-        aria-hidden
-      />
-      <div className="w-full max-w-md space-y-8 relative z-10">{children}</div>
-    </div>
-  )
-}
 
 function LoginHeader() {
   return (
     <header className="text-center space-y-5">
-      <div className="inline-flex items-center justify-center [&_img]:w-28 [&_img]:h-28 sm:[&_img]:w-32 sm:[&_img]:h-32">
+      <div className="inline-flex items-center justify-center [&_img]:w-32 [&_img]:h-32 sm:[&_img]:w-36 sm:[&_img]:h-36">
         <Image
           src={LOGO_URL}
           alt={APP_NAME}
-          width={128}
-          height={128}
+          width={136}
+          height={136}
           className="object-contain"
           priority
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Welcome to {APP_NAME}
         </h1>
@@ -87,11 +69,9 @@ function mapErrorToMessage(error?: string): string | null {
 
 function SignInBlock({
   callbackUrl,
-  termsLinkClass,
   errorMessage,
 }: {
   callbackUrl: string
-  termsLinkClass: string
   errorMessage?: string | null
 }) {
   return (
@@ -111,36 +91,13 @@ function SignInBlock({
         </div>
       )}
       <GoogleSignInButton callbackUrl={callbackUrl} />
-      <div className="relative py-1">
-        <span
-          className="absolute inset-0 flex items-center"
-          aria-hidden
-        >
-          <span className="w-full border-t border-border/60" />
-        </span>
-      </div>
-      <p className="text-center text-sm text-muted-foreground leading-relaxed">
-        By continuing, you agree to our{" "}
-        <Link href="/terms" className={termsLinkClass}>
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className={termsLinkClass}>
-          Privacy Policy
-        </Link>
-        .
+      <p className="text-sm text-center text-muted-foreground leading-relaxed mb-4 max-w-xs mx-auto px-4">
+        By signing in, you accept our <br /> Terms of Service and Privacy Policy.
       </p>
     </section>
   )
 }
 
-function LoginFooter() {
-  return (
-    <p className="text-center text-sm text-muted-foreground">
-      Powered by <span className="font-semibold text-foreground">{APP_NAME}</span>
-    </p>
-  )
-}
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await auth()
@@ -152,15 +109,21 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessage = mapErrorToMessage(error)
 
   return (
-    <LoginLayout>
-      <LoginHeader />
-      <LoginErrorToast message={errorMessage} />
-      <SignInBlock
-        callbackUrl={safeCallbackUrl}
-        termsLinkClass={LINK_CLASS}
-        errorMessage={errorMessage}
+    <div className="flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden bg-linear-to-br from-background via-background to-primary/6">
+      <div className="min-h-screen flex flex-col justify-center space-y-6">
+        <LoginHeader />
+        <LoginErrorToast message={errorMessage} />
+        <SignInBlock
+          callbackUrl={safeCallbackUrl}
+          errorMessage={errorMessage}
+        />
+      </div>
+      <SiteFooter
+        linkClassName={LINK_CLASS}
+        showDividers={false}
+        className="py-2"
       />
-      <LoginFooter />
-    </LoginLayout>
+    </div>
+
   )
 }

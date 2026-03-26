@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppBottomNav } from "@/components/app-bottom-nav"
+import { SiteFooter } from "@/components/site-footer"
 
 const HeaderNotifications = dynamic(() =>
   import("@/components/header-notifications").then((m) => m.HeaderNotifications),
@@ -120,6 +121,8 @@ export default async function SearchPage() {
           <div className="w-full max-w-3xl mx-auto space-y-6">
             <RideSearchForm />
           </div>
+
+          <SiteFooter className="max-w-3xl mx-auto mt-auto border-t border-border/40" />
         </main>
       </SidebarInset>
       <AppBottomNav isAdmin={isAdmin} />

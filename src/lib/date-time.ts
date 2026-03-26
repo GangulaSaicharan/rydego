@@ -72,16 +72,41 @@ export function formatDateTimeIST(
 
 /**
  * Short date + time for cards/lists in IST.
- * e.g. "Mon, 15 Mar · 2:30 PM"
+ * e.g. "Today · 2:30 PM", "Tomorrow · 2:30 PM", "Mon, 15 Mar · 2:30 PM"
  */
 export function formatDateTimeShortIST(date: Date | string | number): string {
   const d = typeof date === "object" && "getTime" in date ? date : new Date(date)
-  const dateStr = d.toLocaleDateString(locale, {
-    ...dateTimeFormatOpts,
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  })
+  const now = new Date()
+  const today = getISTDateParts(now)
+  const dateParts = getISTDateParts(d)
+
+  let dateStr: string
+  if (
+    dateParts.year === today.year &&
+    dateParts.month === today.month &&
+    dateParts.day === today.day
+  ) {
+    dateStr = "Today"
+  } else {
+    const tomorrow = new Date(now)
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+    const tomorrowParts = getISTDateParts(tomorrow)
+    if (
+      dateParts.year === tomorrowParts.year &&
+      dateParts.month === tomorrowParts.month &&
+      dateParts.day === tomorrowParts.day
+    ) {
+      dateStr = "Tomorrow"
+    } else {
+      dateStr = d.toLocaleDateString(locale, {
+        ...dateTimeFormatOpts,
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      })
+    }
+  }
+
   const timeStr = formatTimeIST(d)
   return `${dateStr} · ${timeStr}`
 }
@@ -133,10 +158,36 @@ function getISTDateParts(date: Date): { year: number; month: number; day: number
  */
 export function todayDateStringIST(): string {
   const now = new Date()
-  const { year, month, day } = getISTDateParts(now)
+  return dateToYYYYMMDD(now)
+}
+
+/**
+ * Format Date to YYYY-MM-DD string in IST.
+ */
+function dateToYYYYMMDD(date: Date): string {
+  const { year, month, day } = getISTDateParts(date)
   const m = String(month).padStart(2, "0")
   const d = String(day).padStart(2, "0")
   return `${year}-${m}-${d}`
+}
+
+/**
+ * Display label for search form date input.
+ * e.g. "Today", "Tomorrow", "15 Mar"
+ */
+export function formatRelativeDateSelectIST(dateStr: string): string {
+  if (!dateStr) return "Select date"
+  
+  const todayStr = todayDateStringIST()
+  if (dateStr === todayStr) return "Today"
+  
+  const tomorrow = new Date()
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+  const tomorrowStr = dateToYYYYMMDD(tomorrow)
+  if (dateStr === tomorrowStr) return "Tomorrow"
+  
+  const d = new Date(dateStr)
+  return formatDateShortIST(d)
 }
 
 /**
