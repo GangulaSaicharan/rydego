@@ -57,6 +57,8 @@ model Ride {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  views Int @default(0)
+
   @@index([driverId, status, departureTime])
   @@index([status, departureTime])
   @@index([fromLocationId, toLocationId, departureTime])

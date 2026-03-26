@@ -24,6 +24,7 @@ import {
   ArrowLeft,
   Settings as SettingsIcon,
   Car,
+  Eye,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { notFound } from "next/navigation"
@@ -32,6 +33,7 @@ import { BookRideForm } from "@/components/rides/BookRideForm"
 import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
+import { RideViewTracker } from "@/components/rides/RideViewTracker"
 import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
 import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { HeaderUserMenu } from "@/components/header-user-menu"
@@ -175,12 +177,12 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       }),
       isDriver
         ? prisma.booking.findMany({
-            where: { rideId: id },
-            include: {
-              passenger: { select: { id: true, name: true, image: true, email: true } },
-            },
-            orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-          })
+          where: { rideId: id },
+          include: {
+            passenger: { select: { id: true, name: true, image: true, email: true } },
+          },
+          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+        })
         : [],
     ])
     userBooking = booking
@@ -193,12 +195,12 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       acceptedBookings = isDriver
         ? dBookings.filter((b) => b.status === "ACCEPTED")
         : await prisma.booking.findMany({
-            where: { rideId: id, status: "ACCEPTED" },
-            include: {
-              passenger: { select: { id: true, name: true, image: true } },
-            },
-            orderBy: { createdAt: "asc" },
-          })
+          where: { rideId: id, status: "ACCEPTED" },
+          include: {
+            passenger: { select: { id: true, name: true, image: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        })
     }
   }
 
@@ -251,12 +253,12 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   })()
 
   type DriverBookingItem = {
-  id: string
-  seats: number
-  status: string
-  totalPrice: number | null
-  passenger: { id: string; name: string | null; image: string | null; email: string | null }
-}
+    id: string
+    seats: number
+    status: string
+    totalPrice: number | null
+    passenger: { id: string; name: string | null; image: string | null; email: string | null }
+  }
   const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => {
     const withPassenger = b as typeof b & { passenger: { id: string; name: string | null; image: string | null; email: string | null } }
     return {
@@ -282,6 +284,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(rideJsonLd) }}
       />
+      <RideViewTracker rideId={ride.id} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button
@@ -334,7 +337,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
             {ride.stops.length > 0 && (
               <details className="space-y-3">
                 <summary className="cursor-pointer select-none text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                   Stops ({ride.stops.length})
+                  Stops ({ride.stops.length})
                 </summary>
                 <div className="border-l-2 border-primary/30 pl-4 ml-2 space-y-3">
                   {ride.stops.map((stop, idx) => (
@@ -431,6 +434,12 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
               <Users className="h-4 w-4 inline mr-1" />
               {ride.seatsAvailable} of {ride.seatsTotal} seats available
             </p>
+            {(isDriver || isOwner) && (
+              <p className="text-sm text-muted-foreground">
+                <Eye className="h-4 w-4 inline mr-1" />
+                {ride.views} views
+              </p>
+            )}
           </CardContent>
         </Card>
 

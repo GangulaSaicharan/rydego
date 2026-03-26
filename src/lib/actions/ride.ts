@@ -130,7 +130,7 @@ export async function createRideAction(formData: FormData) {
   try {
     const ride = await prisma.$transaction(async (tx) => {
       const [fromLocation, toLocation, vehicle] = await Promise.all([
-        tx.location.findFirst({ where: { id: fromLocationId, status: true }, select: { id: true} }),
+        tx.location.findFirst({ where: { id: fromLocationId, status: true }, select: { id: true } }),
         tx.location.findFirst({ where: { id: toLocationId, status: true }, select: { id: true } }),
         tx.vehicle.findFirst({
           where: { id: vehicleId, ownerId: session.user!.id!, deletedAt: null },
@@ -240,7 +240,7 @@ export async function deleteRideAction(rideId: string) {
     if (ride.driverId !== session.user.id) return { success: false, error: "Only the ride creator can delete this ride" }
     if (ride.status !== "SCHEDULED") return { success: false, error: "Only scheduled rides can be deleted" }
     if (new Date(ride.departureTime) <= new Date()) return { success: false, error: "Cannot delete a ride after departure time" }
-    
+
     if (new Date(ride.departureTime).getTime() - Date.now() <= TWO_HOURS_MS) {
       if (ride?.bookings?.length > 0) {
         return { success: false, error: "Ride cannot be cancelled within 2 hours of departure if there are bookings" }
@@ -593,9 +593,9 @@ export async function searchRidesAction(params: {
         ],
         departureTime: date
           ? {
-          gte: new Date(date),
-          lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000)
-        }
+            gte: new Date(date),
+            lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000)
+          }
           : undefined
       },
       include: {
@@ -626,5 +626,35 @@ export async function searchRidesAction(params: {
   } catch (error) {
     console.error("Failed to search rides:", error)
     return { success: false, error: "Failed to search rides" }
+  }
+}
+
+export async function incrementRideViewAction(rideId: string) {
+  const { cookies } = await import("next/headers")
+  const cookieStore = await cookies()
+  const cookieName = `ride_${rideId}`
+
+  if (cookieStore.get(cookieName)) {
+    return { success: true, alreadyViewed: true }
+  }
+
+  try {
+    await prisma.ride.update({
+      where: { id: rideId },
+      data: { views: { increment: 1 } },
+    })
+
+    // Set cookie for 1 year
+    cookieStore.set(cookieName, "1", {
+      maxAge: 365 * 24 * 60 * 60,
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to increment ride view:", error)
+    return { success: false, error: "Failed to update view count" }
   }
 }
