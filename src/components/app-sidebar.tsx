@@ -13,6 +13,8 @@ import {
   LayoutDashboard,
   TicketCheck,
   ShieldCheck,
+  MessageSquare,
+  Info,
 } from "lucide-react"
 import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 
@@ -44,6 +46,8 @@ const navMainAll = [
   { title: "My Rides", url: "/rides", icon: Clock, adminOnly: true },
   { title: "My Bookings", url: "/bookings", icon: TicketCheck },
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "About Us", url: "/about", icon: Info },
+  { title: "Contact Us", url: "/contact", icon: MessageSquare },
   { title: "Admin", url: "/admin", icon: ShieldCheck, superAdminOnly: true },
 ]
 

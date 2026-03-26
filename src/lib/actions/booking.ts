@@ -51,7 +51,7 @@ export async function createBookingAction(params: {
     }
 
     if (new Date(ride.departureTime) <= new Date()) {
-      return { success: false, error: "Cannot book a ride whose departure time has passed" }
+      return { success: false, error: "Ride has already started" }
     }
 
     if (ride.seatsAvailable < seats) {

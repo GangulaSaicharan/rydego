@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+
 import { APP_NAME } from "@/lib/constants/brand";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -33,7 +35,7 @@ export default function PrivacyPage() {
           </p>
         </header>
 
-        <article className="bg-card/95 p-6 sm:p-8 rounded-3xl border border-border/60 shadow-xl space-y-8 text-foreground">
+        <article className="p-4 sm:p-6 space-y-8 text-foreground">
           <section>
             <h2 className="text-xl font-semibold mb-3">1. Who We Are</h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -154,16 +156,8 @@ export default function PrivacyPage() {
             </p>
           </section>
         </article>
-
-        <footer className="mt-8 text-center">
-          <Link
-            href="/login"
-            className="text-primary underline underline-offset-4 hover:no-underline"
-          >
-            Return to sign in
-          </Link>
-        </footer>
       </div>
+      <SiteFooter />
     </div>
   );
 }

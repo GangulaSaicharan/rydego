@@ -27,10 +27,12 @@ export async function GET() {
   }
 
   // Static/public pages
-  add("/", now)
+  // add("/", now)
   add("/search", now)
   add("/privacy", now)
   add("/terms", now)
+  add("/about", now)
+  add("/contact", now)
 
   // Public ride detail pages (keep sitemap small & crawler-friendly)
   const rides = await prisma.ride.findMany({

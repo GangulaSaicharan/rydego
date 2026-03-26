@@ -566,17 +566,17 @@ export async function searchRidesAction(params: {
 
     const rides = await prisma.ride.findMany({
       where: {
-        status: "SCHEDULED",
+        // status: "SCHEDULED",
         AND: [
           // Hide rides that already completed their trip:
           // - if arrivalTime is present, ensure arrivalTime >= now
           // - if arrivalTime is missing, fall back to departureTime >= now
-          {
-            OR: [
-              { arrivalTime: { gte: now } },
-              { arrivalTime: null, departureTime: { gte: now } },
-            ],
-          },
+          // {
+          //   OR: [
+          //     { arrivalTime: { gte: now } },
+          //     { arrivalTime: null, departureTime: { gte: now } },
+          //   ],
+          // },
           // If user-selected cities appear as intermediate stops, still include the ride.
           {
             OR: [
@@ -592,10 +592,12 @@ export async function searchRidesAction(params: {
           },
         ],
         departureTime: date
-          ? {
-            gte: new Date(date),
-            lt: new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000)
-          }
+          ? (() => {
+            const [y, m, d] = date.split("-").map(Number)
+            const start = new Date(Date.UTC(y, m - 1, d, -5, -30))
+            const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
+            return { gte: start, lt: end }
+          })()
           : undefined
       },
       include: {
