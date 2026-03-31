@@ -84,7 +84,7 @@ export default function RootLayout({
               "@type": "Organization",
               name: APP_NAME,
               url: SITE_URL,
-              logo: logoUrl,
+              logo: `${SITE_URL}${LOGO_URL}`,
             }),
           }}
         />
@@ -109,6 +109,6 @@ export default function RootLayout({
           </AuthSessionProvider>
         </ThemeProvider>
       </body>
-    </html>
+    </html >
   );
 }

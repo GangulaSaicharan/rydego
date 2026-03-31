@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Timer } from "lucide-react"
+import { Timer, CheckCircle2, XCircle } from "lucide-react"
 import { differenceInMinutes } from "date-fns"
 import { formatDateTimeShortIST, formatTimeIST, formatTimeToDepartureIST } from "@/lib/date-time"
 
@@ -25,6 +25,7 @@ interface RideCardProps {
     fromLocation: { city: string; state?: string | null }
     toLocation: { city: string; state?: string | null }
     driver: { id: string; name: string | null; image: string | null }
+    status?: string
   }
   /** When set, appended to ride detail URL so Back from details returns to search results */
   backToSearchQuery?: string
@@ -124,11 +125,23 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className="text-base sm:text-lg font-bold text-primary">₹{price}</span>
                   <span className="text-xs font-semibold text-destructive">Seats full</span>
-                  {timeToDeparture && (
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Timer className="h-3 w-3 shrink-0" />
-                      {timeToDeparture}
+                  {ride.status === "COMPLETED" ? (
+                    <span className="text-xs font-semibold text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0" />
+                      Completed
                     </span>
+                  ) : ride.status === "CANCELLED" ? (
+                    <span className="text-xs font-semibold text-destructive flex items-center gap-1">
+                      <XCircle className="h-3 w-3 shrink-0" />
+                      Cancelled
+                    </span>
+                  ) : (
+                    timeToDeparture && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Timer className="h-3 w-3 shrink-0" />
+                        {timeToDeparture}
+                      </span>
+                    )
                   )}
                 </div>
               </div>
@@ -197,25 +210,39 @@ export function RideCard({ ride, backToSearchQuery }: RideCardProps) {
 
               {/* Driver name (truncated) + cost adjacent */}
               <div className="flex justify-between items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto p-3 sm:px-5 sm:py-4 border-t sm:border-t-0 sm:border-l border-border/50 bg-muted/30 sm:bg-muted/40">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
-                    <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? ""} />
-                    <AvatarFallback className="text-[10px] sm:text-xs">{ride.driver.name?.[0] ?? "D"}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate min-w-0 text-sm font-medium text-foreground" title={ride.driver.name ?? undefined}>
-                    {ride.driver.name ?? "Driver"}
+                <div className="flex flex-col items-start gap-1 shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
+                      <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? ""} />
+                      <AvatarFallback className="text-[10px] sm:text-xs">{ride.driver.name?.[0] ?? "D"}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate min-w-0 text-sm font-medium text-foreground" title={ride.driver.name ?? undefined}>
+                      {ride.driver.name ?? "Driver"}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground ml-3">
+                    {ride.seatsAvailable} seat{ride.seatsAvailable === 1 ? "" : "s"} left
                   </span>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className="text-base sm:text-lg font-bold text-primary">₹{price}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {ride.seatsAvailable} seat{ride.seatsAvailable === 1 ? "" : "s"} left
-                  </span>
-                  {timeToDeparture && (
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Timer className="h-3 w-3 shrink-0" />
-                      {timeToDeparture}
+                  {ride.status === "COMPLETED" ? (
+                    <span className="text-xs font-semibold text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 shrink-0" />
+                      Completed
                     </span>
+                  ) : ride.status === "CANCELLED" ? (
+                    <span className="text-xs font-semibold text-destructive flex items-center gap-1">
+                      <XCircle className="h-3 w-3 shrink-0" />
+                      Cancelled
+                    </span>
+                  ) : (
+                    timeToDeparture && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Timer className="h-3 w-3 shrink-0" />
+                        {timeToDeparture}
+                      </span>
+                    )
                   )}
                 </div>
               </div>
