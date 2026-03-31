@@ -90,6 +90,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical,
     },
+    openGraph: {
+      title: `Ride: ${route}`,
+      description: `View ride info on ${APP_NAME}`,
+      images: [{ url: logoUrl, width: 200, height: 200 }],
+    },
+    twitter: {
+      card: "summary",
+      images: [{ url: logoUrl, width: 200, height: 200 }],
+    },
   }
 }
 
