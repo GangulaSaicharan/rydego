@@ -578,18 +578,18 @@ export async function searchRidesAction(params: {
           //   ],
           // },
           // If user-selected cities appear as intermediate stops, still include the ride.
-          {
-            OR: [
-              { fromLocationId },
-              { stops: { some: { locationId: fromLocationId } } },
-            ],
-          },
-          {
-            OR: [
-              { toLocationId },
-              { stops: { some: { locationId: toLocationId } } },
-            ],
-          },
+          // {
+          //   OR: [
+          //     { fromLocationId },
+          //     { stops: { some: { locationId: fromLocationId } } },
+          //   ],
+          // },
+          // {
+          //   OR: [
+          //     { toLocationId },
+          //     { stops: { some: { locationId: toLocationId } } },
+          //   ],
+          // },
         ],
         departureTime: date
           ? (() => {
