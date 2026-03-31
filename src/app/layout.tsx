@@ -45,17 +45,17 @@ export const metadata: Metadata = {
     apple: logoUrl,
   },
   openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    locale: "en_US",
+    url: SITE_URL,
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    url: SITE_URL,
-    type: "website",
-    images: [{ url: logoUrl, alt: APP_NAME, width: 200, height: 200 }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: [{ url: logoUrl, width: 200, height: 200 }],
   },
 };
 
