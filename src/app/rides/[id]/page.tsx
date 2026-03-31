@@ -95,7 +95,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `View ride details on ${APP_NAME}`,
       images: [
         {
-          url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          url: `${SITE_URL}/blank.png`,
           width: 1,
           height: 1,
         },
@@ -103,9 +103,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: "summary",
-      images: [
-        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-      ],
+      images: [`${SITE_URL}/blank.png`],
     },
   }
 }
