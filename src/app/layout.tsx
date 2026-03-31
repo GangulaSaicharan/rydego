@@ -49,13 +49,13 @@ export const metadata: Metadata = {
     description: APP_DESCRIPTION,
     url: SITE_URL,
     type: "website",
-    images: [{ url: logoUrl, alt: APP_NAME }],
+    images: [{ url: logoUrl, alt: APP_NAME, width: 200, height: 200 }],
   },
   twitter: {
     card: "summary",
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: [logoUrl],
+    images: [{ url: logoUrl, width: 200, height: 200 }],
   },
 };
 
