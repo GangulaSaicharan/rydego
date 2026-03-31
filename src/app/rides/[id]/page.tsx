@@ -93,11 +93,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `Ride: ${route}`,
       description: `View ride details on ${APP_NAME}`,
-      images: [],
+      images: [
+        {
+          url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          width: 1,
+          height: 1,
+        },
+      ],
     },
     twitter: {
       card: "summary",
-      images: [],
+      images: [
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      ],
     },
   }
 }
