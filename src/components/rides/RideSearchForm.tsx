@@ -337,11 +337,13 @@ export function RideSearchForm({ userId }: { userId?: string }) {
 
   const fromCityLabel =
     defaults.fromLocationId
-      ? cities.find((c) => c.id === defaults.fromLocationId)?.city ?? defaults.fromLocationId
+      ? cities.find((c) => c.id === defaults.fromLocationId)?.city ??
+      (citiesLoading ? "Loading..." : "")
       : ""
   const toCityLabel =
     defaults.toLocationId
-      ? cities.find((c) => c.id === defaults.toLocationId)?.city ?? defaults.toLocationId
+      ? cities.find((c) => c.id === defaults.toLocationId)?.city ??
+      (citiesLoading ? "Loading..." : "")
       : ""
 
   const handleSwap = () => {
