@@ -24,7 +24,7 @@ interface RideCardProps {
     seatsTotal: number
     fromLocation: { city: string; state?: string | null }
     toLocation: { city: string; state?: string | null }
-    driver: { id: string; name: string | null; image: string | null }
+    driver: { id: string; name: string | null; image: string | null; ratingAverage?: number | null }
     status?: string
   }
   /** When set, appended to ride detail URL so Back from details returns to search results */
@@ -156,6 +156,25 @@ export function RideCard({ ride, backToSearchQuery, onViewDetails }: RideCardPro
                 >
                   {ride.driver.name ?? "Driver"}
                 </span>
+
+                {ride.driver?.ratingAverage !== undefined && ride.driver?.ratingAverage !== null && ride.driver?.ratingAverage > 0 && (
+                  <div className="flex items-center gap-0.5 ml-1 px-1.5 py-0.5 bg-yellow-500/10 rounded-md border border-yellow-500/20">
+                    <style jsx global>{`
+                      @keyframes star-shimmer {
+                        0% { opacity: 0.6; filter: drop-shadow(0 0 1px gold); }
+                        50% { opacity: 1; filter: drop-shadow(0 0 4px gold); }
+                        100% { opacity: 0.6; filter: drop-shadow(0 0 1px gold); }
+                      }
+                      .animate-shimmer {
+                        animation: star-shimmer 3s infinite ease-in-out;
+                      }
+                    `}</style>
+                    <span className="text-[10px] text-yellow-600 font-bold leading-none animate-shimmer">★</span>
+                    <span className="text-[10px] text-yellow-600 font-bold leading-none">
+                      {Number(ride.driver.ratingAverage).toFixed(1)}
+                    </span>
+                  </div>
+                )}
               </div>
               {isFull ? (
                 <span className="text-xs font-semibold text-destructive">Seats full</span>
