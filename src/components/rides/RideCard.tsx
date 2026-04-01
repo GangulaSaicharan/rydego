@@ -142,7 +142,7 @@ export function RideCard({ ride, backToSearchQuery, onViewDetails }: RideCardPro
 
           {/* Driver name (truncated) + cost adjacent */}
           <div className="flex justify-between items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto p-3 sm:px-5 sm:py-4 border-t sm:border-t-0 sm:border-l border-border/50 bg-muted/30 sm:bg-muted/40">
-            <div className="flex flex-col items-start gap-1 shrink-0">
+            <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
                   <AvatarImage src={ride.driver.image ?? ""} alt={ride.driver.name ?? ""} />
@@ -158,7 +158,7 @@ export function RideCard({ ride, backToSearchQuery, onViewDetails }: RideCardPro
                 </span>
 
                 {ride.driver?.ratingAverage !== undefined && ride.driver?.ratingAverage !== null && ride.driver?.ratingAverage > 0 && (
-                  <div className="flex items-center gap-0.5 ml-1 px-1.5 py-0.5 bg-yellow-500/10 rounded-md border border-yellow-500/20">
+                  <div className="flex items-center gap-0.5 ml-1 px-1.5 py-0.5 bg-yellow-500/10 rounded-md border border-yellow-500/20 shrink-0">
                     <style jsx global>{`
                       @keyframes star-shimmer {
                         0% { opacity: 0.6; filter: drop-shadow(0 0 1px gold); }
