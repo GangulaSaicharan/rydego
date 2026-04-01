@@ -17,7 +17,7 @@ export type SendPushResult =
 /**
  * Send FCM push to all devices registered for a user. No-op if Firebase is not configured or user has no tokens.
  * Uses brand LOGO_URL (Cloudinary) for notification image; optional FCM_NOTIFICATION_IMAGE_URL env overrides.
- * @param url - Deep link (e.g. /rides/xyz or /bookings). Must be a concrete route, not left blank.
+ * @param url - Deep link (e.g. /rides/xyz or /rides). Must be a concrete route, not left blank.
  */
 export async function sendPushToUser(
   userId: string,
@@ -111,7 +111,7 @@ export async function sendPushToUser(
 
 /**
  * Send FCM push to multiple users. No-op if Firebase is not configured.
- * @param url - Deep link for all (e.g. /bookings). Must be a concrete route, not left blank.
+ * @param url - Deep link for all (e.g. /rides). Must be a concrete route, not left blank.
  */
 export async function sendPushToUsers(
   userIds: string[],

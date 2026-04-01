@@ -4,43 +4,16 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { isSuperAdmin } from "@/lib/super-admin"
 import prisma from "@/lib/db"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  Clock,
-  MapPin,
-  Calendar,
-  User,
-  Users,
-  IndianRupee,
-  FileText,
-  ArrowLeft,
-  Settings as SettingsIcon,
-  Car,
-  Eye,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { notFound } from "next/navigation"
-import { RideStatus } from "@prisma/client"
-import { BookRideForm } from "@/components/rides/BookRideForm"
-import { CancelRideButton } from "@/components/rides/CancelRideButton"
-import { DriverBookingList } from "@/components/rides/DriverBookingList"
-import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
-import { RideViewTracker } from "@/components/rides/RideViewTracker"
-import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
 import { APP_NAME, LOGO_URL } from "@/lib/constants/brand"
 import { HeaderUserMenu } from "@/components/header-user-menu"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { AppBottomNav } from "@/components/app-bottom-nav"
+import { Settings as SettingsIcon } from "lucide-react"
+import { getRideDetailAction } from "@/lib/actions/ride"
+import { RideDetailsContent } from "@/components/rides/RideDetailsContent"
 
 export const dynamic = "force-dynamic"
 
@@ -49,15 +22,6 @@ const SITE_URL =
     /\/$/,
     "",
   )
-
-const logoUrl = `${SITE_URL}/logo.png`
-
-const statusLabel: Record<RideStatus, string> = {
-  SCHEDULED: "Upcoming",
-  STARTED: "In progress",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-}
 
 type Props = {
   params: Promise<{ id: string }>
@@ -110,7 +74,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RideDetailPage({ params, searchParams }: Props) {
   const session = await auth()
-  const userId = session?.user?.id
   const isAdmin = session?.user?.role === "ADMIN"
   const isOwner = session ? isSuperAdmin(session) : false
 
@@ -129,161 +92,8 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
     return `/search?${q.toString()}`
   })()
 
-  const ride = await prisma.ride.findUnique({
-    where: { id },
-    include: {
-      driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
-      fromLocation: true,
-      toLocation: true,
-      stops: {
-        orderBy: { order: "asc" },
-        include: {
-          location: { select: { city: true, } },
-        },
-      },
-      vehicle: { select: { brand: true, model: true, plateNumber: true, color: true, seats: true } },
-    },
-  })
-
-  if (!ride) notFound()
-
-  const canonicalRideUrl = `${SITE_URL}/rides/${ride.id}`
-  const rideJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Trip",
-    name: `Ride: ${ride.fromLocation.city} to ${ride.toLocation.city}`,
-    url: canonicalRideUrl,
-    description: `Ride details from ${ride.fromLocation.city} to ${ride.toLocation.city} on ${APP_NAME}.`,
-    startDate: ride.departureTime.toISOString(),
-    endDate: ride.arrivalTime?.toISOString(),
-    provider: {
-      "@type": "Organization",
-      name: APP_NAME,
-      url: SITE_URL,
-      logo: logoUrl,
-    },
-    image: ride.driver.image ?? undefined,
-    author: {
-      "@type": "Person",
-      name: ride.driver.name ?? "Driver",
-      url: `${SITE_URL}/profile/${ride.driver.id}`,
-      image: ride.driver.image ?? undefined,
-    },
-    offers: {
-      "@type": "Offer",
-      url: canonicalRideUrl,
-      price: Number(String(ride.pricePerSeat)),
-      priceCurrency: ride.currency ?? "INR",
-      availability: "https://schema.org/InStock",
-    },
-  }
-
-  const isDriver = userId ? ride.driverId === userId : false
-
-  let userBooking: Awaited<ReturnType<typeof prisma.booking.findFirst>> = null
-  let driverBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> = []
-  let acceptedBookings: Awaited<ReturnType<typeof prisma.booking.findMany>> = []
-
-  if (userId) {
-    const [booking, dBookings] = await Promise.all([
-      prisma.booking.findFirst({
-        where: { rideId: id, passengerId: userId },
-        orderBy: { createdAt: "desc" },
-      }),
-      isDriver
-        ? prisma.booking.findMany({
-          where: { rideId: id },
-          include: {
-            passenger: { select: { id: true, name: true, image: true, email: true } },
-          },
-          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-        })
-        : [],
-    ])
-    userBooking = booking
-    driverBookings = dBookings
-
-    const hasAccepted = booking?.status === "ACCEPTED"
-    const canSeeOtherPassengers = isDriver || isAdmin || isOwner || hasAccepted
-
-    if (canSeeOtherPassengers) {
-      acceptedBookings = isDriver
-        ? dBookings.filter((b) => b.status === "ACCEPTED")
-        : await prisma.booking.findMany({
-          where: { rideId: id, status: "ACCEPTED" },
-          include: {
-            passenger: { select: { id: true, name: true, image: true } },
-          },
-          orderBy: { createdAt: "asc" },
-        })
-    }
-  }
-
-  const hasActiveBooking = userBooking && userBooking.status !== "CANCELLED" && userBooking.status !== "REJECTED"
-  const rideIsBookable =
-    ride.status === "SCHEDULED" &&
-    ride.seatsAvailable > 0 &&
-    !hasActiveBooking
-  const canBook =
-    !!userId &&
-    !isDriver &&
-    rideIsBookable
-  const showRebook =
-    canBook &&
-    !!userBooking &&
-    (userBooking.status === "CANCELLED" || userBooking.status === "REJECTED")
-  /** Show "Book now" → sign in for any guest who is not the driver */
-  const showBookPromptForGuest = !userId && !isDriver
-
-  const hasPendingBooking = userBooking?.status === "PENDING"
-  const hasAcceptedBooking = userBooking?.status === "ACCEPTED"
-
-  type AcceptedPassengerItem = {
-    passengerId: string
-    seats: number
-    passenger: { id: string; name: string | null; image: string | null }
-  }
-  const acceptedPassengersSerialized: AcceptedPassengerItem[] = (() => {
-    if (!acceptedBookings?.length) return []
-
-    const items = acceptedBookings
-      .map((b) => {
-        const withPassenger = b as typeof b & {
-          passenger: { id: string; name: string | null; image: string | null }
-        }
-        return {
-          passengerId: withPassenger.passengerId,
-          seats: withPassenger.seats,
-          passenger: withPassenger.passenger,
-        }
-      })
-      .filter((x) => x.passenger.id !== userId)
-
-    const byPassengerId = new Map<string, AcceptedPassengerItem>()
-    for (const item of items) {
-      // defensive: ensure uniqueness if data ever contains duplicates
-      if (!byPassengerId.has(item.passengerId)) byPassengerId.set(item.passengerId, item)
-    }
-    return Array.from(byPassengerId.values())
-  })()
-
-  type DriverBookingItem = {
-    id: string
-    seats: number
-    status: string
-    totalPrice: number | null
-    passenger: { id: string; name: string | null; image: string | null; email: string | null }
-  }
-  const driverBookingsSerialized: DriverBookingItem[] = driverBookings.map((b) => {
-    const withPassenger = b as typeof b & { passenger: { id: string; name: string | null; image: string | null; email: string | null } }
-    return {
-      id: withPassenger.id,
-      seats: withPassenger.seats,
-      status: withPassenger.status,
-      totalPrice: withPassenger.totalPrice ? Number(withPassenger.totalPrice) : null,
-      passenger: withPassenger.passenger,
-    }
-  })
+  const result = await getRideDetailAction(id)
+  if (!result.success || !result.ride) notFound()
 
   const isLoggedIn = !!session?.user
   const sidebarUser =
@@ -292,359 +102,6 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
       email: "Sign in to save trips",
       image: null,
     }
-
-  const content = (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(rideJsonLd) }}
-      />
-      <RideViewTracker rideId={ride.id} />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={<Link href={backToSearch} />}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-bold tracking-tight">Ride details</h2>
-        </div>
-        <ShareRideWhatsAppButton
-          rideId={ride.id}
-          fromCity={ride.fromLocation.city}
-          toCity={ride.toLocation.city}
-          stopsCities={ride.stops.map((s) => s.location.city)}
-          departureTime={ride.departureTime}
-          seatsAvailable={ride.seatsAvailable}
-          driverName={ride.driver.name}
-          driverPhone={ride.driver.phone ?? null}
-          vehicleInfo={
-            ride.vehicle
-              ? `${ride.vehicle.brand} ${ride.vehicle.model}`.trim()
-              : null
-          }
-        />
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              Route
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                From
-              </p>
-              <p className="font-semibold text-lg">{ride.fromLocation.city}</p>
-              {ride.fromLocation.state && (
-                <p className="text-sm text-muted-foreground">
-                  {ride.fromLocation.state}, {ride.fromLocation.country}
-                </p>
-              )}
-            </div>
-            {ride.stops.length > 0 && (
-              <details className="space-y-3">
-                <summary className="cursor-pointer select-none text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Stops ({ride.stops.length})
-                </summary>
-                <div className="border-l-2 border-primary/30 pl-4 ml-2 space-y-3">
-                  {ride.stops.map((stop, idx) => (
-                    <div key={stop.id}>
-                      {/* <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Stop {idx + 1}
-                      </p> */}
-                      <p className="font-semibold text-lg">{stop.location.city}</p>
-                      {/* {stop.location.state && (
-                        <p className="text-sm text-muted-foreground">
-                          {stop.location.state}
-                          {stop.location.country ? `, ${stop.location.country}` : ""}
-                        </p>
-                      )} */}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            )}
-            <div className="border-l-2 border-primary/30 pl-4 ml-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                To
-              </p>
-              <p className="font-semibold text-lg">{ride.toLocation.city}</p>
-              {ride.toLocation.state && (
-                <p className="text-sm text-muted-foreground">
-                  {ride.toLocation.state}, {ride.toLocation.country}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Date & time
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
-                {formatDateLongIST(ride.departureTime)}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Departs at {formatTimeIST(ride.departureTime)}
-            </p>
-            {ride.arrivalTime && (
-              <p className="text-sm text-muted-foreground">
-                Arrival: {formatTimeIST(ride.arrivalTime)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {ride.vehicle && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Car className="h-5 w-5 text-primary" />
-                Vehicle
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <p className="text-lg font-semibold">
-                {ride.vehicle.brand} {ride.vehicle.model}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {ride.vehicle.plateNumber}
-                {ride.vehicle.color ? ` • ${ride.vehicle.color}` : ""} • {ride.vehicle.seats} seats
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <IndianRupee className="h-5 w-5 text-primary" />
-              Fare & seats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-2xl font-bold text-primary">
-              ₹{ride.pricePerSeat.toString()}{" "}
-              <span className="text-sm font-normal text-muted-foreground">
-                per seat
-              </span>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              <Users className="h-4 w-4 inline mr-1" />
-              {ride.seatsAvailable} of {ride.seatsTotal} seats available
-            </p>
-            {(isDriver || isOwner) && (
-              <p className="text-sm text-muted-foreground">
-                <Eye className="h-4 w-4 inline mr-1" />
-                {ride.views} views
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              Driver
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Link
-              href={`/profile/${ride.driver.id}`}
-              className="flex items-center gap-3 rounded-lg p-2 -m-2 hover:bg-muted/50 transition-colors"
-            >
-              <Avatar className="h-12 w-12">
-                <AvatarImage
-                  src={ride.driver.image ?? ""}
-                  alt={ride.driver.name ?? "Driver"}
-                />
-                <AvatarFallback>
-                  {ride.driver.name?.[0] ?? "D"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold">
-                  {ride.driver.name ?? "Driver"}
-                </p>
-                {ride.driver.email && (
-                  <p className="text-sm text-muted-foreground">
-                    {ride.driver.email}
-                  </p>
-                )}
-                <p className="text-xs text-primary mt-1">View profile →</p>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {!isDriver && acceptedPassengersSerialized.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Booked passengers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {acceptedPassengersSerialized.map((b) => (
-                <Link
-                  key={b.passenger.id}
-                  href={`/profile/${b.passenger.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg p-2 -m-2 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={b.passenger.image ?? ""}
-                        alt={b.passenger.name ?? "Passenger"}
-                      />
-                      <AvatarFallback>
-                        {b.passenger.name?.[0] ?? "P"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium leading-tight">
-                        {b.passenger.name ?? "Passenger"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {b.seats} seat{b.seats === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-primary">View →</span>
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {ride.description && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm whitespace-pre-wrap font-bold">{ride.description}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge
-          variant={
-            ride.status === "CANCELLED" ? "destructive" : "secondary"
-          }
-          className="text-sm"
-        >
-          {statusLabel[ride.status]}
-        </Badge>
-        {userId && (
-          <span className="text-sm text-muted-foreground">
-            {isDriver && "You are the driver"}
-            {hasAcceptedBooking && !isDriver && "You're booked on this ride"}
-            {hasPendingBooking && !isDriver && "Your request is pending"}
-            {userBooking?.status === "REJECTED" &&
-              "Your request was declined"}
-            {userBooking?.status === "CANCELLED" && "Booking cancelled"}
-          </span>
-        )}
-      </div>
-
-      {showBookPromptForGuest && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Book this ride</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full"
-              size="lg"
-              nativeButton={false}
-              render={
-                <Link
-                  href={`/login?${new URLSearchParams({
-                    callbackUrl: `/rides/${ride.id}`,
-                  }).toString()}`}
-                />
-              }
-            >
-              Book now
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {canBook && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {showRebook ? "Rebook this ride" : "Book this ride"}
-            </CardTitle>
-            <CardDescription>
-              {showRebook
-                ? "Your previous booking was cancelled or declined. You can book again below."
-                : ride.instantBooking
-                  ? "Confirm your seats — booking is instant."
-                  : "Send a request. The driver will accept or reject."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <BookRideForm
-              rideId={ride.id}
-              seatsAvailable={ride.seatsAvailable}
-              pricePerSeat={Number(ride.pricePerSeat)}
-              instantBooking={ride.instantBooking}
-              isRebook={showRebook}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {isDriver && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Booking requests</CardTitle>
-            <CardDescription>
-              Accept or reject passenger requests
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <DriverBookingList
-              rideId={ride.id}
-              bookings={driverBookingsSerialized}
-            />
-            {ride.status === "SCHEDULED" &&
-              new Date(ride.departureTime) > new Date() && (
-                <div className="pt-2 border-t">
-                  <CancelRideButton rideId={ride.id} />
-                </div>
-              )}
-          </CardContent>
-        </Card>
-      )}
-    </>
-  )
 
   return (
     <SidebarProvider>
@@ -688,7 +145,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
             ) : (
               <Link
                 href={`/login?${new URLSearchParams({
-                  callbackUrl: `/rides/${ride.id}`,
+                  callbackUrl: `/rides/${id}`,
                 }).toString()}`}
                 className="px-3 py-1.5 text-sm font-medium rounded-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
               >
@@ -698,7 +155,11 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
           </div>
         </header>
         <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pb-20 pt-3 md:p-6 md:pb-6 md:pt-4">
-          {content}
+          <RideDetailsContent
+            {...result}
+            userId={session?.user?.id}
+            backUrl={backToSearch}
+          />
         </main>
       </SidebarInset>
       <AppBottomNav isAdmin={isAdmin} />

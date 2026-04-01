@@ -4,7 +4,7 @@ import { sendPushToUser, sendPushToUsers } from "@/lib/push"
 /**
  * Create an in-app notification for a single user and send FCM push if configured.
  * Fire-and-forget: we don't fail the main action if notification creation fails.
- * @param url - Deep link for push (e.g. /rides/xyz or /bookings). Must be a concrete route, not left blank.
+ * @param url - Deep link for push (e.g. /rides/xyz or /rides). Must be a concrete route, not left blank.
  */
 export async function createNotification(
   userId: string,
@@ -26,7 +26,7 @@ export async function createNotification(
 /**
  * Create the same in-app notification for multiple users and send FCM push to each.
  * Used e.g. when a ride is cancelled and all passengers are notified.
- * @param url - Deep link for push (e.g. /bookings). Must be a concrete route, not left blank.
+ * @param url - Deep link for push (e.g. /rides). Must be a concrete route, not left blank.
  */
 export async function createNotifications(
   userIds: string[],

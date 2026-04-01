@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { getCitiesAction, searchRidesAction } from "@/lib/actions/ride"
 import { RideCard } from "./RideCard"
+import { RideDetailsModal } from "./RideDetailsModal"
 import {
   Select,
   SelectContent,
@@ -81,7 +82,7 @@ const INITIAL_DEFAULTS: SearchParams = {
   date: "",
 }
 
-export function RideSearchForm() {
+export function RideSearchForm({ userId }: { userId?: string }) {
   const router = useRouter()
   const searchParamsFromUrl = useSearchParams()
   const [defaults, setDefaults] = useState<SearchParams>(INITIAL_DEFAULTS)
@@ -97,6 +98,7 @@ export function RideSearchForm() {
   const [error, setError] = useState<string | null>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
   const hasRestoredFromUrl = useRef(false)
+  const [selectedRideId, setSelectedRideId] = useState<string | null>(null)
 
   const loadMore = useCallback(async () => {
     if (!searchParams || loadingMore || !hasMore) return
@@ -413,6 +415,7 @@ export function RideSearchForm() {
                 key={ride.id}
                 ride={ride}
                 backToSearchQuery={searchParams ? buildSearchQuery(searchParams) : undefined}
+                onViewDetails={(id) => setSelectedRideId(id)}
               />
             ))}
 
@@ -444,6 +447,12 @@ export function RideSearchForm() {
           </div>
         </div>
       )}
+
+      <RideDetailsModal 
+        rideId={selectedRideId} 
+        userId={userId}
+        onClose={() => setSelectedRideId(null)} 
+      />
     </div>
   )
 }

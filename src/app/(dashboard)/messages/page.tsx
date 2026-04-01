@@ -22,7 +22,7 @@ export default function MessagesPage() {
         <CardHeader>
           <CardTitle>Your Conversations</CardTitle>
           <CardDescription>
-            Chat with drivers and passengers.
+            Chat with ride partners and passengers.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">

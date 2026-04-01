@@ -17,7 +17,6 @@ const navItemsAll = [
   { href: "/publish", label: "Publish", icon: PlusCircle},
   { href: "/search", label: "Search", icon: Search },
   { href: "/rides", label: "Rides", icon: Clock},
-  { href: "/bookings", label: "Bookings", icon: TicketCheck },
 ]
 
 export function AppBottomNav({
