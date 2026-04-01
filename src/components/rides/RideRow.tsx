@@ -23,19 +23,18 @@ export function RideRow({
   statusLabel,
   statusVariant,
   action,
+  onViewDetails,
 }: {
   ride: RideRowRide
   userId: string
   statusLabel: string
   statusVariant: "default" | "secondary" | "outline" | "destructive"
   action?: React.ReactNode
+  onViewDetails?: (rideId: string) => void
 }) {
   const isDriver = ride.driverId === userId
-  return (
-    <Link
-      href={`/rides/${ride.id}`}
-      className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-colors shadow-sm"
-    >
+  const content = (
+    <>
       <div className="flex flex-1 min-w-0 gap-3">
         <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <MapPin className="h-5 w-5 text-primary" />
@@ -52,16 +51,6 @@ export function RideRow({
               <span className="ml-1">→ Arrives {formatTimeIST(ride.arrivalTime)}</span>
             )}
           </p>
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {ride.driver.name ?? "Driver"}
-            </span>
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {ride.seatsAvailable} / {ride.seatsTotal} seats
-            </span>
-          </div>
         </div>
       </div>
       <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
@@ -73,6 +62,28 @@ export function RideRow({
           </Badge>
         </div>
       </div>
+    </>
+  )
+
+  const containerClass = "flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border bg-card hover:bg-accent/50 transition-colors shadow-sm"
+
+  if (onViewDetails) {
+    return (
+      <button
+        onClick={() => onViewDetails(ride.id)}
+        className={containerClass + " w-full text-left"}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      href={`/rides/${ride.id}`}
+      className={containerClass}
+    >
+      {content}
     </Link>
   )
 }

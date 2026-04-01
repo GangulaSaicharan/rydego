@@ -6,7 +6,8 @@ import { revalidatePath, revalidateTag, unstable_cache } from "next/cache"
 import { requireMobile } from "@/lib/require-mobile"
 import { createNotifications } from "@/lib/notifications"
 import { parseISTLocalDateTime } from "@/lib/date-time"
-import { rideFormSchema, rideSearchSchema } from "@/lib/validation"
+import { rideFormSchema, rideSearchSchema, } from "@/lib/validation"
+import { isSuperAdmin } from "@/lib/super-admin"
 
 const CITIES_CACHE_TAG = "cities"
 
@@ -285,14 +286,13 @@ export async function deleteRideAction(rideId: string) {
         passengerIds,
         "Ride cancelled",
         `The ride ${route} has been cancelled by the driver.`,
-        "/bookings"
+        "/rides"
       )
     }
 
     revalidatePath("/dashboard")
     revalidatePath("/rides")
     revalidatePath("/rides/[id]", "page")
-    revalidatePath("/bookings")
     revalidatePath("/search")
     return { success: true }
   } catch (error) {
@@ -658,5 +658,247 @@ export async function incrementRideViewAction(rideId: string) {
   } catch (error) {
     console.error("Failed to increment ride view:", error)
     return { success: false, error: "Failed to update view count" }
+  }
+}
+
+const rideInclude = {
+  driver: { select: { name: true, image: true, email: true } },
+  fromLocation: { select: { city: true, state: true } },
+  toLocation: { select: { city: true, state: true } },
+}
+
+const bookingInclude = {
+  ride: {
+    include: {
+      driver: { select: { id: true, name: true, image: true } },
+      fromLocation: { select: { city: true, state: true } },
+      toLocation: { select: { city: true, state: true } },
+    },
+  },
+}
+
+export async function fetchRides({
+  page = 0,
+  pageSize = 5,
+}: {
+  page?: number
+  pageSize?: number
+}) {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) return []
+
+  const rides = await prisma.ride.findMany({
+    where: {
+      driverId: userId,
+    },
+    orderBy: {
+      departureTime: "desc",
+    },
+    include: rideInclude,
+    skip: page * pageSize,
+    take: pageSize,
+  })
+
+  return rides.map((r) => {
+    const pricePerSeat = r.pricePerSeat
+    const price =
+      typeof pricePerSeat === "number"
+        ? pricePerSeat
+        : Number(String(pricePerSeat))
+    return {
+      id: r.id,
+      driverId: r.driverId,
+      status: r.status,
+      departureTime: r.departureTime.toISOString(),
+      arrivalTime: r.arrivalTime?.toISOString() ?? null,
+      pricePerSeat: price,
+      seatsAvailable: r.seatsAvailable,
+      seatsTotal: r.seatsTotal,
+      driver: r.driver,
+      fromLocation: r.fromLocation,
+      toLocation: r.toLocation,
+    }
+  })
+}
+
+export async function fetchBookings({
+  page = 0,
+  pageSize = 5,
+}: {
+  page?: number
+  pageSize?: number
+}) {
+  const session = await auth()
+  const userId = session?.user?.id
+  if (!userId) return []
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      passengerId: userId,
+    },
+    include: bookingInclude,
+    orderBy: {
+      ride: {
+        departureTime: "desc",
+      },
+    },
+    skip: page * pageSize,
+    take: pageSize,
+  })
+
+  return bookings.map((b) => ({
+    id: b.id,
+    seats: b.seats,
+    totalPrice: b.totalPrice == null ? null : Number(b.totalPrice),
+    status: b.status,
+    createdAt: b.createdAt.toISOString(),
+    ride: {
+      id: b.ride.id,
+      departureTime: b.ride.departureTime.toISOString(),
+      status: b.ride.status,
+      driver: b.ride.driver,
+      fromLocation: b.ride.fromLocation,
+      toLocation: b.ride.toLocation,
+    },
+  }))
+}
+
+export async function getRideDetailAction(id: string) {
+  const session = await auth()
+  const userId = session?.user?.id
+  const isAdmin = session?.user?.role === "ADMIN"
+  const isOwner = session ? isSuperAdmin(session) : false
+
+  try {
+    const ride = await prisma.ride.findUnique({
+      where: { id },
+      include: {
+        driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
+        fromLocation: true,
+        toLocation: true,
+        stops: {
+          orderBy: { order: "asc" },
+          include: {
+            location: { select: { city: true, } },
+          },
+        },
+        vehicle: { select: { brand: true, model: true, plateNumber: true, color: true, seats: true } },
+      },
+    })
+
+    if (!ride) return { success: false, error: "Ride not found" }
+
+    const isDriver = userId ? ride.driverId === userId : false
+
+    let userBooking = null
+    let driverBookings: any = []
+    let acceptedBookings: any = []
+
+    if (userId) {
+      const [booking, dBookings] = await Promise.all([
+        prisma.booking.findFirst({
+          where: { rideId: id, passengerId: userId },
+          orderBy: { createdAt: "desc" },
+        }),
+        isDriver
+          ? prisma.booking.findMany({
+            where: { rideId: id },
+            include: {
+              passenger: { select: { id: true, name: true, image: true, email: true } },
+            },
+            orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+          })
+          : [],
+      ])
+      userBooking = booking
+      driverBookings = dBookings
+
+      const hasAccepted = booking?.status === "ACCEPTED"
+      const canSeeOtherPassengers = isDriver || isAdmin || isOwner || hasAccepted
+
+      if (canSeeOtherPassengers) {
+        if (isDriver) {
+          acceptedBookings = dBookings.filter((b) => b.status === "ACCEPTED")
+        } else {
+          acceptedBookings = await prisma.booking.findMany({
+            where: { rideId: id, status: "ACCEPTED" },
+            include: {
+              passenger: { select: { id: true, name: true, image: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          })
+        }
+      }
+    }
+
+    const hasActiveBooking = userBooking && userBooking.status !== "CANCELLED" && userBooking.status !== "REJECTED"
+    const rideIsBookable =
+      ride.status === "SCHEDULED" &&
+      ride.seatsAvailable > 0 &&
+      !hasActiveBooking
+    const canBook =
+      !!userId &&
+      !isDriver &&
+      rideIsBookable
+    const showRebook =
+      canBook &&
+      !!userBooking &&
+      (userBooking.status === "CANCELLED" || userBooking.status === "REJECTED")
+    const showBookPromptForGuest = !userId && !isDriver
+
+    const hasPendingBooking = userBooking?.status === "PENDING"
+    const hasAcceptedBooking = userBooking?.status === "ACCEPTED"
+
+    // Serializing decimals and dates
+    const serializedRide = {
+      ...ride,
+      pricePerSeat: Number(ride.pricePerSeat),
+      departureTime: ride.departureTime.toISOString(),
+      arrivalTime: ride.arrivalTime?.toISOString() ?? null,
+      createdAt: ride.createdAt.toISOString(),
+      updatedAt: ride.updatedAt.toISOString(),
+    }
+
+    const serializedUserBooking = userBooking ? {
+      ...userBooking,
+      totalPrice: userBooking.totalPrice ? Number(userBooking.totalPrice) : null,
+      createdAt: userBooking.createdAt.toISOString(),
+      updatedAt: userBooking.updatedAt.toISOString(),
+    } : null
+
+    const serializedDriverBookings = driverBookings.map((b: any) => ({
+      ...b,
+      totalPrice: b.totalPrice ? Number(b.totalPrice) : null,
+      createdAt: b.createdAt.toISOString(),
+      updatedAt: b.updatedAt.toISOString(),
+    }))
+
+    const serializedAcceptedBookings = acceptedBookings.map((b: any) => ({
+      ...b,
+      totalPrice: b.totalPrice ? Number(b.totalPrice) : null,
+      createdAt: b.createdAt.toISOString(),
+      updatedAt: b.updatedAt.toISOString(),
+    }))
+
+    return {
+      success: true,
+      ride: serializedRide,
+      userBooking: serializedUserBooking,
+      driverBookings: serializedDriverBookings,
+      acceptedBookings: serializedAcceptedBookings,
+      isDriver,
+      isAdmin,
+      isOwner,
+      canBook,
+      showRebook,
+      showBookPromptForGuest,
+      hasPendingBooking,
+      hasAcceptedBooking,
+    }
+
+  } catch (error) {
+    console.error("Failed to fetch ride detail:", error)
+    return { success: false, error: "Failed to fetch ride detail" }
   }
 }

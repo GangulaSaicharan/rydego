@@ -119,7 +119,7 @@ export default async function SearchPage() {
 
           {/* Centered search */}
           <div className="w-full max-w-3xl mx-auto space-y-6">
-            <RideSearchForm />
+            <RideSearchForm userId={session?.user?.id} />
           </div>
 
           <SiteFooter className="max-w-3xl mx-auto mt-auto border-t border-border/40" />

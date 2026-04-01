@@ -173,8 +173,8 @@ export function ShareRideWhatsAppButton({
     const message = [
       `${E.car} *CAR AVAILABLE* ${E.car}`,
       "",
-     `*Date:* ${dateStr}`,
-     `${relativeStr ? ` ${relativeStr}` : ""}`,
+      `*Date:* ${dateStr}`,
+      `${relativeStr ? ` ${relativeStr}` : ""}`,
       `${timeStr}`,
       `${E.pin} From: *${fromPart}*`,
       ...(intermediateStops.length > 0
@@ -216,7 +216,7 @@ export function ShareRideWhatsAppButton({
       className="gap-2"
     >
       <Share2 className="h-4 w-4" />
-      Share via WhatsApp
+      Share
     </Button>
   );
 }

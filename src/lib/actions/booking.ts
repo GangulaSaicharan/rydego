@@ -162,7 +162,6 @@ export async function createBookingAction(params: {
     revalidatePath("/rides")
     revalidatePath("/rides/[id]", "page")
     revalidatePath("/dashboard")
-    revalidatePath("/bookings")
 
     // Notifications (fire-and-forget)
     const rideForNotification = await prisma.ride.findUnique({
@@ -399,7 +398,6 @@ export async function updateBookingStatusAction(
     revalidatePath("/rides")
     revalidatePath("/rides/[id]", "page")
     revalidatePath("/dashboard")
-    revalidatePath("/bookings")
 
     const route =
       booking.ride.fromLocation && booking.ride.toLocation

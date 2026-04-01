@@ -47,9 +47,11 @@ export type BookingCardBooking = {
 export function BookingCard({
   booking,
   showCancel,
+  onViewRide,
 }: {
   booking: BookingCardBooking
   showCancel: boolean
+  onViewRide?: (rideId: string) => void
 }) {
   const total = Number(booking.totalPrice ?? 0)
   const canCancel =
@@ -63,12 +65,21 @@ export function BookingCard({
     <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border bg-card">
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href={`/rides/${booking.ride.id}`}
-            className="font-semibold text-primary hover:underline"
-          >
-            {booking.ride.fromLocation.city} → {booking.ride.toLocation.city}
-          </Link>
+          {onViewRide ? (
+            <button
+              onClick={() => onViewRide(booking.ride.id)}
+              className="font-semibold text-primary hover:underline text-left"
+            >
+              {booking.ride.fromLocation.city} → {booking.ride.toLocation.city}
+            </button>
+          ) : (
+            <Link
+              href={`/rides/${booking.ride.id}`}
+              className="font-semibold text-primary hover:underline"
+            >
+              {booking.ride.fromLocation.city} → {booking.ride.toLocation.city}
+            </Link>
+          )}
           <Badge variant={isInProgress ? "default" : statusVariant[booking.status] ?? "outline"}>
             {isInProgress ? "In progress" : statusLabel[booking.status] ?? booking.status}
           </Badge>
@@ -109,19 +120,21 @@ export function BookingCard({
         </p>
       </div>
       <div className="flex justify-between items-center gap-2">
-          <Link
-            href={`/rides/${booking.ride.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
-          >
-            View ride
-          </Link>
-          {/* <Link
-            href={`/profile/${booking.ride.driver.id}#contact`}
-            className={cn(buttonVariants({ variant: "ghost", size: "xs" }), "gap-1 text-xs")}
-          >
-            <MessageCircle className="h-3 w-3" />
-            Message driver
-          </Link> */}
+          {onViewRide ? (
+            <button
+              onClick={() => onViewRide(booking.ride.id)}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
+            >
+              View ride
+            </button>
+          ) : (
+            <Link
+              href={`/rides/${booking.ride.id}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full")}
+            >
+              View ride
+            </Link>
+          )}
           <ShareRideWhatsAppButton
             rideId={booking.ride.id}
             fromCity={booking.ride.fromLocation.city}

@@ -20,7 +20,6 @@ export async function GET() {
     `Disallow: /login`,
     `Disallow: /settings`,
     `Disallow: /publish`,
-    `Disallow: /bookings`,
     `Disallow: /messages`,
     `Disallow: /api/`,
     `Disallow: /rides`,
