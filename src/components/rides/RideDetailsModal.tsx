@@ -49,7 +49,7 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
 
   return (
     <AlertDialog open={!!rideId} onOpenChange={(open) => !open && onClose()}>
-      <AlertDialogContent className="sm:max-w-4xl max-h-[92vh] overflow-y-auto p-0 rounded-2xl border-none shadow-2xl bg-background">
+      <AlertDialogContent className="w-[95vw] sm:max-w-4xl max-h-[92vh] overflow-y-auto p-0 rounded-2xl border-none shadow-2xl bg-background">
         <AlertDialogHeader className="sr-only">
           <AlertDialogTitle>Ride Details</AlertDialogTitle>
           <AlertDialogDescription>
@@ -57,7 +57,7 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="relative min-h-[300px]">
+        <div className="relative min-h-[500px]">
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-xs z-50">
               <div className="flex flex-col items-center gap-3">
@@ -74,7 +74,7 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
               </div>
               <h3 className="text-lg font-semibold mb-2">Error loading details</h3>
               <p className="text-muted-foreground mb-6 max-w-xs">{error}</p>
-              <button 
+              <button
                 onClick={onClose}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium"
               >
@@ -84,12 +84,12 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
           )}
 
           {data && (
-            <div className="p-4 md:p-8">
-              <RideDetailsContent 
-                {...data} 
-                isModal 
-                onClose={onClose} 
-                userId={userId} 
+            <div className="p-3 md:p-6">
+              <RideDetailsContent
+                {...data}
+                isModal
+                onClose={onClose}
+                userId={userId}
               />
             </div>
           )}

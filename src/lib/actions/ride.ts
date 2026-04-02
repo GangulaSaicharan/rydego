@@ -774,7 +774,7 @@ export async function getRideDetailAction(id: string) {
     const ride = await prisma.ride.findUnique({
       where: { id },
       include: {
-        driver: { select: { id: true, name: true, image: true, email: true, phone: true } },
+        driver: { select: { id: true, name: true, image: true, email: true, phone: true, ratingAverage: true } },
         fromLocation: true,
         toLocation: true,
         stops: {
