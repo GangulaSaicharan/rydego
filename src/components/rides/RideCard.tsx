@@ -176,12 +176,14 @@ export function RideCard({ ride, backToSearchQuery, onViewDetails }: RideCardPro
                   </div>
                 )}
               </div>
-              {isFull ? (
-                <span className="text-xs font-semibold text-destructive">Seats full</span>
-              ) : (
-                <span className="text-xs text-muted-foreground ml-3">
-                  {ride.seatsAvailable} seat{ride.seatsAvailable === 1 ? "" : "s"} left
-                </span>
+              {ride.status !== "COMPLETED" && (
+                isFull ? (
+                  <span className="text-xs font-semibold text-destructive">Seats full</span>
+                ) : (
+                  <span className="text-xs text-muted-foreground ml-3">
+                    {ride.seatsAvailable} seat{ride.seatsAvailable === 1 ? "" : "s"} left
+                  </span>
+                )
               )}
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">

@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Car, ArrowLeft, Phone } from "lucide-react"
+import { FileText, Car, ArrowLeft, Phone, Star } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
 import { APP_NAME } from "@/lib/constants/brand"
@@ -67,6 +67,7 @@ export default async function DriverProfilePage({ params }: Props) {
       phone: true,
       bio: true,
       totalRides: true,
+      ratingAverage: true,
       driverProfile: { select: { verified: true } },
     },
   })
@@ -104,7 +105,7 @@ export default async function DriverProfilePage({ params }: Props) {
   }
 
   return (
-    <main className="flex-1 space-y-6 max-w-2xl mx-auto">
+    <main className="flex-1 space-y-6 max-w-2xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(driverJsonLd) }}
@@ -137,6 +138,12 @@ export default async function DriverProfilePage({ params }: Props) {
                   <Badge variant="secondary" className="gap-1 font-medium">
                     <Car className="h-3.5 w-3.5" />
                     Verified driver
+                  </Badge>
+                )}
+                {user?.ratingAverage > 0 && (
+                  <Badge variant="outline" className="gap-1 font-medium bg-amber-500/10 text-amber-600 border-amber-500/20">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    {user.ratingAverage}
                   </Badge>
                 )}
               </div>

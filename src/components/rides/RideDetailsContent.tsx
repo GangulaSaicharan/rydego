@@ -31,6 +31,7 @@ import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppBut
 import { RideViewTracker } from "@/components/rides/RideViewTracker"
 import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
 import { RideStatus } from "@prisma/client"
+import { cn } from "@/lib/utils"
 
 const statusLabel: Record<RideStatus, string> = {
   SCHEDULED: "Upcoming",
@@ -121,8 +122,11 @@ export function RideDetailsContent({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(rideJsonLd) }}
       />
       <RideViewTracker rideId={ride.id} />
-      
-      <div className="flex flex-wrap items-center justify-between gap-2">
+
+      <div className={cn(
+        "flex flex-wrap items-center justify-between gap-2 border-b pb-3 mb-2",
+        isModal ? "sticky top-0 z-20 -mx-3 -mt-3 p-3 bg-background/95 backdrop-blur-sm md:-mx-6 md:-mt-6 md:p-6" : ""
+      )}>
         <div className="flex items-center gap-2">
           {!isModal && backUrl && (
             <Button
@@ -139,12 +143,11 @@ export function RideDetailsContent({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="md:hidden"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-          <h2 className="text-2xl font-bold tracking-tight">Ride details</h2>
+          <h2 className="text-xl font-bold tracking-tight md:text-2xl line-clamp-1">Ride details</h2>
         </div>
         <ShareRideWhatsAppButton
           rideId={ride.id}
