@@ -308,27 +308,45 @@ export function formatShareDateIST(
     (1000 * 60 * 60 * 24)
   const diffDaysRounded = Math.round(diffDays)
 
-  let relativeStr = ""
-  if (diffDaysRounded === 0) relativeStr = "Today"
-  else if (diffDaysRounded === 1) relativeStr = "Tomorrow"
-  else if (diffDaysRounded === 2) relativeStr = "Day after tomorrow"
-  else if (diffDaysRounded > 2 && diffDaysRounded <= 7) relativeStr = `In ${diffDaysRounded} days`
-
+  // Robust hour extraction in IST (avoiding locale-dependent hour12 issues)
   const hour = parseInt(
-    new Intl.DateTimeFormat(locale, { timeZone: INDIAN_TZ, hour: "numeric", hour12: false }).format(
-      d
-    ),
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: INDIAN_TZ,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(d),
     10
   )
-  const timeOfDay =
-    hour >= 4 && hour < 12
-      ? "Morning"
-      : hour >= 12 && hour < 17
-        ? "Afternoon"
-        : hour >= 17 && hour < 21
-          ? "Evening"
-          : "Night"
-  if (relativeStr) relativeStr = `${relativeStr} ${timeOfDay}`
+
+  let relativeStr = ""
+  let timeOfDay = ""
+
+  if (diffDaysRounded === 0) {
+    relativeStr = "Today"
+    if (hour >= 6 && hour < 12) timeOfDay = "morning"
+    else if (hour >= 12 && hour < 16) timeOfDay = "afternoon"
+    else if (hour >= 16 && hour < 20) timeOfDay = "evening"
+    else timeOfDay = "night" // 20:00 - 05:59
+  } else if (diffDaysRounded === 1) {
+    relativeStr = "Tomorrow"
+    if (hour >= 0 && hour < 6) timeOfDay = "early morning"
+    else if (hour >= 6 && hour < 12) timeOfDay = "morning"
+    else if (hour >= 12 && hour < 18) timeOfDay = "afternoon"
+    else timeOfDay = "night" // 18:00 - 23:59
+  } else if (diffDaysRounded === 2) {
+    relativeStr = "Day after tomorrow"
+    if (hour >= 6 && hour < 12) timeOfDay = "morning"
+    else if (hour >= 12 && hour < 17) timeOfDay = "afternoon"
+    else timeOfDay = "night"
+  } else if (diffDaysRounded > 2 && diffDaysRounded <= 7) {
+    relativeStr = `In ${diffDaysRounded} days`
+    if (hour >= 6 && hour < 12) timeOfDay = "morning"
+    else if (hour >= 12 && hour < 17) timeOfDay = "afternoon"
+    else if (hour >= 17 && hour < 21) timeOfDay = "evening"
+    else timeOfDay = "night"
+  }
+
+  if (relativeStr && timeOfDay) relativeStr = `${relativeStr} ${timeOfDay}`
 
   return { dateStr, relativeStr: relativeStr.trim() }
 }
