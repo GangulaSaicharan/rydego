@@ -104,4 +104,12 @@ export const CITIES: City[] = [
     longitude: 78.785,
     status: false
   },
+  {
+    name: "Khammam",
+    state: "Telangana",
+    country: "India",
+    latitude: 17.2488,
+    longitude: 79.1397,
+    status: false
+  }
 ];
