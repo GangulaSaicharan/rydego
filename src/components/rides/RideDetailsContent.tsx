@@ -57,6 +57,7 @@ interface RideDetailsContentProps {
   backUrl?: string
   isModal?: boolean
   onClose?: () => void
+  onActionSuccess?: () => void
 }
 
 export function RideDetailsContent({
@@ -76,6 +77,7 @@ export function RideDetailsContent({
   backUrl,
   isModal,
   onClose,
+  onActionSuccess,
 }: RideDetailsContentProps) {
   const rideJsonLd = {
     "@context": "https://schema.org",
@@ -444,6 +446,7 @@ export function RideDetailsContent({
               pricePerSeat={Number(ride.pricePerSeat)}
               instantBooking={ride.instantBooking}
               isRebook={showRebook}
+              onSuccess={onActionSuccess}
             />
           </CardContent>
         </Card>
@@ -461,11 +464,12 @@ export function RideDetailsContent({
             <DriverBookingList
               rideId={ride.id}
               bookings={driverBookings}
+              onSuccess={onActionSuccess}
             />
             {ride.status === "SCHEDULED" &&
               new Date(ride.departureTime) > new Date() && (
                 <div className="pt-2 border-t">
-                  <CancelRideButton rideId={ride.id} />
+                  <CancelRideButton rideId={ride.id} onSuccess={onActionSuccess} />
                 </div>
               )}
           </CardContent>

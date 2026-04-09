@@ -24,6 +24,7 @@ interface CancelRideButtonProps {
   className?: string
   /** If true, show icon-only label for compact use (e.g. in list rows) */
   compact?: boolean
+  onSuccess?: () => void
 }
 
 export function CancelRideButton({
@@ -32,6 +33,7 @@ export function CancelRideButton({
   size = "sm",
   className,
   compact = false,
+  onSuccess,
 }: CancelRideButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -50,6 +52,7 @@ export function CancelRideButton({
       if (result.success) {
         toast.success("Ride cancelled")
         setOpen(false)
+        if (onSuccess) onSuccess()
         router.push("/rides")
         router.refresh()
       } else {

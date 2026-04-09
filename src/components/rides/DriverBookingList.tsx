@@ -36,6 +36,7 @@ type BookingWithPassenger = {
 interface DriverBookingListProps {
   rideId: string
   bookings: BookingWithPassenger[]
+  onSuccess?: () => void
 }
 
 const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -46,7 +47,7 @@ const statusVariant: Record<string, "default" | "secondary" | "outline" | "destr
   COMPLETED: "outline",
 }
 
-export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) {
+export function DriverBookingList({ rideId, bookings, onSuccess }: DriverBookingListProps) {
   const router = useRouter()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [removeConfirm, setRemoveConfirm] = useState<{
@@ -68,6 +69,7 @@ export function DriverBookingList({ rideId, bookings }: DriverBookingListProps) 
           toast.success("Passenger removed from ride")
           setRemoveConfirm(null)
         }
+        if (onSuccess) onSuccess()
         router.refresh()
       } else {
         toast.error(result.error ?? "Failed to update")
