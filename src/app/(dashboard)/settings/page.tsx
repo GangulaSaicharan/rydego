@@ -6,6 +6,8 @@ import Link from "next/link"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
 import { APP_NAME } from "@/lib/constants/brand"
+import { isSuperAdmin } from "@/lib/super-admin"
+
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -19,6 +21,8 @@ export const metadata: Metadata = {
 export default async function SettingsPage() {
   const session = await auth()
   const isAdmin = session?.user?.role === "ADMIN"
+  const isOwner = isSuperAdmin(session)
+
 
   return (
     <main className="flex-1 space-y-6">
@@ -51,10 +55,36 @@ export default async function SettingsPage() {
             href="/settings/vehicles"
             className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto inline-flex")}
           >
-            Show vehicles
+            Manage vehicles
           </Link>
         </section>
       )}
+
+      {isOwner && (
+        <section className="space-y-3 rounded-lg border bg-card p-4">
+          <div>
+            <h3 className="text-base font-semibold">Owner Actions</h3>
+            <p className="text-sm text-muted-foreground">
+              Access administrative tools and manage users.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/admin"
+              className={cn(buttonVariants({ variant: "default" }), "w-full sm:w-auto inline-flex")}
+            >
+              Admin Dashboard
+            </Link>
+            <Link
+              href="/admin/users"
+              className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto inline-flex")}
+            >
+              Users Page
+            </Link>
+          </div>
+        </section>
+      )}
+
 
       <NotificationSettings />
     </main>

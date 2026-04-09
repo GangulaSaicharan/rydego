@@ -19,9 +19,10 @@ import { toast } from "sonner"
 
 interface CancelBookingButtonProps {
   bookingId: string
+  onSuccess?: () => void
 }
 
-export function CancelBookingButton({ bookingId }: CancelBookingButtonProps) {
+export function CancelBookingButton({ bookingId, onSuccess }: CancelBookingButtonProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -33,6 +34,7 @@ export function CancelBookingButton({ bookingId }: CancelBookingButtonProps) {
       if (result.success) {
         toast.success("Booking cancelled")
         setOpen(false)
+        if (onSuccess) onSuccess()
         router.refresh()
       } else {
         toast.error(result.error ?? "Failed to cancel")

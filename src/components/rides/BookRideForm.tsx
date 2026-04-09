@@ -3,19 +3,16 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { toast } from "sonner"
 import { IndianRupee, Loader2 } from "lucide-react"
+
 import { createBookingAction } from "@/lib/actions/booking"
 import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
-import { toast } from "sonner"
+import {
+  Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui"
 
 interface BookRideFormProps {
   rideId: string
@@ -24,6 +21,7 @@ interface BookRideFormProps {
   instantBooking: boolean
   /** Show "Rebook" instead of "Book" when passenger had a cancelled/declined booking */
   isRebook?: boolean
+  onSuccess?: () => void
 }
 
 export function BookRideForm({
@@ -32,20 +30,22 @@ export function BookRideForm({
   pricePerSeat,
   instantBooking,
   isRebook = false,
+  onSuccess,
 }: BookRideFormProps) {
   const router = useRouter()
   const [seats, setSeats] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profileError, setProfileError] = useState<boolean>(false)
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   const total = pricePerSeat * seats
   const maxSeats = Math.min(seatsAvailable, 10)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleConfirmBooking() {
     if (seats < 1 || seats > seatsAvailable) return
     setIsSubmitting(true)
     setProfileError(false)
+    setIsConfirmOpen(false)
     try {
       const result = await createBookingAction({
         rideId,
@@ -53,6 +53,7 @@ export function BookRideForm({
       })
       if (result.success) {
         toast.success(result.message ?? "Booking request sent")
+        if (onSuccess) onSuccess()
         router.refresh()
       } else {
         if ("requiresProfile" in result && result.requiresProfile) {
@@ -63,6 +64,12 @@ export function BookRideForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (seats < 1 || seats > seatsAvailable) return
+    setIsConfirmOpen(true)
   }
 
   return (
@@ -123,6 +130,37 @@ export function BookRideForm({
           </p>
         )}
       </div>
+
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent className="border-primary/10 shadow-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Confirm Booking</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <p>Are you sure you want to proceed with this booking?</p>
+              </div>
+
+              {instantBooking ? (
+                <div className="flex flex-col gap-2 p-2 rounded-md bg-green-500/5 text-green-600 border border-green-500/10 text-xs">
+                  <span className="font-semibold">Instant Booking:</span>
+                  <span>Your seats will be reserved immediately.</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 p-2 rounded-md bg-blue-500/5 text-blue-600 border border-blue-500/10 text-xs">
+                  <span className="font-semibold">Booking Request:</span>
+                  <span>The driver will review and confirm your request.</span>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBooking}>
+              Confirm Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

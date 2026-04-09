@@ -23,6 +23,18 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const refreshData = () => {
+    if (rideId) {
+      getRideDetailAction(rideId)
+        .then((res) => {
+          if (res.success) setData(res)
+        })
+        .catch(() => {
+          // Silent catch on manual refresh
+        })
+    }
+  }
+
   useEffect(() => {
     if (rideId) {
       setLoading(true)
@@ -90,6 +102,7 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
                 isModal
                 onClose={onClose}
                 userId={userId}
+                onActionSuccess={refreshData}
               />
             </div>
           )}
