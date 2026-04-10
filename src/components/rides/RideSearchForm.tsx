@@ -17,12 +17,7 @@ import {
 import { getCitiesAction, searchRidesAction } from "@/lib/actions/ride"
 import { RideCard } from "./RideCard"
 import { RideDetailsModal } from "./RideDetailsModal"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select"
+import { CityCombobox } from "@/components/ui/city-combobox"
 import { todayDateStringIST, formatDateShortIST } from "@/lib/date-time"
 const STORAGE_KEY = "ride-search-prefs"
 const RECENT_SEARCHES_KEY = "recent-ride-searches-v1"
@@ -335,17 +330,6 @@ export function RideSearchForm({ userId }: { userId?: string }) {
     router.replace("/search", { scroll: false })
   }
 
-  const fromCityLabel =
-    defaults.fromLocationId
-      ? cities.find((c) => c.id === defaults.fromLocationId)?.city ??
-      (citiesLoading ? "Loading..." : "")
-      : ""
-  const toCityLabel =
-    defaults.toLocationId
-      ? cities.find((c) => c.id === defaults.toLocationId)?.city ??
-      (citiesLoading ? "Loading..." : "")
-      : ""
-
   const handleSwap = () => {
     setDefaults((prev) => ({
       ...prev,
@@ -369,37 +353,16 @@ export function RideSearchForm({ userId }: { userId?: string }) {
                     <MapPin className="h-3.5 w-3.5" />
                     From
                   </label>
-                  <Select
+                  <CityCombobox
                     name="fromLocationId"
-                    required
                     value={defaults.fromLocationId}
-                    onValueChange={(v) =>
-                      setDefaults((prev) => ({ ...prev, fromLocationId: v ?? "" }))
-                    }
-                  >
-                    <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
-                      {fromCityLabel ? (
-                        <span className="flex flex-1 text-left">{fromCityLabel}</span>
-                      ) : (
-                        <span className="flex flex-1 text-left text-muted-foreground">
-                          City or area
-                        </span>
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {citiesLoading ? (
-                        <SelectItem value="loading" disabled>
-                          Loading cities...
-                        </SelectItem>
-                      ) : (
-                        cities.map((city) => (
-                          <SelectItem key={city.id} value={city.id}>
-                            {city.city}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                    onValueChange={(v) => setDefaults((prev) => ({ ...prev, fromLocationId: v }))}
+                    cities={cities}
+                    loading={citiesLoading}
+                    placeholder="City or area"
+                    required
+                    controlClassName="h-11 border-0 bg-muted/40 shadow-none"
+                  />
                 </div>
                 <div className="flex items-center justify-center -mx-3 z-10 shrink-0">
                   <Button
@@ -418,37 +381,16 @@ export function RideSearchForm({ userId }: { userId?: string }) {
                     <MapPin className="h-3.5 w-3.5" />
                     To
                   </label>
-                  <Select
+                  <CityCombobox
                     name="toLocationId"
-                    required
                     value={defaults.toLocationId}
-                    onValueChange={(v) =>
-                      setDefaults((prev) => ({ ...prev, toLocationId: v ?? "" }))
-                    }
-                  >
-                    <SelectTrigger className="h-11 w-full border-0 bg-muted/40 shadow-none focus:ring-2 focus:ring-primary/20 px-3">
-                      {toCityLabel ? (
-                        <span className="flex flex-1 text-left">{toCityLabel}</span>
-                      ) : (
-                        <span className="flex flex-1 text-left text-muted-foreground">
-                          City or area
-                        </span>
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {citiesLoading ? (
-                        <SelectItem value="loading" disabled>
-                          Loading cities...
-                        </SelectItem>
-                      ) : (
-                        cities.map((city) => (
-                          <SelectItem key={city.id} value={city.id}>
-                            {city.city}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                    onValueChange={(v) => setDefaults((prev) => ({ ...prev, toLocationId: v }))}
+                    cities={cities}
+                    loading={citiesLoading}
+                    placeholder="City or area"
+                    required
+                    controlClassName="h-11 border-0 bg-muted/40 shadow-none"
+                  />
                 </div>
                 <div className="flex-1 flex flex-col p-4 border-b sm:border-b-0 sm:border-r border-border/50">
                   <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">

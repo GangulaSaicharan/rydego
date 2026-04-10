@@ -28,9 +28,6 @@ export default async function SettingsPage() {
     <main className="flex-1 space-y-6">
       <div className="space-y-1">
         <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-sm text-muted-foreground">
-          Manage how you use the app on this device.
-        </p>
       </div>
 
       <section className="space-y-3 rounded-lg border bg-card p-4">

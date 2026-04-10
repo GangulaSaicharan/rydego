@@ -86,7 +86,7 @@ export const CITIES: City[] = [
     country: "India",
     latitude: 19.0964,
     longitude: 78.3446,
-    status: false
+    status: true
   },
   {
     name: "Jagtial",
@@ -94,7 +94,7 @@ export const CITIES: City[] = [
     country: "India",
     latitude: 18.7956,
     longitude: 78.9123,
-    status: false
+    status: true
   },
   {
     name: "Raikal",

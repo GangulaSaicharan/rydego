@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { CityCombobox } from "@/components/ui/city-combobox"
 import { createRideAction, getCitiesAction } from "@/lib/actions/ride"
 import { listMyVehiclesAction } from "@/lib/actions/vehicle"
 import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
@@ -226,63 +227,27 @@ export function OfferRideForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="fromCity">From City</Label>
-              <Select
+              <CityCombobox
                 name="fromLocationId"
+                value={fromLocationId}
+                onValueChange={setFromLocationId}
+                cities={cities}
+                loading={citiesLoading}
+                placeholder="Select departure city"
                 required
-                value={fromLocationId || null}
-                onValueChange={(v) => setFromLocationId(v ?? "")}
-              >
-                <SelectTrigger className="w-full">
-                  {fromLocationId ? (
-                    <span className="flex flex-1 text-left">
-                      {cities.find((c) => c.id === fromLocationId)?.city ?? "Selected city"}
-                    </span>
-                  ) : (
-                    <span className="flex flex-1 text-left text-muted-foreground">Select departure city</span>
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {citiesLoading ? (
-                    <SelectItem value="loading" disabled>Loading cities...</SelectItem>
-                  ) : (
-                    cities.map((city) => (
-                      <SelectItem key={city.id} value={city.id}>
-                        {city.city}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="toCity">To City</Label>
-              <Select
+              <CityCombobox
                 name="toLocationId"
+                value={toLocationId}
+                onValueChange={setToLocationId}
+                cities={cities}
+                loading={citiesLoading}
+                placeholder="Select destination city"
                 required
-                value={toLocationId || null}
-                onValueChange={(v) => setToLocationId(v ?? "")}
-              >
-                <SelectTrigger className="w-full">
-                  {toLocationId ? (
-                    <span className="flex flex-1 text-left">
-                      {cities.find((c) => c.id === toLocationId)?.city ?? "Selected city"}
-                    </span>
-                  ) : (
-                    <span className="flex flex-1 text-left text-muted-foreground">Select destination city</span>
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {citiesLoading ? (
-                    <SelectItem value="loading" disabled>Loading cities...</SelectItem>
-                  ) : (
-                    cities.map((city) => (
-                      <SelectItem key={city.id} value={city.id}>
-                        {city.city}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+              />
             </div>
           </div>
 
@@ -317,38 +282,15 @@ export function OfferRideForm() {
                     <div key={idx} className="flex items-end gap-3">
                       <div className="flex-1 space-y-2">
                         <Label>{`Stop ${idx + 1}`}</Label>
-                        <Select
+                        <CityCombobox
                           name="stopLocationIds"
-                          value={stopId || null}
-                          onValueChange={(v) => updateStop(idx, v ?? "")}
-                        >
-                          <SelectTrigger className="w-full">
-                            {stopId ? (
-                              <span className="flex flex-1 text-left">
-                                {cities.find((c) => c.id === stopId)?.city ?? "Selected stop"}
-                              </span>
-                            ) : (
-                              <span className="flex flex-1 text-left text-muted-foreground">Select stop city</span>
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            {citiesLoading ? (
-                              <SelectItem value="loading" disabled>
-                                Loading cities...
-                              </SelectItem>
-                            ) : options.length === 0 ? (
-                              <SelectItem value="none" disabled>
-                                No other stops available
-                              </SelectItem>
-                            ) : (
-                              options.map((city) => (
-                                <SelectItem key={city.id} value={city.id}>
-                                  {city.city}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
+                          value={stopId}
+                          onValueChange={(v) => updateStop(idx, v)}
+                          cities={options}
+                          loading={citiesLoading}
+                          placeholder={options.length === 0 ? "No other stops available" : "Select stop city"}
+                          disabled={!citiesLoading && options.length === 0}
+                        />
                       </div>
 
                       <Button
