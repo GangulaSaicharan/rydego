@@ -526,7 +526,7 @@ export async function updateRideAction(rideId: string, formData: FormData) {
   }
 }
 
-const SEARCH_PAGE_SIZE = 10
+const SEARCH_PAGE_SIZE = 5
 
 export async function searchRidesAction(params: {
   fromLocationId?: string
@@ -568,6 +568,7 @@ export async function searchRidesAction(params: {
     const rides = await prisma.ride.findMany({
       where: {
         // status: "SCHEDULED",
+        status: { not: "CANCELLED" },
         AND: [
           // Hide rides that already completed their trip:
           // - if arrivalTime is present, ensure arrivalTime >= now
@@ -663,7 +664,7 @@ export async function incrementRideViewAction(rideId: string) {
 }
 
 const rideInclude = {
-  driver: { select: { name: true, image: true, email: true } },
+  driver: { select: { name: true, image: true } },
   fromLocation: { select: { city: true, state: true } },
   toLocation: { select: { city: true, state: true } },
 }
@@ -775,7 +776,7 @@ export async function getRideDetailAction(id: string) {
     const ride = await prisma.ride.findUnique({
       where: { id },
       include: {
-        driver: { select: { id: true, name: true, image: true, email: true, phone: true, ratingAverage: true } },
+        driver: { select: { id: true, name: true, image: true, phone: true, ratingAverage: true } },
         fromLocation: true,
         toLocation: true,
         stops: {
@@ -806,7 +807,7 @@ export async function getRideDetailAction(id: string) {
           ? prisma.booking.findMany({
             where: { rideId: id },
             include: {
-              passenger: { select: { id: true, name: true, image: true, email: true } },
+              passenger: { select: { id: true, name: true, image: true } },
             },
             orderBy: [{ status: "asc" }, { createdAt: "desc" }],
           })

@@ -493,19 +493,14 @@ export function RideSearchForm({ userId }: { userId?: string }) {
                 <ArrowLeft className="h-4 w-4" />
                 Back to search
               </Button>
-              <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
-                {loading ? (
+              {loading && (
+                <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Searching...
                   </span>
-                ) : (
-                  <>
-                    {results.length === 0 ? "No" : results.length} ride
-                    {results.length !== 1 ? "s" : ""} found
-                  </>
-                )}
-              </h2>
+                </h2>
+              )}
             </div>
 
             {error && (
