@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Mail, ArrowLeft, Globe, Shield } from "lucide-react";
+import { Mail, ArrowLeft, Globe, Shield, Instagram } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants/brand";
 import { buttonVariants, } from "@/components/ui";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const contactEmail = "rydixo.ofiifcal@gmail.com";
+  const contactEmail = "rydixo.official@gmail.com";
 
   return (
     <div className="min-h-screen bg-[linear-gradient(to_bottom_right,var(--background),var(--background),oklch(0.98_0.01_175/0.3))] p-4 sm:p-6 relative overflow-hidden">
@@ -43,8 +43,8 @@ export default function ContactPage() {
         <div className="rounded-[2rem] overflow-hidden">
           <div className="p-4 sm:p-6">
             <div className="space-y-10">
-              <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-3xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-colors">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm text-primary">
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-7 rounded-3xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all duration-300 group">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm text-primary group-hover:scale-110 transition-transform duration-300">
                   <Mail className="h-8 w-8" />
                 </div>
                 <div className="text-center sm:text-left">
@@ -59,6 +59,45 @@ export default function ContactPage() {
                   </a>
                   <p className="text-muted-foreground mt-2">
                     Expect a response within 24-48 hours.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-7 rounded-3xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all duration-300 group">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                  <svg width="0" height="0" className="absolute pointer-events-none">
+                    <defs>
+                      <linearGradient id="instagram-gradient-contact" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f09433" />
+                        <stop offset="25%" stopColor="#e6683c" />
+                        <stop offset="50%" stopColor="#dc2743" />
+                        <stop offset="75%" stopColor="#cc2366" />
+                        <stop offset="100%" stopColor="#bc1888" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <Instagram
+                    className="h-8 w-8"
+                    style={{ stroke: "url(#instagram-gradient-contact)" }}
+                  />
+                </div>
+                <div className="text-center sm:text-left">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Instagram
+                  </h2>
+                  <a
+                    href="https://www.instagram.com/rydixo.official/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-2xl sm:text-3xl font-bold text-foreground hover:text-primary transition-colors"
+                  >
+                    @rydixo.official
+                  </a>
+                  <p className="text-muted-foreground mt-2">
+                    Follow us for news, updates, and community stories.
+                  </p>
+                  <p className="text-muted-foreground mt-2">
+                    Expected response within 24-48 hours.
                   </p>
                 </div>
               </div>

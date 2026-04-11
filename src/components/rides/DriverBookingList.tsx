@@ -113,10 +113,7 @@ export function DriverBookingList({ rideId, bookings, onSuccess }: DriverBooking
                   </Avatar>
                   <div className="min-w-0">
                     <p className="font-medium truncate">{b.passenger.name ?? "Passenger"}</p>
-                    {b.passenger.email && (
-                      <p className="text-xs text-muted-foreground truncate">{b.passenger.email}</p>
-                    )}
-                    <p className="text-xs text-primary">
+                      <p className="text-xs text-primary">
                       {b.seats} seat{b.seats !== 1 ? "s" : ""} · ₹{b.totalPrice?.toLocaleString() ?? "—"}
                     </p>
                   </div>

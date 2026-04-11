@@ -18,7 +18,7 @@ export default function AboutPage() {
   const stats = [
     { label: "Community Members", value: "1,000+" },
     { label: "Safe Rides Completed", value: "500+" },
-    { label: "Cities Connected", value: "5+" },
+    { label: "Cities Connected", value: "8+" },
   ];
 
   const features = [

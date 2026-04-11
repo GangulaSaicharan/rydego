@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import {
   Card,
@@ -279,7 +278,7 @@ export function RideDetailsContent({
               <Users className="h-4 w-4 inline mr-1" />
               {ride.seatsAvailable} of {ride.seatsTotal} seats available
             </p>
-            {(isDriver || isOwner) && (
+            {(isOwner || (isDriver && ride.status !== "CANCELLED" && ride.status !== "COMPLETED")) && (
               <p className="text-sm text-muted-foreground">
                 <Eye className="h-4 w-4 inline mr-1" />
                 {ride.views} views
@@ -313,11 +312,6 @@ export function RideDetailsContent({
                 <p className="font-semibold">
                   {ride.driver.name ?? "Driver"}
                 </p>
-                {ride.driver.email && (
-                  <p className="text-sm text-muted-foreground">
-                    {ride.driver.email}
-                  </p>
-                )}
                 <p className="text-xs text-primary mt-1">View profile →</p>
               </div>
             </Link>
