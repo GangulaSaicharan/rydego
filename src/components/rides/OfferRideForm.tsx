@@ -1,27 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
-import { CityCombobox } from "@/components/ui/city-combobox"
+import { toast } from "sonner"
+import { Loader2, ChevronRight, ChevronLeft, MapPin, Calendar, Car, ClipboardList, Info, Trash2 } from "lucide-react"
+
+import { Textarea , Button, Input, Label, Card, CardContent, CardFooter, CardHeader, CardTitle, Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/"
 import { createRideAction, getCitiesAction } from "@/lib/actions/ride"
 import { listMyVehiclesAction } from "@/lib/actions/vehicle"
 import { PROFILE_EDIT_PATH } from "@/lib/constants/routes"
-import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
-
+import { cn } from "@/lib/utils"
+import { formatDateTimeShortIST, formatScheduleRangeIST } from "@/lib/date-time"
+import { Stepper } from "./Stepper"
+import { CityCombobox } from "../ui/city-combobox"
 
 const VEHICLES_CACHE_KEY = "my-vehicles-v1"
 
 function nowISTDateTimeLocalString(): string {
-  // `datetime-local` expects "YYYY-MM-DDTHH:mm" without timezone.
-  // We show/validate this form in IST, regardless of the viewer's system timezone.
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -38,11 +34,21 @@ function nowISTDateTimeLocalString(): string {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`
 }
 
+const STEPS = [
+  { label: "Route", icon: <MapPin className="w-4 h-4" /> },
+  { label: "Timing", icon: <Calendar className="w-4 h-4" /> },
+  { label: "Vehicle", icon: <Car className="w-4 h-4" /> },
+  { label: "Confirm", icon: <ClipboardList className="w-4 h-4" /> },
+]
+
 export function OfferRideForm() {
   const router = useRouter()
+  const formRef = useRef<HTMLFormElement>(null)
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [requiresProfile, setRequiresProfile] = useState(false)
+  
   const [cities, setCities] = useState<{ id: string; city: string }[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [vehicles, setVehicles] = useState<
@@ -50,10 +56,17 @@ export function OfferRideForm() {
   >([])
   const [vehiclesLoading, setVehiclesLoading] = useState(true)
   const [minDateTime, setMinDateTime] = useState<string>("")
+  
+  // Form State
   const [vehicleId, setVehicleId] = useState<string>("")
   const [fromLocationId, setFromLocationId] = useState<string>("")
   const [toLocationId, setToLocationId] = useState<string>("")
   const [stopLocationIds, setStopLocationIds] = useState<string[]>([])
+  const [departureTime, setDepartureTime] = useState<string>("")
+  const [arrivalTime, setArrivalTime] = useState<string>("")
+  const [seatsTotal, setSeatsTotal] = useState<string>("1")
+  const [pricePerSeat, setPricePerSeat] = useState<string>("")
+  const [description, setDescription] = useState<string>("")
 
   const MAX_STOPS = 3
 
@@ -83,7 +96,6 @@ export function OfferRideForm() {
   useEffect(() => {
     async function fetchVehicles() {
       try {
-        // Prefer cached vehicles to avoid refetching every time.
         try {
           const cached = sessionStorage.getItem(VEHICLES_CACHE_KEY)
           if (cached) {
@@ -94,9 +106,7 @@ export function OfferRideForm() {
               return
             }
           }
-        } catch {
-          // ignore cache parse errors
-        }
+        } catch {}
 
         const result = await listMyVehiclesAction()
         if (result.success && result.vehicles) {
@@ -111,9 +121,7 @@ export function OfferRideForm() {
           setVehicles(next)
           try {
             sessionStorage.setItem(VEHICLES_CACHE_KEY, JSON.stringify(next))
-          } catch {
-            // ignore
-          }
+          } catch {}
         }
       } finally {
         setVehiclesLoading(false)
@@ -123,19 +131,57 @@ export function OfferRideForm() {
   }, [])
 
   useEffect(() => {
-    // Keep min reasonably fresh for users leaving the form open.
     const update = () => setMinDateTime(nowISTDateTimeLocalString())
     update()
     const id = window.setInterval(update, 30_000)
     return () => window.clearInterval(id)
   }, [])
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!vehiclesLoading && vehicles.length === 0) {
-      toast.error("Add a vehicle to create a ride")
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      if (!fromLocationId) return "Departure city is required"
+      if (!toLocationId) return "Destination city is required"
+      if (fromLocationId === toLocationId) return "Departure and destination cannot be the same"
+      if (stopLocationIds.some(s => !s)) return "Please finish selecting your stops or remove empty ones"
+    } else if (step === 2) {
+      if (!departureTime) return "Departure time is required"
+      if (!arrivalTime) return "Arrival time is required"
+      if (new Date(arrivalTime) <= new Date(departureTime)) return "Arrival must be after departure"
+    } else if (step === 3) {
+      if (!vehicleId) return "Please select a vehicle"
+      if (!seatsTotal || parseInt(seatsTotal) < 1) return "At least 1 seat is required"
+      if (!pricePerSeat || parseFloat(pricePerSeat) < 0) return "Valid price is required"
+      
+      const v = vehicles.find(x => x.id === vehicleId)
+      if (v && parseInt(seatsTotal) > v.seats) return `Capacity of selected vehicle is ${v.seats} seats`
+    }
+    return null
+  }
+
+  const handleNext = () => {
+    const err = validateStep(currentStep)
+    if (err) {
+      toast.error(err)
       return
     }
+    setCurrentStep(prev => Math.min(prev + 1, STEPS.length))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    
+    const finalErr = validateStep(currentStep)
+    if (finalErr) {
+      toast.error(finalErr)
+      return
+    }
+
     setLoading(true)
     setError(null)
     setRequiresProfile(false)
@@ -165,205 +211,406 @@ export function OfferRideForm() {
     }
   }
 
-  return (
-    <Card className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-3">
-          {error && !requiresProfile && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-              <p>{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="vehicleId">Vehicle</Label>
-            <Select name="vehicleId" required value={vehicleId || null} onValueChange={(v) => setVehicleId(v ?? "")}>
-              <SelectTrigger className="w-full">
-                {vehicleId ? (
-                  <span className="flex flex-1 text-left">
-                    {(() => {
-                      const v = vehicles.find((x) => x.id === vehicleId)
-                      return v ? `${v.brand} ${v.model} • ${v.plateNumber} • ${v.seats} seats` : "Selected vehicle"
-                    })()}
-                  </span>
-                ) : (
-                  <span className="flex flex-1 text-left text-muted-foreground">
-                    {vehiclesLoading
-                      ? "Loading vehicles..."
-                      : vehicles.length === 0
-                        ? "No vehicles found"
-                        : "Select vehicle"}
-                  </span>
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                {vehiclesLoading ? (
-                  <SelectItem value="loading" disabled>
-                    Loading vehicles...
-                  </SelectItem>
-                ) : vehicles.length === 0 ? (
-                  <SelectItem value="none" disabled>
-                    Add a vehicle in Settings → Vehicles
-                  </SelectItem>
-                ) : (
-                  vehicles.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.brand} {v.model} • {v.plateNumber} • {v.seats} seats
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            {!vehiclesLoading && vehicles.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                You need to add a vehicle first.{" "}
-                <Link href="/settings/vehicles" className="underline underline-offset-2">
-                  manage vehicles
-                </Link>
-              </p>
-            )}
+  const renderStep1 = () => (
+    <div className={cn("space-y-6", currentStep !== 1 && "hidden")}>
+      {!vehiclesLoading && vehicles.length === 0 && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex gap-3 items-start animate-in fade-in slide-in-from-top-2">
+          <Car className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-destructive">Vehicle Required</p>
+            <p className="text-xs text-destructive/80">
+              You need to add a vehicle before you can offer a ride.{" "}
+              <Link href="/settings/vehicles" className="underline font-bold">Add a vehicle now</Link>
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="fromCity">From City</Label>
-              <CityCombobox
-                name="fromLocationId"
-                value={fromLocationId}
-                onValueChange={setFromLocationId}
-                cities={cities}
-                loading={citiesLoading}
-                placeholder="Select departure city"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="toCity">To City</Label>
-              <CityCombobox
-                name="toLocationId"
-                value={toLocationId}
-                onValueChange={setToLocationId}
-                cities={cities}
-                loading={citiesLoading}
-                placeholder="Select destination city"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2 pt-2">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <Label>Intermediate Stops (optional)</Label>
-                <p className="text-sm text-muted-foreground">Add up to {MAX_STOPS} stops on the way.</p>
+        </div>
+      )}
+      <div className="space-y-4">
+        <div className="relative">
+          <div className="absolute left-4 top-10 bottom-10 w-0.5 bg-muted-foreground/20 md:left-4" />
+          
+          <div className="space-y-2 relative">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center z-10">
+                <MapPin className="w-4 h-4 text-primary" />
               </div>
+              <Label className="font-semibold text-base">Departure City</Label>
+            </div>
+            <CityCombobox
+              name="fromLocationId"
+              value={fromLocationId}
+              onValueChange={setFromLocationId}
+              cities={cities}
+              loading={citiesLoading}
+              placeholder="Where are you starting?"
+              required={currentStep === 1}
+              controlClassName="pl-10"
+            />
+          </div>
+
+          <div className="py-4 space-y-4">
+            {stopLocationIds.map((stopId, idx) => {
+              const usedStopIds = new Set(stopLocationIds.filter((v, i) => i !== idx && v))
+              const options = cities.filter((c) => {
+                if (c.id === fromLocationId || c.id === toLocationId) return false
+                if (usedStopIds.has(c.id) && c.id !== stopId) return false
+                return true
+              })
+
+              return (
+                <div key={idx} className="flex items-end gap-3 animate-in slide-in-from-left-2 transition-all">
+                  <div className="flex-1 space-y-2 relative">
+                     <div className="flex items-center gap-2 mb-1">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center z-10">
+                          <div className="w-2 h-2 rounded-full bg-muted-foreground/50" />
+                        </div>
+                        <Label className="text-sm font-medium">{`Stop ${idx + 1}`}</Label>
+                      </div>
+                    <CityCombobox
+                      name="stopLocationIds"
+                      value={stopId}
+                      onValueChange={(v) => updateStop(idx, v)}
+                      cities={options}
+                      loading={citiesLoading}
+                      placeholder="Select stop city"
+                      controlClassName="pl-10"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 text-destructive hover:bg-destructive/10 shrink-0"
+                    onClick={() => removeStop(idx)}
+                    title="Remove stop"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              )
+            })}
+            
+            {stopLocationIds.length < MAX_STOPS && (
               <Button
                 type="button"
                 variant="outline"
-                className="shrink-0"
+                size="sm"
+                className="w-full border-dashed py-6 hover:border-primary hover:text-primary transition-all"
                 onClick={addStop}
-                disabled={stopLocationIds.length >= MAX_STOPS}
               >
-                + Add stop
+                + Add Intermediate Stop
               </Button>
-            </div>
-
-            {stopLocationIds.length > 0 && (
-              <div className="space-y-3">
-                {stopLocationIds.map((stopId, idx) => {
-                  const usedStopIds = new Set(stopLocationIds.filter((v, i) => i !== idx && v))
-                  const options = cities.filter((c) => {
-                    if (c.id === fromLocationId || c.id === toLocationId) return false
-                    if (usedStopIds.has(c.id) && c.id !== stopId) return false
-                    return true
-                  })
-
-                  return (
-                    <div key={idx} className="flex items-end gap-3">
-                      <div className="flex-1 space-y-2">
-                        <Label>{`Stop ${idx + 1}`}</Label>
-                        <CityCombobox
-                          name="stopLocationIds"
-                          value={stopId}
-                          onValueChange={(v) => updateStop(idx, v)}
-                          cities={options}
-                          loading={citiesLoading}
-                          placeholder={options.length === 0 ? "No other stops available" : "Select stop city"}
-                          disabled={!citiesLoading && options.length === 0}
-                        />
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-9 px-2.5 text-destructive"
-                        onClick={() => removeStop(idx)}
-                        aria-label={`Remove stop ${idx + 1}`}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  )
-                })}
-              </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="departureTime">Departure Time</Label>
-              <Input
-                id="departureTime"
-                name="departureTime"
-                type="datetime-local"
-                min={minDateTime || undefined}
-                required
-              />
+          <div className="space-y-2 relative">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center z-10">
+                <MapPin className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <Label className="font-semibold text-base">Destination City</Label>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrivalTime">Arrival Time</Label>
-              <Input
-                id="arrivalTime"
-                name="arrivalTime"
-                type="datetime-local"
-                min={minDateTime || undefined}
-                required
-              />
-            </div>
+            <CityCombobox
+              name="toLocationId"
+              value={toLocationId}
+              onValueChange={setToLocationId}
+              cities={cities}
+              loading={citiesLoading}
+              placeholder="Where are you going?"
+              required={currentStep === 1}
+              controlClassName="pl-10"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="seatsTotal">Available Seats</Label>
-              <Input id="seatsTotal" name="seatsTotal" type="number" min="1" max="10" defaultValue="1" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pricePerSeat">Price (INR)</Label>
-              <Input id="pricePerSeat" name="pricePerSeat" type="number" min="0" step="0.01" placeholder="0.00" required />
-            </div>
-          </div>
+        </div>
+      </div>
+    </div>
+  )
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Additional Details</Label>
-            <Textarea id="description" name="description" placeholder="Smoking allowed, pets, luggage limits, etc." />
+  const renderStep2 = () => (
+    <div className={cn("space-y-6 animate-in fade-in slide-in-from-right-4", currentStep !== 2 && "hidden")}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <Label className="text-base font-semibold block">Departure Day & Time</Label>
+          <div className="relative">
+            <Input
+              id="departureTime"
+              name="departureTime"
+              type="datetime-local"
+              min={minDateTime || undefined}
+              value={departureTime}
+              onChange={(e) => setDepartureTime(e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker?.()}
+              required={currentStep === 2}
+              className="h-12 cursor-pointer"
+            />
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-          <Button type="submit" className="w-full" disabled={loading || (!vehiclesLoading && vehicles.length === 0)}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Publish Ride
-          </Button>
-          {requiresProfile && (
-            <p className="text-center text-sm w-full">
-              <Link
-                href={PROFILE_EDIT_PATH}
-                className="text-primary font-medium underline underline-offset-2 hover:no-underline"
-              >
-                Add your phone number in Edit profile →
-              </Link>
+          <p className="text-xs text-muted-foreground">Pick when you'll start your journey.</p>
+        </div>
+        
+        <div className="space-y-3">
+          <Label className="text-base font-semibold block">Estimated Arrival</Label>
+          <div className="relative">
+            <Input
+              id="arrivalTime"
+              name="arrivalTime"
+              type="datetime-local"
+              min={departureTime || minDateTime || undefined}
+              value={arrivalTime}
+              onChange={(e) => setArrivalTime(e.target.value)}
+              onClick={(e) => e.currentTarget.showPicker?.()}
+              required={currentStep === 2}
+              className="h-12 cursor-pointer"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Approximate time of arrival at destination.</p>
+        </div>
+      </div>
+
+      <div className="bg-primary/5 p-4 rounded-lg flex gap-3 items-start">
+        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+        <p className="text-sm text-primary/80">
+          Providing an accurate arrival time helps passengers plan their connection better.
+        </p>
+      </div>
+    </div>
+  )
+
+  const renderStep3 = () => (
+    <div className={cn("space-y-6 animate-in fade-in slide-in-from-right-4", currentStep !== 3 && "hidden")}>
+      <div className="space-y-3">
+        <Label htmlFor="vehicleId" className="text-base font-semibold">Select Your Vehicle</Label>
+        <Select name="vehicleId" required={currentStep === 3} value={vehicleId || undefined} onValueChange={(v) => setVehicleId(v ?? "")}>
+          <SelectTrigger className="w-full h-12">
+            {vehicleId ? (
+              <span className="flex flex-1 text-left items-center gap-2">
+                <Car className="w-4 h-4 text-primary" />
+                {(() => {
+                  const v = vehicles.find((x) => x.id === vehicleId)
+                  return v ? `${v.brand} ${v.model} • ${v.plateNumber}` : "Selected vehicle"
+                })()}
+              </span>
+            ) : (
+              <span className="flex flex-1 text-left text-muted-foreground">
+                {vehiclesLoading
+                  ? "Loading vehicles..."
+                  : vehicles.length === 0
+                    ? "No vehicles found"
+                    : "Choose a vehicle"}
+              </span>
+            )}
+          </SelectTrigger>
+          <SelectContent>
+            {vehiclesLoading ? (
+              <SelectItem value="loading" disabled>Loading vehicles...</SelectItem>
+            ) : vehicles.length === 0 ? (
+              <SelectItem value="none" disabled>Add a vehicle in Settings</SelectItem>
+            ) : (
+              vehicles.map((v) => (
+                <SelectItem key={v.id} value={v.id}>
+                  <div className="flex flex-col">
+                    <span>{v.brand} {v.model}</span>
+                    <span className="text-xs text-muted-foreground">{v.plateNumber} • {v.seats} max seats</span>
+                  </div>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+        {!vehiclesLoading && vehicles.length === 0 && (
+          <p className="text-sm text-destructive">
+            You need to add a vehicle to publish a ride.{" "}
+            <Link href="/settings/vehicles" className="underline font-medium">Add Vehicle</Link>
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <Label htmlFor="seatsTotal" className="text-base font-semibold">Seats for Passengers</Label>
+          <Input 
+            id="seatsTotal" 
+            name="seatsTotal" 
+            type="number" 
+            min="1" 
+            max={vehicles.find(v => v.id === vehicleId)?.seats || 10} 
+            value={seatsTotal}
+            onChange={(e) => setSeatsTotal(e.target.value)}
+            required={currentStep === 3}
+            className="h-12 text-lg font-medium"
+          />
+          <p className="text-xs text-muted-foreground">How many people can you take?</p>
+        </div>
+        
+        <div className="space-y-3">
+          <Label htmlFor="pricePerSeat" className="text-base font-semibold">Price per Seat (INR)</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-3 text-muted-foreground font-medium">₹</span>
+            <Input 
+              id="pricePerSeat" 
+              name="pricePerSeat" 
+              type="number" 
+              min="0" 
+              step="1" 
+              placeholder="0" 
+              value={pricePerSeat}
+              onChange={(e) => setPricePerSeat(e.target.value)}
+              required={currentStep === 3}
+              className="pl-8 h-12 text-lg font-medium"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Charge per passenger for the trip.</p>
+        </div>
+      </div>
+    </div>
+  )
+
+  const renderStep4 = () => (
+    <div className={cn("space-y-6 animate-in fade-in slide-in-from-right-4", currentStep !== 4 && "hidden")}>
+      <div className="bg-muted/30 border border-border rounded-xl p-5 space-y-4">        
+        <div className="flex justify-between items-start gap-4 pb-3 border-b border-border/50">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Route</p>
+            <p className="font-medium">
+              {cities.find(c => c.id === fromLocationId)?.city} → {cities.find(c => c.id === toLocationId)?.city}
             </p>
-          )}
-        </CardFooter>
-      </form>
-    </Card>
+            {stopLocationIds.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Via: {stopLocationIds.map(id => cities.find(c => c.id === id)?.city).join(", ")}
+              </p>
+            )}
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setCurrentStep(1)} className="h-7 text-primary">Edit</Button>
+        </div>
+
+        <div className="flex justify-between items-start gap-4 pb-3 border-b border-border/50">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Schedule</p>
+            <p className="font-medium">
+              {departureTime && arrivalTime
+                ? formatScheduleRangeIST(departureTime, arrivalTime)
+                : departureTime
+                  ? formatDateTimeShortIST(departureTime)
+                  : "Not set"}
+            </p>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setCurrentStep(2)} className="h-7 text-primary">Edit</Button>
+        </div>
+
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Details</p>
+            <div className="flex gap-4 mt-1">
+              <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full font-medium">
+                {seatsTotal} Seats
+              </span>
+              <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-medium">
+                ₹{pricePerSeat}/seat
+              </span>
+            </div>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setCurrentStep(3)} className="h-7 text-primary">Edit</Button>
+        </div>
+      </div>
+
+      <div className="space-y-3 mb-2">
+        <Label htmlFor="description" className="text-base font-semibold">Additional Details (Optional)</Label>
+        <Textarea 
+          id="description" 
+          name="description" 
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Smoking allowed, pets, luggage limits, etc." 
+          className="min-h-24 resize-none"
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="max-w-3xl mx-auto pb-20 md:pb-10">
+      <div className="mb-6">
+        <Stepper currentStep={currentStep} steps={STEPS} />
+      </div>
+
+      <Card className="border-none shadow-none md:border md:shadow-sm">
+        <CardHeader className="md:border-b bg-muted/5">
+          <CardTitle className="flex items-center gap-2">
+            {STEPS[currentStep - 1].icon}
+            {STEPS[currentStep - 1].label} Details
+          </CardTitle>
+        </CardHeader>
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
+          <CardContent className="pt-3 space-y-4">
+            {error && !requiresProfile && (
+              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                <p>{error}</p>
+              </div>
+            )}
+
+            {renderStep1()}
+            {renderStep2()}
+            {renderStep3()}
+            {renderStep4()}
+          </CardContent>
+
+          <CardFooter className="flex flex-col gap-4 mt-auto border-t pt-3 bg-background md:relative">
+            <div className="flex w-full gap-3">
+              {currentStep > 1 && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleBack} 
+                  className="flex-1 h-12"
+                  disabled={loading}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+              )}
+              
+              {currentStep < STEPS.length ? (
+                <Button
+                  key="next-btn"
+                  type="button"
+                  onClick={handleNext}
+                  className="flex-[2] h-12"
+                  disabled={vehiclesLoading && currentStep === 3}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <Button
+                  key="submit-btn"
+                  type="submit"
+                  className="flex-[2] h-12"
+                  disabled={loading || (!vehiclesLoading && vehicles.length === 0)}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Publishing...
+                    </>
+                  ) : (
+                    "Publish Ride"
+                  )}
+                </Button>
+              )}
+            </div>
+            
+            {requiresProfile && (
+              <p className="text-center text-sm w-full animate-bounce">
+                <Link
+                  href={PROFILE_EDIT_PATH}
+                  className="text-primary font-bold underline underline-offset-4"
+                >
+                  Action Required: Add phone number in Profile
+                </Link>
+              </p>
+            )}
+          </CardFooter>
+        </form>
+      </Card>
+    </div>
   )
 }

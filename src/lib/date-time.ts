@@ -154,6 +154,15 @@ function getISTDateParts(date: Date): { year: number; month: number; day: number
 }
 
 /**
+ * Check if two dates represent the same calendar day in IST.
+ */
+export function isSameDayIST(d1: Date | string | number, d2: Date | string | number): boolean {
+  const p1 = getISTDateParts(typeof d1 === "object" && "getTime" in d1 ? d1 : new Date(d1))
+  const p2 = getISTDateParts(typeof d2 === "object" && "getTime" in d2 ? d2 : new Date(d2))
+  return p1.year === p2.year && p1.month === p2.month && p1.day === p2.day
+}
+
+/**
  * Today's date in IST as YYYY-MM-DD (for form defaults, e.g. date input).
  */
 export function todayDateStringIST(): string {
@@ -361,6 +370,21 @@ export function formatShareTimeIST(
   const departure = new Date(departureTime)
   const from = new Date(departure.getTime() - 60 * 60 * 1000)
   return `${formatTimeIST(from)} - ${formatTimeIST(departure)}`
+}
+
+/**
+ * Human readable schedule range in IST.
+ * e.g. "Today · 10:00 AM - 12:00 PM"
+ * or "Mon, 15 Mar · 10:00 PM - Tue, 16 Mar · 2:00 AM"
+ */
+export function formatScheduleRangeIST(
+  departure: Date | string | number,
+  arrival: Date | string | number
+): string {
+  if (isSameDayIST(departure, arrival)) {
+    return `${formatDateTimeShortIST(departure)} - ${formatTimeIST(arrival)}`
+  }
+  return `${formatDateTimeShortIST(departure)} → ${formatDateTimeShortIST(arrival)}`
 }
 
 /**
