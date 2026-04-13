@@ -21,7 +21,7 @@ async function fetchActiveCities() {
 
 const getCachedCities = unstable_cache(fetchActiveCities, ["locations", "cities", "active", "v1"], {
   tags: [CITIES_CACHE_TAG],
-  // revalidate: 3600, // Refresh every 60 minutes
+  revalidate: 3600, // Refresh every 1 hour
 })
 
 export async function getCitiesAction() {
