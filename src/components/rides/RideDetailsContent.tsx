@@ -28,7 +28,7 @@ import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { RideViewTracker } from "@/components/rides/RideViewTracker"
-import { formatDateLongIST, formatTimeIST } from "@/lib/date-time"
+import {formatScheduleRangeIST, isSameDayIST } from "@/lib/date-time"
 import { RideStatus } from "@prisma/client"
 import { cn } from "@/lib/utils"
 
@@ -223,20 +223,14 @@ export function RideDetailsContent({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
-                {formatDateLongIST(new Date(ride.departureTime))}
-              </span>
+            <div className="flex items-start gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-medium text-base">
+                  {formatScheduleRangeIST(ride.departureTime, ride.arrivalTime)}
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Departs at {formatTimeIST(new Date(ride.departureTime))}
-            </p>
-            {ride.arrivalTime && (
-              <p className="text-sm text-muted-foreground">
-                Arrival: {formatTimeIST(new Date(ride.arrivalTime))}
-              </p>
-            )}
           </CardContent>
         </Card>
 
