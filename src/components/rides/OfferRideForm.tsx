@@ -244,7 +244,7 @@ export function OfferRideForm() {
               loading={citiesLoading}
               placeholder="Where are you starting?"
               required={currentStep === 1}
-              controlClassName="pl-10"
+              controlClassName="ml-10 w-[w-full-10]"
             />
           </div>
 
@@ -273,7 +273,7 @@ export function OfferRideForm() {
                       cities={options}
                       loading={citiesLoading}
                       placeholder="Select stop city"
-                      controlClassName="pl-10"
+                      controlClassName="ml-10 w-[w-full-10]"
                     />
                   </div>
                   <Button
@@ -295,7 +295,7 @@ export function OfferRideForm() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-full border-dashed py-6 hover:border-primary hover:text-primary transition-all"
+                className="ml-10 w-[w-full-10] border-dashed py-6 hover:border-primary hover:text-primary transition-all"
                 onClick={addStop}
               >
                 + Add Intermediate Stop
@@ -318,7 +318,7 @@ export function OfferRideForm() {
               loading={citiesLoading}
               placeholder="Where are you going?"
               required={currentStep === 1}
-              controlClassName="pl-10"
+              controlClassName="ml-10 w-[w-full-10]"
             />
           </div>
         </div>
