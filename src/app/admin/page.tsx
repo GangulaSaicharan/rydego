@@ -38,7 +38,6 @@ export default async function AdminPage() {
     driversCount,
     totalReviews,
     newUsersLast7Days,
-    recentUsers,
     recentRides,
     rideCountByStatus,
     bookingCountByStatus,
@@ -50,20 +49,6 @@ export default async function AdminPage() {
     prisma.review.count(),
     prisma.user.count({
       where: { deletedAt: null, createdAt: { gte: sevenDaysAgo } },
-    }),
-    prisma.user.findMany({
-      where: { deletedAt: null },
-      take: 15,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        isBlocked: true,
-        _count: { select: { rides: true, bookings: true } },
-      },
     }),
     prisma.ride.findMany({
       where: { deletedAt: null },
@@ -235,59 +220,6 @@ export default async function AdminPage() {
             </CardContent>
           </Card>
         </section>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent users</CardTitle>
-            <CardDescription>Latest 15 registered users</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 pr-4 font-medium">Name</th>
-                    <th className="pb-2 pr-4 font-medium">Email</th>
-                    <th className="pb-2 pr-4 font-medium">Role</th>
-                    <th className="pb-2 pr-4 font-medium">Rides / Bookings</th>
-                    <th className="pb-2 pr-4 font-medium">Joined</th>
-                    <th className="pb-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentUsers.map((u) => (
-                    <tr key={u.id} className="border-b last:border-0">
-                      <td className="py-2 pr-4 font-medium">{u.name ?? "—"}</td>
-                      <td className="py-2 pr-4 text-muted-foreground">
-                        {u.email ?? "—"}
-                      </td>
-                      <td className="py-2 pr-4">
-                        <Badge
-                          variant={u.role === "ADMIN" ? "default" : "secondary"}
-                        >
-                          {u.role}
-                        </Badge>
-                      </td>
-                      <td className="py-2 pr-4 text-muted-foreground">
-                        {u._count.rides} / {u._count.bookings}
-                      </td>
-                      <td className="py-2 pr-4 text-muted-foreground">
-                        {formatDateShortIST(u.createdAt)}
-                      </td>
-                      <td className="py-2">
-                        {u.isBlocked ? (
-                          <Badge variant="destructive">Blocked</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">Active</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>

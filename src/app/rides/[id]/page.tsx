@@ -80,7 +80,7 @@ export default async function RideDetailPage({ params, searchParams }: Props) {
   const { id } = await params
   const sp = await searchParams
   const backToSearch = (() => {
-    if (!(sp?.fromLocationId && sp?.toLocationId && sp?.date)) return "/rides"
+    if (!(sp?.fromLocationId && sp?.toLocationId && sp?.date)) return "/search"
     const q = new URLSearchParams()
     q.set("fromLocationId", sp.fromLocationId)
     q.set("toLocationId", sp.toLocationId)
