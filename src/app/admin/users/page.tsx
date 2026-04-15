@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { updateUserRoleOwnerAction } from "@/lib/actions/owner-users"
+import { formatDateShortIST } from "@/lib/date-time"
 
 // export const metadata: Metadata = {
 //   title: "Users • Owner dashboard",
@@ -43,6 +44,7 @@ export default async function AdminUsersPage({
         role: true,
         isBlocked: true,
         createdAt: true,
+        _count: { select: { rides: true, bookings: true } },
       },
     }),
   ])
@@ -79,6 +81,8 @@ export default async function AdminUsersPage({
                   <th className="pb-2 pr-4 font-medium">Email</th>
                   <th className="pb-2 pr-4 font-medium">Mobile</th>
                   <th className="pb-2 pr-4 font-medium">Role</th>
+                  <th className="pb-2 pr-4 font-medium text-center">Rides / Bookings</th>
+                  <th className="pb-2 pr-4 font-medium">Joined</th>
                   <th className="pb-2 pr-4 font-medium">Status</th>
                   <th className="pb-2 text-right font-medium">Actions</th>
                 </tr>
@@ -103,6 +107,12 @@ export default async function AdminUsersPage({
                         >
                           {u.role}
                         </Badge>
+                      </td>
+                      <td className="py-3 pr-4 text-center text-muted-foreground">
+                        {u._count.rides} / {u._count.bookings}
+                      </td>
+                      <td className="py-3 pr-4 text-muted-foreground">
+                        {formatDateShortIST(u.createdAt)}
                       </td>
                       <td className="py-3 pr-4">
                         {u.isBlocked ? (
