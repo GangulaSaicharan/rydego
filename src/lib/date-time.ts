@@ -166,8 +166,20 @@ export function isSameDayIST(d1: Date | string | number, d2: Date | string | num
  * Today's date in IST as YYYY-MM-DD (for form defaults, e.g. date input).
  */
 export function todayDateStringIST(): string {
-  const now = new Date()
-  return dateToYYYYMMDD(now)
+  return offsetDateStringIST(0)
+}
+
+/**
+ * Get YYYY-MM-DD for IST with a day offset.
+ * safely handles IST day boundaries regardless of UTC time.
+ */
+export function offsetDateStringIST(offset: number): string {
+  const d = new Date()
+  if (offset !== 0) {
+    // Shifting by exactly 24h per day is safe enough for calendar day parts extraction
+    d.setTime(d.getTime() + offset * 24 * 60 * 60 * 1000)
+  }
+  return dateToYYYYMMDD(d)
 }
 
 /**
@@ -187,12 +199,10 @@ function dateToYYYYMMDD(date: Date): string {
 export function formatRelativeDateSelectIST(dateStr: string): string {
   if (!dateStr) return "Select date"
   
-  const todayStr = todayDateStringIST()
+  const todayStr = offsetDateStringIST(0)
   if (dateStr === todayStr) return "Today"
   
-  const tomorrow = new Date()
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
-  const tomorrowStr = dateToYYYYMMDD(tomorrow)
+  const tomorrowStr = offsetDateStringIST(1)
   if (dateStr === tomorrowStr) return "Tomorrow"
   
   const d = new Date(dateStr)

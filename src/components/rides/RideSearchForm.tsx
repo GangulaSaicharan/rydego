@@ -18,7 +18,7 @@ import { getCitiesAction, searchRidesAction } from "@/lib/actions/ride"
 import { RideCard } from "./RideCard"
 import { RideDetailsModal } from "./RideDetailsModal"
 import { CityCombobox } from "@/components/ui/city-combobox"
-import { todayDateStringIST, formatDateShortIST } from "@/lib/date-time"
+import { todayDateStringIST, formatDateShortIST, offsetDateStringIST } from "@/lib/date-time"
 const STORAGE_KEY = "ride-search-prefs"
 const RECENT_SEARCHES_KEY = "recent-ride-searches-v1"
 
@@ -138,12 +138,7 @@ export function RideSearchForm({ userId }: { userId?: string }) {
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([])
 
   const getShortcutDate = (offset: number) => {
-    const d = new Date()
-    d.setUTCDate(d.getUTCDate() + offset)
-    const y = d.getUTCFullYear()
-    const m = String(d.getUTCMonth() + 1).padStart(2, "0")
-    const day = String(d.getUTCDate()).padStart(2, "0")
-    return `${y}-${m}-${day}`
+    return offsetDateStringIST(offset)
   }
 
   const dateShortcuts = [
