@@ -314,9 +314,9 @@ export function RideDetailsContent({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-2">
               <Link href={`/profile/${ride.driver.id}`} className="shrink-0">
-                <Avatar className="h-14 w-14 border border-border/50 shadow-sm transition-transform hover:scale-105">
+                <Avatar className="h-12 w-12 border border-border/50 shadow-sm transition-transform hover:scale-105">
                   <AvatarImage
                     src={ride.driver.image ?? ""}
                     alt={ride.driver.name ?? "Driver"}
