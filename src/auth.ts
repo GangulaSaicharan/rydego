@@ -15,7 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return adapterCreateUser({
         ...data,
-        role: "ADMIN",
+        role: "USER",
       } as typeof data)
     },
   },
@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { role: true, phone: true },
         })
         token.role = dbUser?.role ?? "USER"
-        ;(token as any).phone = dbUser?.phone ?? null
+          ; (token as any).phone = dbUser?.phone ?? null
       }
       return token
     },
@@ -39,7 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.id) {
         session.user.id = token.id as string
         session.user.role = token.role as "USER" | "ADMIN"
-        ;(session.user as any).phone = (token as any).phone ?? null
+          ; (session.user as any).phone = (token as any).phone ?? null
       }
       return session
     },
