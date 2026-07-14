@@ -52,7 +52,7 @@ export async function createRideAction(formData: FormData) {
     return { success: false, error: "Your account is blocked." }
   }
   if (dbUser.role !== "ADMIN") {
-    return { success: false, error: "Only admins can publish rides." }
+    return { success: false, error: "You are not allowed to publish rides. Contact Us for access." }
   }
 
   const mobileError = await requireMobile(session.user.id, "create_ride")

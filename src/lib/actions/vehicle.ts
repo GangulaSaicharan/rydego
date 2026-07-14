@@ -19,7 +19,7 @@ export async function listMyVehiclesAction() {
   if (!dbUser) return { success: false as const, error: "User not found." }
   if (dbUser.isBlocked) return { success: false as const, error: "Your account is blocked." }
   if (dbUser.role !== "ADMIN") {
-    return { success: false as const, error: "Only admins can manage vehicles." }
+    return { success: false as const, error: "You are not allowed to manage vehicles. Contact Us for access." }
   }
 
   const vehicles = await prisma.vehicle.findMany({
@@ -52,7 +52,7 @@ export async function createVehicleAction(formData: FormData) {
   if (!dbUser) return { success: false as const, error: "User not found." }
   if (dbUser.isBlocked) return { success: false as const, error: "Your account is blocked." }
   if (dbUser.role !== "ADMIN") {
-    return { success: false as const, error: "Only admins can add vehicles." }
+    return { success: false as const, error: "You are not allowed to add vehicles. Contact Us for access." }
   }
 
   const existingCount = await prisma.vehicle.count({
@@ -119,7 +119,7 @@ export async function updateVehicleAction(vehicleId: string, formData: FormData)
   if (!dbUser) return { success: false as const, error: "User not found." }
   if (dbUser.isBlocked) return { success: false as const, error: "Your account is blocked." }
   if (dbUser.role !== "ADMIN") {
-    return { success: false as const, error: "Only admins can edit vehicles." }
+    return { success: false as const, error: "You are not allowed to edit vehicles. Contact Us for access." }
   }
 
   const raw = {
@@ -178,7 +178,7 @@ export async function deleteVehicleAction(vehicleId: string) {
   if (!dbUser) return { success: false as const, error: "User not found." }
   if (dbUser.isBlocked) return { success: false as const, error: "Your account is blocked." }
   if (dbUser.role !== "ADMIN") {
-    return { success: false as const, error: "Only admins can delete vehicles." }
+    return { success: false as const, error: "You are not allowed to delete vehicles. Contact Us for access." }
   }
 
   try {
