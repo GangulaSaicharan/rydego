@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Mail, ArrowLeft, Globe, Shield, Instagram } from "lucide-react";
+import { Mail, ArrowLeft, Globe, Shield, Instagram, Phone, MessageCircle } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants/brand";
 import { buttonVariants, } from "@/components/ui";
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   const contactEmail = "rydixo.official@gmail.com";
+  const whatsappMessage = encodeURIComponent(
+    `Hi, I'd like some help regarding ${APP_NAME}.`
+  );
+  const phoneNumbers = [
+    { display: "+91 63024 84263", tel: "+916302484263", whatsapp: "916302484263" },
+    { display: "+91 95812 66984", tel: "+919581266984", whatsapp: "919581266984" },
+  ];
 
   return (
     <div className="min-h-screen bg-[linear-gradient(to_bottom_right,var(--background),var(--background),oklch(0.98_0.01_175/0.3))] p-4 sm:p-6 relative overflow-hidden">
@@ -60,6 +67,58 @@ export default function ContactPage() {
                   <p className="text-muted-foreground mt-2">
                     Expect a response within 24-48 hours.
                   </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-7 rounded-3xl bg-primary/5 border border-primary/10 hover:bg-primary/10 transition-all duration-300 group">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm text-primary group-hover:scale-110 transition-transform duration-300">
+                  <Phone className="h-8 w-8" />
+                </div>
+                <div className="text-center sm:text-left w-full">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    Phone Support
+                  </h2>
+                  <p className="text-muted-foreground mb-4">
+                    Call us or message us on WhatsApp for quick assistance.
+                  </p>
+                  <div className="space-y-3">
+                    {phoneNumbers.map((phone) => (
+                      <div
+                        key={phone.tel}
+                        className="flex flex-col sm:flex-row sm:items-center gap-3"
+                      >
+                        <span className="text-lg font-bold text-foreground sm:w-44">
+                          {phone.display}
+                        </span>
+                        <div className="flex gap-2 justify-center sm:justify-start">
+                          <a
+                            href={`tel:${phone.tel}`}
+                            className={buttonVariants({
+                              variant: "outline",
+                              size: "sm",
+                              className: "rounded-full gap-1.5",
+                            })}
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                            Call
+                          </a>
+                          <a
+                            href={`https://wa.me/${phone.whatsapp}?text=${whatsappMessage}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={buttonVariants({
+                              variant: "default",
+                              size: "sm",
+                              className: "rounded-full gap-1.5 bg-[#25D366] hover:bg-[#1ebe57] text-white",
+                            })}
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            WhatsApp
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
