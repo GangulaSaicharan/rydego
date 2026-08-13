@@ -34,6 +34,19 @@ function nowISTDateTimeLocalString(): string {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`
 }
 
+function addHoursToDateTimeLocal(value: string, hours: number): string {
+  const [datePart, timePart] = value.split("T")
+  const [year, month, day] = (datePart ?? "").split("-").map(Number)
+  const [hour, minute] = (timePart ?? "").split(":").map(Number)
+  if ([year, month, day, hour, minute].some(Number.isNaN)) return ""
+
+  const d = new Date(year, month - 1, day, hour, minute)
+  d.setHours(d.getHours() + hours)
+
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 const STEPS = [
   { label: "Route", icon: <MapPin className="w-4 h-4" /> },
   { label: "Timing", icon: <Calendar className="w-4 h-4" /> },
@@ -338,7 +351,11 @@ export function OfferRideForm() {
               type="datetime-local"
               min={minDateTime || undefined}
               value={departureTime}
-              onChange={(e) => setDepartureTime(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                setDepartureTime(value)
+                setArrivalTime(value ? addHoursToDateTimeLocal(value, 5) : "")
+              }}
               onClick={(e) => e.currentTarget.showPicker?.()}
               required={currentStep === 2}
               className="h-12 cursor-pointer"

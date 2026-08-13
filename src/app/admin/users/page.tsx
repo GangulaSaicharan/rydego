@@ -4,8 +4,10 @@ import prisma from "@/lib/db"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { updateUserRoleOwnerAction } from "@/lib/actions/owner-users"
 import { formatDateShortIST } from "@/lib/date-time"
+import type { Prisma } from "@prisma/client"
 
 // export const metadata: Metadata = {
 //   title: "Users • Owner dashboard",
@@ -28,11 +30,25 @@ export default async function AdminUsersPage({
   const sp = (await searchParams) ?? {}
   const pageRaw = Array.isArray(sp.page) ? sp.page[0] : sp.page
   const page = Math.max(1, Number(pageRaw ?? 1) || 1)
+  const qRaw = Array.isArray(sp.q) ? sp.q[0] : sp.q
+  const q = (qRaw ?? "").trim()
+
+  const where: Prisma.UserWhereInput = {
+    deletedAt: null,
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  }
 
   const [total, users] = await Promise.all([
-    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where }),
     prisma.user.findMany({
-      where: { deletedAt: null },
+      where,
       orderBy: [{ createdAt: "desc" }],
       skip: pageToSkip(page),
       take: PAGE_SIZE,
@@ -64,7 +80,7 @@ export default async function AdminUsersPage({
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-base">All users</CardTitle>
           <div className="text-sm text-muted-foreground">
             Page <span className="font-medium text-foreground">{page}</span> of{" "}
@@ -73,6 +89,26 @@ export default async function AdminUsersPage({
           </div>
         </CardHeader>
         <CardContent>
+          <form method="get" className="mb-4 flex flex-col gap-2 sm:flex-row">
+            <Input
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder="Search by name or email…"
+              className="sm:max-w-sm"
+            />
+            <div className="flex gap-2">
+              <Button type="submit" variant="outline">
+                Search
+              </Button>
+              {q ? (
+                <Button variant="ghost" render={<Link href="/admin/users" />}>
+                  Clear
+                </Button>
+              ) : null}
+            </div>
+          </form>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -151,7 +187,7 @@ export default async function AdminUsersPage({
 
           <div className="mt-4 flex items-center justify-between gap-3">
             <Link
-              href={`/admin/users?page=${Math.max(1, page - 1)}`}
+              href={`/admin/users?page=${Math.max(1, page - 1)}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
               aria-disabled={!canPrev}
               tabIndex={canPrev ? 0 : -1}
               className={[
@@ -174,7 +210,7 @@ export default async function AdminUsersPage({
             </div>
 
             <Link
-              href={`/admin/users?page=${page + 1}`}
+              href={`/admin/users?page=${page + 1}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
               aria-disabled={!canNext}
               tabIndex={canNext ? 0 : -1}
               className={[
