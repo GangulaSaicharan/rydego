@@ -350,18 +350,20 @@ export function formatShareDateIST(
     relativeStr = "Tomorrow"
     if (hour >= 0 && hour < 6) timeOfDay = "early morning"
     else if (hour >= 6 && hour < 12) timeOfDay = "morning"
-    else if (hour >= 12 && hour < 18) timeOfDay = "afternoon"
-    else timeOfDay = "night" // 18:00 - 23:59
+    else if (hour >= 12 && hour < 17) timeOfDay = "afternoon"
+    else if (hour >= 17 && hour < 20) timeOfDay = "evening"
+    else timeOfDay = "night" // 20:00 - 05:59
   } else if (diffDaysRounded === 2) {
     relativeStr = "Day after tomorrow"
     if (hour >= 6 && hour < 12) timeOfDay = "morning"
     else if (hour >= 12 && hour < 17) timeOfDay = "afternoon"
+    else if (hour >= 17 && hour < 20) timeOfDay = "evening"
     else timeOfDay = "night"
   } else if (diffDaysRounded > 2 && diffDaysRounded <= 7) {
     relativeStr = `In ${diffDaysRounded} days`
     if (hour >= 6 && hour < 12) timeOfDay = "morning"
     else if (hour >= 12 && hour < 17) timeOfDay = "afternoon"
-    else if (hour >= 17 && hour < 21) timeOfDay = "evening"
+    else if (hour >= 17 && hour < 20) timeOfDay = "evening"
     else timeOfDay = "night"
   }
 
