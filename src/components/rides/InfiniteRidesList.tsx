@@ -2,8 +2,9 @@
 
 import { useState, useRef, useCallback } from "react"
 import { RideRow, type RideRowRide } from "./RideRow"
+import { RideRowSkeleton } from "./ListSkeletons"
 import { fetchRides } from "@/lib/actions/ride"
-import { Loader2, PlusCircle } from "lucide-react"
+import { PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 import { RideStatus } from "@prisma/client"
@@ -110,11 +111,7 @@ export function InfiniteRidesList({ initialRides, userId, onViewDetails }: Infin
           />
         )
       })}
-      {loading && (
-        <div className="flex justify-center p-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
+      {loading && <RideRowSkeleton />}
     </div>
   )
 }

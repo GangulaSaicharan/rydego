@@ -2,8 +2,9 @@
 
 import { useState, useRef, useCallback } from "react"
 import { BookingCard, type BookingCardBooking } from "./BookingCard"
+import { BookingCardSkeleton } from "./ListSkeletons"
 import { fetchBookings } from "@/lib/actions/ride"
-import { Loader2, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 
@@ -82,11 +83,7 @@ export function InfiniteBookingsList({ initialBookings, onViewRide }: InfiniteBo
         }
         return <BookingCard key={booking.id} booking={booking} showCancel={false} onViewRide={onViewRide} />
       })}
-      {loading && (
-        <div className="flex justify-center p-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
+      {loading && <BookingCardSkeleton />}
     </div>
   )
 }
