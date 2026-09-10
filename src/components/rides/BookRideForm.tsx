@@ -134,6 +134,14 @@ export function BookRideForm({
       </div>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        {isConfirmOpen && (
+          <style>{`
+            [data-slot="alert-dialog-overlay"]:nth-of-type(n+2) {
+              background-color: transparent !important;
+              backdrop-filter: none !important;
+            }
+          `}</style>
+        )}
         <AlertDialogContent className="border-primary/10 shadow-xl z-100">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl">Confirm Booking</AlertDialogTitle>
