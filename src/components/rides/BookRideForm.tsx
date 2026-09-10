@@ -74,23 +74,25 @@ export function BookRideForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <div className="flex items-center justify-between gap-4">
         <Label htmlFor="seats">Number of seats</Label>
-        <Select
-          value={seats.toString()}
-          onValueChange={(v) => { if (v != null) setSeats(parseInt(v, 10)) }}
-        >
-          <SelectTrigger id="seats">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: maxSeats }, (_, i) => i + 1).map((n) => (
-              <SelectItem key={n} value={n.toString()}>
-                {n} seat{n > 1 ? "s" : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-32">
+          <Select
+            value={seats.toString()}
+            onValueChange={(v) => { if (v != null) setSeats(parseInt(v, 10)) }}
+          >
+            <SelectTrigger id="seats">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: maxSeats }, (_, i) => i + 1).map((n) => (
+                <SelectItem key={n} value={n.toString()}>
+                  {n} seat{n > 1 ? "s" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 text-lg font-bold text-primary pt-2">
@@ -132,7 +134,7 @@ export function BookRideForm({
       </div>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent className="border-primary/10 shadow-xl">
+        <AlertDialogContent className="border-primary/10 shadow-xl z-100">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl">Confirm Booking</AlertDialogTitle>
             <AlertDialogDescription className="space-y-4 pt-2">

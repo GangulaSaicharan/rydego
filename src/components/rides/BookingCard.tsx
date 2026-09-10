@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Clock, IndianRupee, MessageCircle } from "lucide-react"
+import { Calendar, Clock, IndianRupee, MessageCircle, Copy } from "lucide-react"
 import Link from "next/link"
 import { buttonVariants } from "@/components/ui"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { CancelBookingButton } from "@/components/rides/CancelBookingButton"
 import {
   formatDateTimeIST,
@@ -135,16 +136,35 @@ export function BookingCard({
               View ride
             </Link>
           )}
-          <ShareRideWhatsAppButton
-            rideId={booking.ride.id}
-            fromCity={booking.ride.fromLocation.city}
-            toCity={booking.ride.toLocation.city}
-            departureTime={new Date(booking.ride.departureTime)}
-            seatsAvailable={booking.seats}
-            driverName={booking.ride.driver.name}
-            driverPhone={null}
-            vehicleInfo={null}
-          />
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const url = `${window.location.origin}/rides/${booking.ride.id}`
+                try {
+                  await navigator.clipboard.writeText(url)
+                  toast.success("Ride link copied")
+                } catch {
+                  toast.error("Couldn't copy link")
+                }
+              }}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2 px-2 md:px-3")}
+              title="Copy link"
+            >
+              <Copy className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Copy</span>
+            </button>
+            <ShareRideWhatsAppButton
+              rideId={booking.ride.id}
+              fromCity={booking.ride.fromLocation.city}
+              toCity={booking.ride.toLocation.city}
+              departureTime={new Date(booking.ride.departureTime)}
+              seatsAvailable={booking.seats}
+              driverName={booking.ride.driver.name}
+              driverPhone={null}
+              vehicleInfo={null}
+            />
+          </div>
       </div>
     </div>
   )

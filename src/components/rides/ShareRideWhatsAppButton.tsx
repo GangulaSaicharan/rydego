@@ -213,10 +213,11 @@ export function ShareRideWhatsAppButton({
       variant="outline"
       size="sm"
       onClick={handleShare}
-      className="gap-2"
+      className="gap-2 px-2 md:px-3"
+      title="Share via WhatsApp"
     >
-      <Share2 className="h-4 w-4" />
-      Share
+      <Share2 className="h-4 w-4 shrink-0" />
+      <span className="hidden sm:inline">Share</span>
     </Button>
   );
 }

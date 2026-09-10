@@ -10,7 +10,7 @@ import {
 } from "@/components/ui"
 import { getRideDetailAction } from "@/lib/actions/ride"
 import { RideDetailsContent } from "./RideDetailsContent"
-import { Loader2 } from "lucide-react"
+import { RideDetailsSkeleton } from "./ListSkeletons"
 
 interface RideDetailsModalProps {
   rideId: string | null
@@ -69,15 +69,8 @@ export function RideDetailsModal({ rideId, userId, onClose }: RideDetailsModalPr
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="relative min-h-[500px]">
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-xs z-50">
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm font-medium text-muted-foreground">Loading ride details...</p>
-              </div>
-            </div>
-          )}
+        <div className="relative min-h-[92vh] sm:min-h-125">
+          {loading && <RideDetailsSkeleton />}
 
           {error && (
             <div className="flex flex-col items-center justify-center p-12 text-center">

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export function RideCardSkeleton() {
@@ -71,6 +71,40 @@ export function BookingCardSkeleton() {
         </div>
       </div>
       <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+    </div>
+  )
+}
+
+export function RideDetailsSkeleton() {
+  return (
+    <div className="space-y-6 p-3 md:p-6 animate-pulse">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2 border-b pb-3 mb-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-9 rounded-md shrink-0" />
+          <Skeleton className="h-7 w-32 md:w-48" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-12 md:w-24 shrink-0" />
+          <Skeleton className="h-9 w-12 md:w-28 shrink-0" />
+        </div>
+      </div>
+
+      {/* Grid of Cards */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-5 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              {i === 0 && <Skeleton className="h-4 w-1/2" />}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
