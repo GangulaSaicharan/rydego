@@ -180,7 +180,16 @@ export function VehiclesManager({ initialVehicles }: { initialVehicles: Vehicle[
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plateNumber">Plate number</Label>
-                  <Input id="plateNumber" name="plateNumber" placeholder="e.g. TS09AB1234" required />
+                  <Input
+                    id="plateNumber"
+                    name="plateNumber"
+                    placeholder="e.g. TS09AB1234"
+                    className="uppercase"
+                    onChange={(e) => {
+                      e.currentTarget.value = e.currentTarget.value.toUpperCase().replace(/\s+/g, "")
+                    }}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="color">Color (optional)</Label>
@@ -231,6 +240,10 @@ export function VehiclesManager({ initialVehicles }: { initialVehicles: Vehicle[
                       id="edit-plateNumber"
                       name="plateNumber"
                       defaultValue={editing.plateNumber}
+                      className="uppercase"
+                      onChange={(e) => {
+                        e.currentTarget.value = e.currentTarget.value.toUpperCase().replace(/\s+/g, "")
+                      }}
                       required
                     />
                   </div>
