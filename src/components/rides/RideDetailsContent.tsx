@@ -31,7 +31,7 @@ import { CancelRideButton } from "@/components/rides/CancelRideButton"
 import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { RideViewTracker } from "@/components/rides/RideViewTracker"
-import {formatScheduleRangeIST, } from "@/lib/date-time"
+import { formatScheduleRangeIST, } from "@/lib/date-time"
 import { RideStatus } from "@prisma/client"
 import { cn } from "@/lib/utils"
 
@@ -154,7 +154,7 @@ export function RideDetailsContent({
     : undefined
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(rideJsonLd) }}
@@ -162,16 +162,17 @@ export function RideDetailsContent({
       <RideViewTracker rideId={ride.id} />
 
       <div className={cn(
-        "flex flex-wrap items-center justify-between gap-2 border-b pb-3 mb-2",
+        "flex flex-nowrap items-center justify-between gap-2 border-b pb-3 mb-2 overflow-hidden",
         isModal ? "sticky top-0 z-20 -mx-3 -mt-3 p-3 bg-background/95 backdrop-blur-sm md:-mx-6 md:-mt-6 md:p-6" : ""
       )}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
           {!isModal && backUrl && (
             <Button
               variant="ghost"
               size="icon"
               nativeButton={false}
               render={<Link href={backUrl} />}
+              className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -181,22 +182,24 @@ export function RideDetailsContent({
               variant="ghost"
               size="icon"
               onClick={onClose}
+              className="shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-          <h2 className="text-xl font-bold tracking-tight md:text-2xl line-clamp-1">Ride details</h2>
+          <h2 className="text-lg font-bold tracking-tight md:text-2xl truncate">Ride details</h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
-            className="gap-2"
+            className="gap-2 px-2 md:px-3"
+            title="Copy link"
           >
-            <Copy className="h-4 w-4" />
-            Copy link
+            <Copy className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Copy link</span>
           </Button>
           <ShareRideWhatsAppButton
             rideId={ride.id}
@@ -368,15 +371,15 @@ export function RideDetailsContent({
                         {formattedPhone}
                       </p>
                     )}
-                  <Link
-                    href={`/profile/${ride.driver.id}`}
-                    className="flex flex-col gap-0.5 rounded-lg p-1 -ml-2 hover:bg-muted/50 transition-colors"
-                  >
-                    
-                    <p className="text-xs text-primary font-medium">
-                      View profile →
-                    </p>
-                  </Link>
+                    <Link
+                      href={`/profile/${ride.driver.id}`}
+                      className="flex flex-col gap-0.5 rounded-lg p-1 -ml-2 hover:bg-muted/50 transition-colors"
+                    >
+
+                      <p className="text-xs text-primary font-medium">
+                        View profile →
+                      </p>
+                    </Link>
                   </div>
                   {!isDriver && formattedPhone && (
                     <div className="flex gap-2 shrink-0">
