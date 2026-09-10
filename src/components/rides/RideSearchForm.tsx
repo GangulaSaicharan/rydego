@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { getCitiesAction, searchRidesAction } from "@/lib/actions/ride"
 import { RideCard } from "./RideCard"
+import { RideCardSkeleton } from "./ListSkeletons"
 import { RideDetailsModal } from "./RideDetailsModal"
 import { CityCombobox } from "@/components/ui/city-combobox"
 import { todayDateStringIST, formatDateShortIST, offsetDateStringIST } from "@/lib/date-time"
@@ -488,14 +489,7 @@ export function RideSearchForm({ userId }: { userId?: string }) {
                 <ArrowLeft className="h-4 w-4" />
                 Back to search
               </Button>
-              {loading && (
-                <h2 className="text-lg font-semibold tracking-tight text-muted-foreground">
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Searching...
-                  </span>
-                </h2>
-              )}
+
             </div>
 
             {error && (
@@ -516,8 +510,11 @@ export function RideSearchForm({ userId }: { userId?: string }) {
                 />
               ))}
 
-              {loading && (
-                <div className="flex items-center justify-center py-4 h-96">
+              {loading && results.length === 0 && (
+                <div className="grid gap-4">
+                  <RideCardSkeleton />
+                  <RideCardSkeleton />
+                  <RideCardSkeleton />
                 </div>
               )}
 
@@ -536,10 +533,8 @@ export function RideSearchForm({ userId }: { userId?: string }) {
               )}
 
               {/* Sentinel for infinite scroll */}
-              <div ref={sentinelRef} className="min-h-4 flex items-center justify-center py-4">
-                {loadingMore && (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                )}
+              <div ref={sentinelRef} className="min-h-4">
+                {loadingMore && <RideCardSkeleton />}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -22,6 +23,7 @@ import {
   Car,
   Eye,
   Phone,
+  Copy,
 } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { BookRideForm } from "@/components/rides/BookRideForm"
@@ -136,6 +138,16 @@ export function RideDetailsContent({
     }
     return ride?.driver?.phone
   })()
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}/rides/${ride.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success("Ride link copied")
+    } catch {
+      toast.error("Couldn't copy link")
+    }
+  }
+
   const telHref = ride.driver.phone ? `tel:${ride.driver.phone}` : undefined
   const whatsappHref = ride.driver.phone
     ? `https://wa.me/${ride.driver.phone.replace(/[^0-9]/g, "")}`
@@ -175,21 +187,33 @@ export function RideDetailsContent({
           )}
           <h2 className="text-xl font-bold tracking-tight md:text-2xl line-clamp-1">Ride details</h2>
         </div>
-        <ShareRideWhatsAppButton
-          rideId={ride.id}
-          fromCity={ride.fromLocation.city}
-          toCity={ride.toLocation.city}
-          stopsCities={ride.stops.map((s: any) => s.location.city)}
-          departureTime={new Date(ride.departureTime)}
-          seatsAvailable={ride.seatsAvailable}
-          driverName={ride.driver.name}
-          driverPhone={ride.driver.phone ?? null}
-          vehicleInfo={
-            ride.vehicle
-              ? `${ride.vehicle.brand} ${ride.vehicle.model}`.trim()
-              : null
-          }
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCopyLink}
+            className="gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            Copy link
+          </Button>
+          <ShareRideWhatsAppButton
+            rideId={ride.id}
+            fromCity={ride.fromLocation.city}
+            toCity={ride.toLocation.city}
+            stopsCities={ride.stops.map((s: any) => s.location.city)}
+            departureTime={new Date(ride.departureTime)}
+            seatsAvailable={ride.seatsAvailable}
+            driverName={ride.driver.name}
+            driverPhone={ride.driver.phone ?? null}
+            vehicleInfo={
+              ride.vehicle
+                ? `${ride.vehicle.brand} ${ride.vehicle.model}`.trim()
+                : null
+            }
+          />
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -464,7 +488,7 @@ export function RideDetailsContent({
       </div>
 
       {showBookPromptForGuest && (
-        <Card>
+        <Card id="book-ride-section">
           <CardHeader>
             <CardTitle>Book this ride</CardTitle>
           </CardHeader>
@@ -488,7 +512,7 @@ export function RideDetailsContent({
       )}
 
       {canBook && (
-        <Card>
+        <Card id="book-ride-section">
           <CardHeader>
             <CardTitle>
               {showRebook ? "Rebook this ride" : "Book this ride"}
@@ -536,6 +560,37 @@ export function RideDetailsContent({
               )}
           </CardContent>
         </Card>
+      )}
+
+      {!isModal && (canBook || showBookPromptForGuest) && (
+        <>
+          <div className="h-20 sm:hidden" aria-hidden="true" />
+          <div className="fixed inset-x-0 bottom-14 z-30 border-t bg-background/95 p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Per seat</p>
+                <p className="text-lg font-bold text-primary">
+                  ₹{ride.pricePerSeat.toString()}
+                </p>
+              </div>
+              <Button
+                size="lg"
+                className="flex-1 max-w-[220px]"
+                onClick={() =>
+                  document
+                    .getElementById("book-ride-section")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              >
+                {showBookPromptForGuest
+                  ? "Log in to book"
+                  : showRebook
+                    ? "Rebook now"
+                    : "Book now"}
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
