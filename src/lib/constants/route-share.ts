@@ -93,6 +93,20 @@ export function getRouteShareText(fromCity: string, toCity: string): string {
 }
 
 /**
+ * Some stop/city names are too ambiguous for Google Maps to resolve to the
+ * intended landmark on their own (e.g. "JBS" could mean many things) — map
+ * them to a more specific search string for the Maps directions link.
+ */
+const MAPS_QUERY_ALIASES: Record<string, string> = {
+  jbs: "JBS Bustand",
+  jntu: "JNTU Metro Station",
+};
+
+function toMapsQuery(name: string): string {
+  return MAPS_QUERY_ALIASES[normalize(name)] ?? name;
+}
+
+/**
  * Builds a Google Maps "Directions" URL from raw city names (no API key required).
  * Used as a fallback since stored lat/lng coordinates aren't reliable yet.
  */
@@ -103,10 +117,10 @@ export function getGoogleMapsDirectionsUrl(
 ): string {
   const params = new URLSearchParams({
     api: "1",
-    origin: fromCity,
-    destination: toCity,
+    origin: toMapsQuery(fromCity),
+    destination: toMapsQuery(toCity),
   });
-  const waypoints = stopCities.map((c) => c.trim()).filter(Boolean);
+  const waypoints = stopCities.map((c) => c.trim()).filter(Boolean).map(toMapsQuery);
   if (waypoints.length > 0) {
     params.set("waypoints", waypoints.join("|"));
   }
