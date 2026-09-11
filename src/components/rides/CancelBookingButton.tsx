@@ -58,7 +58,7 @@ export function CancelBookingButton({ bookingId, onSuccess }: CancelBookingButto
         </>
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-60" overlayClassName="z-55">
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel booking?</AlertDialogTitle>
             <AlertDialogDescription>
