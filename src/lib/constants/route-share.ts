@@ -91,3 +91,24 @@ export function getRouteShareText(fromCity: string, toCity: string): string {
   const lastTwo = stops.slice(n - 2).join(", ");
   return `${firstPart} to ${lastTwo}`;
 }
+
+/**
+ * Builds a Google Maps "Directions" URL from raw city names (no API key required).
+ * Used as a fallback since stored lat/lng coordinates aren't reliable yet.
+ */
+export function getGoogleMapsDirectionsUrl(
+  fromCity: string,
+  toCity: string,
+  stopCities: string[] = []
+): string {
+  const params = new URLSearchParams({
+    api: "1",
+    origin: fromCity,
+    destination: toCity,
+  });
+  const waypoints = stopCities.map((c) => c.trim()).filter(Boolean);
+  if (waypoints.length > 0) {
+    params.set("waypoints", waypoints.join("|"));
+  }
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}

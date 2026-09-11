@@ -194,7 +194,7 @@ export function DriverBookingList({ rideId, bookings, onSuccess }: DriverBooking
       )}
 
       <AlertDialog open={!!removeConfirm} onOpenChange={(open) => !open && setRemoveConfirm(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-60" overlayClassName="z-55">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove passenger from ride?</AlertDialogTitle>
             <AlertDialogDescription>

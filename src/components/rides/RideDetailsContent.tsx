@@ -1,9 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { toast } from "sonner"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -24,6 +26,7 @@ import {
   Eye,
   Phone,
   Copy,
+  Navigation,
 } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { BookRideForm } from "@/components/rides/BookRideForm"
@@ -32,6 +35,7 @@ import { DriverBookingList } from "@/components/rides/DriverBookingList"
 import { ShareRideWhatsAppButton } from "@/components/rides/ShareRideWhatsAppButton"
 import { RideViewTracker } from "@/components/rides/RideViewTracker"
 import { formatScheduleRangeIST, } from "@/lib/date-time"
+import { getGoogleMapsDirectionsUrl } from "@/lib/constants/route-share"
 import { RideStatus } from "@prisma/client"
 import { cn } from "@/lib/utils"
 
@@ -92,6 +96,26 @@ export function RideDetailsContent({
   onClose,
   onActionSuccess,
 }: RideDetailsContentProps) {
+  const [isBookingFormVisible, setIsBookingFormVisible] = useState(false)
+
+  useEffect(() => {
+    const element = document.getElementById("book-ride-section")
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsBookingFormVisible(entry.isIntersecting)
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -100px 0px" }
+    )
+    
+    observer.observe(element)
+    
+    return () => {
+      observer.unobserve(element)
+    }
+  }, [])
+
   const rideJsonLd = {
     "@context": "https://schema.org",
     "@type": "Trip",
@@ -147,6 +171,12 @@ export function RideDetailsContent({
       toast.error("Couldn't copy link")
     }
   }
+
+  const mapsDirectionsUrl = getGoogleMapsDirectionsUrl(
+    ride.fromLocation.city,
+    ride.toLocation.city,
+    ride.stops.map((s: any) => s.location.city)
+  )
 
   const telHref = ride.driver.phone ? `tel:${ride.driver.phone}` : undefined
   const whatsappHref = ride.driver.phone
@@ -226,6 +256,20 @@ export function RideDetailsContent({
               <MapPin className="h-5 w-5 text-primary" />
               Route
             </CardTitle>
+            <CardAction>
+              <a
+                href={mapsDirectionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "gap-2"
+                )}
+              >
+                <Navigation className="h-4 w-4" />
+                <span className="hidden sm:inline">View in Maps</span>
+              </a>
+            </CardAction>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -568,7 +612,12 @@ export function RideDetailsContent({
       {!isModal && (canBook || showBookPromptForGuest) && (
         <>
           <div className="h-20 sm:hidden" aria-hidden="true" />
-          <div className="fixed inset-x-0 bottom-14 z-30 border-t bg-background/95 p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:hidden">
+          <div 
+            className={cn(
+              "fixed inset-x-0 bottom-14 z-30 border-t bg-background/95 p-3 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:hidden transition-all duration-300 ease-in-out",
+              isBookingFormVisible ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+            )}
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs text-muted-foreground">Per seat</p>
