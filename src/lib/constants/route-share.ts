@@ -119,6 +119,9 @@ export function getGoogleMapsDirectionsUrl(
     api: "1",
     origin: toMapsQuery(fromCity),
     destination: toMapsQuery(toCity),
+    // Jump straight into turn-by-turn navigation instead of the route preview
+    // (only honored by the Google Maps mobile app; desktop web still shows the preview).
+    dir_action: "navigate",
   });
   const waypoints = stopCities.map((c) => c.trim()).filter(Boolean).map(toMapsQuery);
   if (waypoints.length > 0) {
