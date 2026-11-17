@@ -17,8 +17,10 @@ import {
   Star,
   ShieldCheck,
   ArrowLeft,
+  Eye,
 } from "lucide-react"
 import { formatDateShortIST, formatTimeIST } from "@/lib/date-time"
+import { SITE_VISIT_COUNTER_USER_EMAIL } from "@/lib/constants/site-analytics"
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -38,6 +40,7 @@ export default async function AdminPage() {
     driversCount,
     totalReviews,
     newUsersLast7Days,
+    siteVisitCounter,
     recentRides,
     rideCountByStatus,
     bookingCountByStatus,
@@ -49,6 +52,10 @@ export default async function AdminPage() {
     prisma.review.count(),
     prisma.user.count({
       where: { deletedAt: null, createdAt: { gte: sevenDaysAgo } },
+    }),
+    prisma.user.findUnique({
+      where: { email: SITE_VISIT_COUNTER_USER_EMAIL },
+      select: { totalRides: true },
     }),
     prisma.ride.findMany({
       where: { deletedAt: null },
@@ -80,6 +87,12 @@ export default async function AdminPage() {
   )
 
   const stats = [
+     {
+      title: "Site visits",
+      value: siteVisitCounter?.totalRides ?? 0,
+      description: "Unique visitors, all time",
+      icon: Eye,
+    },
     {
       title: "Total users",
       value: totalUsers,
@@ -135,7 +148,7 @@ export default async function AdminPage() {
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">
             App overview
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {stats.map((s) => (
               <Card key={s.title} size="sm">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
